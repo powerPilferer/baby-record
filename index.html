@@ -531,8 +531,9 @@ function renderClock(sorted, dayLogs, today) {
     const m0 = Math.max(0, (s0 - dayStart) / 60000), m1 = Math.min(1440, (e0 - dayStart) / 60000);
     g += arc(m0, m1, R, r, 'ck sleep' + (l.ended_at ? '' : ' open'), l.id);
   }
-  const W = { feed: 22, diaper: 14, temp: 10 };                   // 조각 폭(분)
-  for (const l of dayLogs.filter(l => l.kind !== 'sleep')) { const m = minOf(l.at); g += arc(m - W[l.kind] / 2, m + W[l.kind] / 2, R, r, 'ck ' + l.kind, l.id); }
+  const W = { feed: 22, diaper: 20, temp: 8 }, MID = (R + r) / 2;   // 조각 폭(분). 겹쳐도 다 보이게 띠를 안팎으로 나눔: 바깥=수유, 안쪽=기저귀, 체온은 전체 폭 가는 조각(맨 위)
+  const lane = { feed: [R, MID + 1], diaper: [MID - 1, r], temp: [R, r] };
+  for (const k of ['feed', 'diaper', 'temp']) for (const l of dayLogs.filter(l => l.kind === k)) { const m = minOf(l.at); g += arc(m - W[k] / 2, m + W[k] / 2, lane[k][0], lane[k][1], 'ck ' + k, l.id); }
   if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 4, a), [x1, y1] = pt(R + 4, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
   const dtxt = `D+${dd}`, dw = 20 + dtxt.length * 6.6;
@@ -745,7 +746,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8f · 09-27 18:25';
+const VER = 'v0.8g · 09-27 18:35';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
