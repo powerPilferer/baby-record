@@ -57,8 +57,8 @@
   header .name { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
   header .dday { color: var(--fg3); font-size: 13px; margin-left: 7px; font-weight: 500; }
   header .gear { color: var(--fg2); padding: 8px; margin-right: -8px; font-size: 21px; line-height: 1; }
-  .daynav { display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px; }
-  .daynav button { color: var(--fg2); width: 40px; height: 34px; border-radius: 10px; font-size: 21px; line-height: 1; }
+  .daynav { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 20px; }
+  .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; font-size: 26px; line-height: 1; }
   .daynav button:active { background: var(--card); }
   .daynav button:disabled { color: var(--line); }
   .daynav .date { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -67,7 +67,7 @@
   /* 간편 상태 두 칸 */
   .status { background: var(--bg1); border-radius: 14px; padding: 12px 14px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 7px; }
   .status .chip { display: flex; align-items: center; gap: 10px; }
-  .status .chip b { display: inline-flex; align-items: center; font-size: 12px; color: var(--fg2); font-weight: 500; flex: none; padding: 4px 9px; border-radius: 7px; background: var(--card2); }
+  .status .chip b { display: inline-flex; align-items: center; font-size: 12px; color: var(--c); font-weight: 500; flex: none; padding: 4px 9px; border-radius: 7px; background: color-mix(in srgb, var(--c) 14%, var(--bg1)); }
   .status .chip span { font-size: 14px; font-weight: 500; color: var(--fg2); font-variant-numeric: tabular-nums; }
   .status .chip span small { color: var(--fg3); font-weight: 400; font-size: 12px; margin-left: 5px; }
   .status .chip.feed { --c: var(--feed); } .status .chip.sleep { --c: var(--sleep); }
