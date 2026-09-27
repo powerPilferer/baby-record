@@ -185,8 +185,10 @@
   .cal .d .m { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; max-height: 13px; overflow: hidden; }
   .cal .d .m i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
   .cal .d .m i.feed { --c: var(--feed); } .cal .d .m i.diaper { --c: var(--diaper); } .cal .d .m i.sleep { --c: var(--sleep); } .cal .d .m i.nt { --c: var(--ok); }
-  .cal .d .stk { position: absolute; right: -6px; top: -9px; width: 44px; height: 44px; transform: rotate(-10deg); filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); pointer-events: none; }
-  .cal .d .stk img { width: 100%; height: 100%; object-fit: contain; }
+  .cal .d .stk { position: absolute; right: -4px; top: -8px; font-size: 30px; line-height: 1; filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); pointer-events: none; }
+  .emo { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+  .emo button { width: 42px; height: 42px; border-radius: 12px; background: var(--bg); font-size: 22px; line-height: 1; }
+  .emo button.on { background: var(--card2); box-shadow: 0 0 0 1.5px var(--fg2); }
   .cal .d .stl { font-size: 11px; font-weight: 700; color: var(--ok); margin-top: 5px; line-height: 1; }
   .cal-legend { display: flex; justify-content: center; gap: 12px; margin-top: 14px; font-size: 11px; color: var(--fg3); }
   .cal-legend span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; background: var(--c); }
@@ -490,6 +492,8 @@ let baby = null;        // { id, name, birth_date, invite_code }
 let nickById = {};      // user_id → nickname
 let logs = [];          // 현재 아기 전체 (최근 30일)
 let notes = [];
+let stickers = {};      // day → 이모지 (baby_days)
+let tilts = {};         // day → 1/-1 (붙일 때 랜덤으로 정해진 기울기 방향)
 let day = dstr(new Date());
 let channel = null;
 
@@ -498,12 +502,15 @@ const db = {
   async loadAll() {
     if (MOCK) return;
     const since = new Date(Date.now() - 30 * 86400000).toISOString();
-    const [l, n, m] = await Promise.all([
+    const [l, n, m, sd] = await Promise.all([
       sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at'),
       sb.from('baby_notes').select('*').eq('baby_id', baby.id).order('created_at'),
-      sb.from('baby_members').select('user_id, avatar_url').eq('baby_id', baby.id)
+      sb.from('baby_members').select('user_id, avatar_url').eq('baby_id', baby.id),
+      sb.from('baby_days').select('day, sticker, tilt').eq('baby_id', baby.id)
     ]);
     logs = l.data || []; notes = n.data || [];
+    stickers = Object.fromEntries((sd.data || []).filter(x => x.sticker).map(x => [x.day, x.sticker]));
+    tilts = Object.fromEntries((sd.data || []).map(x => [x.day, x.tilt || 1]));
     const ids = (m.data || []).map(x => x.user_id);
     avatarById = Object.fromEntries((m.data || []).map(x => [x.user_id, x.avatar_url || '']));
     const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
@@ -545,6 +552,13 @@ const db = {
     if (MOCK) return;
     const { error } = await sb.from('baby_notes').delete().eq('id', id); if (error) throw error;
   },
+  async setSticker(dayStr, emoji) {
+    const tilt = Math.random() < .5 ? -1 : 1;                       // 붙이는 순간 좌우 랜덤, 저장돼서 계속 같은 방향
+    if (emoji) { stickers[dayStr] = emoji; tilts[dayStr] = tilt; } else delete stickers[dayStr];
+    if (MOCK) return;
+    const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, sticker: emoji || '', tilt, updated_by: me.id, updated_at: new Date().toISOString() });
+    if (error) throw error;
+  },
   async addNote(text, forDay) {
     const row = { baby_id: baby.id, user_id: me.id, day: forDay || day, text };
     if (MOCK) { row.id = 'n' + Date.now(); row.created_at = new Date().toISOString(); notes.push(row); return; }
@@ -562,6 +576,7 @@ function subscribe() {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE' || !p.new.sticker) delete stickers[(p.old || p.new).day]; else { stickers[p.new.day] = p.new.sticker; tilts[p.new.day] = p.new.tilt || 1; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') notes = notes.filter(x => x.id !== p.old.id); else upsertLocal(notes, p.new); render(); })
     .subscribe();
 }
@@ -586,7 +601,9 @@ function detailOf(l) {
 const MILESTONES = { 50: '50일', 100: '100일', 200: '200일', 300: '300일', 365: '첫돌' };
 const dayNo = d => Math.floor((new Date(d + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
 const stampOf = d => MILESTONES[dayNo(d)] || '';
-const STICKER = { _: 'img/ic-wake.png' };   // 특별한 날 스티커 그림 (임시: 해 아이콘. 미지 도장 그림 오면 날짜별로 교체)
+const MILESTONE_EMOJI = { '50일': '🎂', '100일': '🎂', '200일': '🎈', '300일': '🎈', '첫돌': '🎉' };
+const EMOJIS = ['👶', '🥰', '😊', '😭', '😴', '🍼', '💩', '🤒', '🏥', '💉', '🙃', '👣', '🦷', '🛁', '📸', '🧸', '🎉', '❤️', '⭐'];   // 🙃 = 뒤집은 날(웃는 얼굴 180°). 👼는 뺌(다른 뜻 오해)   // 우선 이모지로 (사장님 09-27). 그림 스티커는 나중에
+const stickerOf = d => stickers[d] || MILESTONE_EMOJI[stampOf(d)] || '';
 
 // ── 기록일지: 달력 (칸 = 그날 요약 점 + 도장, 누르면 홈에서 그날 표)
 let ym = dstr(new Date()).slice(0, 7);
@@ -608,7 +625,7 @@ async function renderDiary() {
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = lastNote[ds];
     h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${future || !born ? 'future' : ''}" data-d="${ds}" ${future ? 'disabled' : ''}>
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${st ? `<span class="stk"><img src="${STICKER[st] || STICKER._}" alt=""></span><span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln.text)}</span>` : ''}<span class="m">${dots}</span></button>`;
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${stickerOf(ds) ? `<span class="stk" style="transform:rotate(${(stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1)) * 10}deg)">${stickerOf(ds)}</span>` : ''}${st ? `<span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln.text)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -621,7 +638,8 @@ function openDayNotes(ds) {
     $('dn-list').innerHTML = dn.length ? dn.map(n => `<div class="note"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span>${n.user_id === me.id ? `<button type="button" class="nx" data-id="${n.id}">✕</button>` : ''}</div>`).join('') : '<div class="empty" style="padding:14px 0">아직 남긴 말이 없어요</div>'; };
   const d = new Date(ds + 'T00:00');
   $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">D+${dayNo(ds)}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
-    <div class="notes" id="dn-list" style="padding:0;background:none;max-height:40vh;overflow:auto"></div>
+    <div class="emo" id="dn-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stickers[ds] === e ? 'on' : ''}">${e}</button>`).join('')}</div>
+    <div class="notes" id="dn-list" style="padding:0;background:none;max-height:34vh;overflow:auto"></div>
     <form class="noteform" id="dn-form"><input id="dn-in" maxlength="300" placeholder="예: 많이 운 날 ㅜㅜ · 처음 뒤집은 날" autocomplete="off"><button type="submit" id="dn-btn" disabled>남기기</button></form>
     <div class="acts"><button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="dn-go">이날 기록 보기</button></div>`;
   $('sheet').dataset.kind = 'daynotes'; list();
@@ -630,6 +648,8 @@ function openDayNotes(ds) {
   $('dn-form').addEventListener('submit', async e => { e.preventDefault(); const t = $('dn-in').value.trim(); if (!t) return;
     try { await db.addNote(t, ds); $('dn-in').value = ''; $('dn-btn').disabled = true; list(); renderDiary(); } catch (err) { alert('남기기 실패: ' + err.message); } });
   $('dn-list').addEventListener('click', async e => { const b = e.target.closest('.nx'); if (!b) return; if (!confirm('이 한마디를 지울까요?')) return; try { await db.delNote(b.dataset.id); list(); renderDiary(); } catch (err) { alert('지우기 실패: ' + err.message); } });
+  $('dn-emo').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const next = stickers[ds] === b.dataset.e ? '' : b.dataset.e;   // 같은 걸 다시 누르면 뗌
+    try { await db.setSticker(ds, next); for (const x of $('dn-emo').children) x.classList.toggle('on', x.dataset.e === next); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
   $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
 }
 
@@ -920,7 +940,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9 · 09-27 19:20';
+const VER = 'v0.9a · 09-27 23:40';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
