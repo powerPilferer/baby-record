@@ -186,6 +186,8 @@
   .cal .d .m i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
   .cal .d .m i.feed { --c: var(--feed); } .cal .d .m i.diaper { --c: var(--diaper); } .cal .d .m i.sleep { --c: var(--sleep); } .cal .d .m i.nt { --c: var(--ok); }
   .cal .d .stk { position: absolute; right: -4px; top: -8px; font-size: 30px; line-height: 1; filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); pointer-events: none; }
+  .diary-in { width: 100%; background: var(--bg); border: 0; border-radius: 14px; padding: 13px 15px; font-size: 15px; line-height: 1.45; outline: none; resize: none; color: var(--fg); margin-top: 4px; }
+  .diary-in:focus { box-shadow: 0 0 0 1.5px var(--fg3); }
   .emo { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
   .emo button { width: 42px; height: 42px; border-radius: 12px; background: var(--bg); font-size: 22px; line-height: 1; }
   .emo button.on { background: var(--card2); box-shadow: 0 0 0 1.5px var(--fg2); }
@@ -373,7 +375,7 @@
   <header><div class="who"><span class="name">기록일지</span></div></header>
   <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="date" id="mon-label"></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
   <div class="cal" id="cal"></div>
-  <div class="cal-legend"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="nt">한마디</span></div>
+  <div class="cal-legend"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span></div>
 </section>
 
 <!-- 통계 -->
@@ -494,6 +496,7 @@ let logs = [];          // 현재 아기 전체 (최근 30일)
 let notes = [];
 let stickers = {};      // day → 이모지 (baby_days)
 let tilts = {};         // day → 1/-1 (붙일 때 랜덤으로 정해진 기울기 방향)
+let diaries = {};       // day → 일기 글 (baby_days.diary) — 홈의 한마디(baby_notes)와 별개
 let day = dstr(new Date());
 let channel = null;
 
@@ -506,11 +509,12 @@ const db = {
       sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at'),
       sb.from('baby_notes').select('*').eq('baby_id', baby.id).order('created_at'),
       sb.from('baby_members').select('user_id, avatar_url').eq('baby_id', baby.id),
-      sb.from('baby_days').select('day, sticker, tilt').eq('baby_id', baby.id)
+      sb.from('baby_days').select('day, sticker, tilt, diary').eq('baby_id', baby.id)
     ]);
     logs = l.data || []; notes = n.data || [];
     stickers = Object.fromEntries((sd.data || []).filter(x => x.sticker).map(x => [x.day, x.sticker]));
     tilts = Object.fromEntries((sd.data || []).map(x => [x.day, x.tilt || 1]));
+    diaries = Object.fromEntries((sd.data || []).filter(x => x.diary).map(x => [x.day, x.diary]));
     const ids = (m.data || []).map(x => x.user_id);
     avatarById = Object.fromEntries((m.data || []).map(x => [x.user_id, x.avatar_url || '']));
     const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
@@ -559,6 +563,12 @@ const db = {
     const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, sticker: emoji || '', tilt, updated_by: me.id, updated_at: new Date().toISOString() });
     if (error) throw error;
   },
+  async setDiary(dayStr, text) {
+    if (text) diaries[dayStr] = text; else delete diaries[dayStr];
+    if (MOCK) return;
+    const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, diary: text, updated_by: me.id, updated_at: new Date().toISOString() });
+    if (error) throw error;
+  },
   async addNote(text, forDay) {
     const row = { baby_id: baby.id, user_id: me.id, day: forDay || day, text };
     if (MOCK) { row.id = 'n' + Date.now(); row.created_at = new Date().toISOString(); notes.push(row); return; }
@@ -576,7 +586,7 @@ function subscribe() {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE' || !p.new.sticker) delete stickers[(p.old || p.new).day]; else { stickers[p.new.day] = p.new.sticker; tilts[p.new.day] = p.new.tilt || 1; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; } else { if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') notes = notes.filter(x => x.id !== p.old.id); else upsertLocal(notes, p.new); render(); })
     .subscribe();
 }
@@ -617,15 +627,14 @@ async function renderDiary() {
   const byDay = {};
   for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0, byDay[d].slp += (l.kind === 'sleep' && l.ended_at) ? (new Date(l.ended_at) - new Date(l.at)) : 0; }
   for (const n of notes) if (n.day.startsWith(ym)) (byDay[n.day] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 }).note += 1;
-  const lastNote = {}; for (const n of notes) if (n.day.startsWith(ym) && (!lastNote[n.day] || n.created_at > lastNote[n.day].created_at)) lastNote[n.day] = n;
   let h = '';
   for (let d = 1; d <= days; d++) {
     const ds = `${ym}-${pad(d)}`, v = byDay[ds], st = stampOf(ds), future = ds > today, born = ds >= baby.birth_date;
-    const dots = v ? ['feed', 'diaper', 'sleep', 'note'].map(k => `<i class="${k === 'note' ? 'nt' : k}"></i>`.repeat(Math.min(v[k], k === 'note' ? 1 : 3))).join('') : '';
+    const dots = v ? ['feed', 'diaper', 'sleep'].map(k => `<i class="${k}"></i>`.repeat(Math.min(v[k], 3))).join('') : '';
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
-    const wd = new Date(ds + 'T00:00').getDay(), ln = lastNote[ds];
+    const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
     h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${future || !born ? 'future' : ''}" data-d="${ds}" ${future ? 'disabled' : ''}>
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${stickerOf(ds) ? `<span class="stk" style="transform:rotate(${(stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1)) * 10}deg)">${stickerOf(ds)}</span>` : ''}${st ? `<span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln.text)}</span>` : ''}<span class="m">${dots}</span></button>`;
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${stickerOf(ds) ? `<span class="stk" style="transform:rotate(${(stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1)) * 10}deg)">${stickerOf(ds)}</span>` : ''}${st ? `<span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -634,22 +643,17 @@ $('mon-next').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth
 $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]'); if (!b || b.disabled) return; openDayNotes(b.dataset.d); });
 // ── 일지에서 날짜를 누르면: 그날 한마디 보기 + 쓰기 (지난 날에도 남길 수 있음) + 그날 표로 가기
 function openDayNotes(ds) {
-  const list = () => { const dn = notes.filter(n => n.day === ds).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    $('dn-list').innerHTML = dn.length ? dn.map(n => `<div class="note"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span>${n.user_id === me.id ? `<button type="button" class="nx" data-id="${n.id}">✕</button>` : ''}</div>`).join('') : '<div class="empty" style="padding:14px 0">아직 남긴 말이 없어요</div>'; };
   const d = new Date(ds + 'T00:00');
   $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">D+${dayNo(ds)}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
     <div class="emo" id="dn-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stickers[ds] === e ? 'on' : ''}">${e}</button>`).join('')}</div>
-    <div class="notes" id="dn-list" style="padding:0;background:none;max-height:34vh;overflow:auto"></div>
-    <form class="noteform" id="dn-form"><input id="dn-in" maxlength="300" placeholder="예: 많이 운 날 ㅜㅜ · 처음 뒤집은 날" autocomplete="off"><button type="submit" id="dn-btn" disabled>남기기</button></form>
-    <div class="acts"><button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="dn-go">이날 기록 보기</button></div>`;
-  $('sheet').dataset.kind = 'daynotes'; list();
-  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
-  $('dn-in').addEventListener('input', () => $('dn-btn').disabled = !$('dn-in').value.trim());
-  $('dn-form').addEventListener('submit', async e => { e.preventDefault(); const t = $('dn-in').value.trim(); if (!t) return;
-    try { await db.addNote(t, ds); $('dn-in').value = ''; $('dn-btn').disabled = true; list(); renderDiary(); } catch (err) { alert('남기기 실패: ' + err.message); } });
-  $('dn-list').addEventListener('click', async e => { const b = e.target.closest('.nx'); if (!b) return; if (!confirm('이 한마디를 지울까요?')) return; try { await db.delNote(b.dataset.id); list(); renderDiary(); } catch (err) { alert('지우기 실패: ' + err.message); } });
+    <textarea id="dn-text" class="diary-in" maxlength="1000" rows="4" placeholder="이날의 일기 — 예: 많이 운 날 ㅜㅜ, 처음 뒤집은 날">${esc(diaries[ds] || '')}</textarea>
+    <div class="acts"><button type="button" class="cancel" id="dn-go">이날 기록 보기</button><button type="button" class="save" id="dn-save">저장</button></div>`;
+  $('sheet').dataset.kind = 'daynotes';
+  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet;
   $('dn-emo').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const next = stickers[ds] === b.dataset.e ? '' : b.dataset.e;   // 같은 걸 다시 누르면 뗌
     try { await db.setSticker(ds, next); for (const x of $('dn-emo').children) x.classList.toggle('on', x.dataset.e === next); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
+  $('dn-save').onclick = async () => { const t = $('dn-text').value.trim();
+    try { await db.setDiary(ds, t); closeSheet(); renderDiary(); toast(t ? '일기를 남겼어요' : '일기를 지웠어요'); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
 }
 
@@ -940,7 +944,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9b · 09-28 00:05';
+const VER = 'v0.9c · 09-28 00:20';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
