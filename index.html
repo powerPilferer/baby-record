@@ -224,6 +224,16 @@
   .menu-title:first-of-type { margin-top: 10px; }
   #logout { color: var(--temp); justify-content: center; }
   .code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .12em; font-weight: 600; color: var(--fg); font-size: 15px; }
+  .cropper { position: fixed; inset: 0; z-index: 70; background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; padding: calc(var(--sat) + 10px) 16px calc(24px + var(--sab)); }
+  .cr-top { width: 100%; max-width: 480px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 16px; }
+  .cr-top button { color: #bbb; padding: 10px 6px; font-size: 16px; }
+  .cr-top button.ok { color: #fff; font-weight: 700; }
+  .cr-view { position: relative; width: min(320px, calc(100vw - 32px)); aspect-ratio: 1; margin: auto 0; overflow: hidden; touch-action: none; border-radius: 12px; background: #111; }
+  .cr-view img { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-select: none; pointer-events: none; }
+  .cr-mask { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.62); pointer-events: none; outline: 1.5px solid rgba(255,255,255,.55); outline-offset: -1px; }
+  .cr-zoom { display: flex; align-items: center; gap: 12px; width: min(320px, calc(100vw - 32px)); margin-top: 22px; color: #999; font-size: 18px; }
+  .cr-zoom input { flex: 1; accent-color: #fff; }
+  .cr-hint { color: #777; font-size: 12px; margin-top: 12px; text-align: center; }
   .toast { position: fixed; left: 50%; bottom: calc(28px + var(--sab)); transform: translateX(-50%); background: var(--fg); color: var(--bg);
     padding: 10px 16px; border-radius: 999px; font-size: 15px; font-weight: 600; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
@@ -344,6 +354,12 @@
 <!-- 입력 바텀 시트 -->
 <div id="dim" class="dim hidden"></div>
 <div id="sheet" class="sheet hidden"></div>
+<div id="cropper" class="cropper hidden">
+  <div class="cr-top"><button type="button" id="cr-cancel">취소</button><span>사진 맞추기</span><button type="button" id="cr-ok" class="ok">완료</button></div>
+  <div class="cr-view" id="cr-view"><img id="cr-img" alt="" draggable="false"><div class="cr-mask"></div></div>
+  <div class="cr-zoom"><span>−</span><input type="range" id="cr-zoom" min="0" max="100" value="0"><span>+</span></div>
+  <div class="cr-hint">끌어서 옮기고, 두 손가락이나 슬라이더로 확대·축소</div>
+</div>
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -662,13 +678,51 @@ $('noteform').addEventListener('submit', async e => {
 // ── 아기 사진: 정사각 512 JPEG로 줄여 Storage(baby-photos/<baby_id>/<ts>.jpg)에 올리고 공개 URL을 babies.photo_url에
 const BABY_FACE = 'img/아기-얼굴-4e.png';
 const babyFace = () => baby.photo_url || BABY_FACE;
+// ── 원형 크롭: 끌기·두 손가락·슬라이더로 맞추고 원 안만 512 정사각 JPEG로
 function squareJpeg(file) {
   return new Promise((res, rej) => {
     const img = new Image(); const url = URL.createObjectURL(file);
-    img.onload = () => { const S = 512, m = Math.min(img.width, img.height); const c = document.createElement('canvas'); c.width = c.height = S;
-      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S); URL.revokeObjectURL(url);
-      c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', .86); };
+    img.onload = () => cropPhoto(img).then(v => { URL.revokeObjectURL(url); res(v); }, e => { URL.revokeObjectURL(url); rej(e); });   // 크롭 화면이 같은 URL을 쓰므로 끝난 뒤 해제
     img.onerror = () => rej(new Error('이미지를 읽을 수 없어요')); img.src = url;
+  });
+}
+function cropPhoto(img) {
+  return new Promise((res, rej) => {
+    const box = $('cropper'), view = $('cr-view'), el = $('cr-img'), zoom = $('cr-zoom');
+    box.classList.remove('hidden'); el.src = img.src;
+    const V = view.clientWidth;                                   // 뷰(=원 지름)
+    const base = V / Math.min(img.naturalWidth, img.naturalHeight);   // 원을 꽉 채우는 최소 배율
+    let s = base, tx = (V - img.naturalWidth * base) / 2, ty = (V - img.naturalHeight * base) / 2;
+    const MAXZ = 4;
+    const clamp = () => { s = Math.min(Math.max(s, base), base * MAXZ); const w = img.naturalWidth * s, h = img.naturalHeight * s; tx = Math.min(0, Math.max(V - w, tx)); ty = Math.min(0, Math.max(V - h, ty)); };
+    const draw = () => { clamp(); el.style.width = img.naturalWidth * s + 'px'; el.style.height = img.naturalHeight * s + 'px'; el.style.transform = `translate(${tx}px, ${ty}px)`; zoom.value = Math.round((s / base - 1) / (MAXZ - 1) * 100); };
+    const zoomAt = (ns, cx, cy) => { ns = Math.min(Math.max(ns, base), base * MAXZ); tx = cx - (cx - tx) * (ns / s); ty = cy - (cy - ty) * (ns / s); s = ns; draw(); };
+    draw();
+    const pts = new Map(); let last = null;
+    const onDown = e => { pts.set(e.pointerId, [e.clientX, e.clientY]); view.setPointerCapture(e.pointerId); last = null; };
+    const onMove = e => {
+      if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+      const r = view.getBoundingClientRect(), P = [...pts.values()];
+      if (P.length === 1) { if (last) { tx += e.clientX - last[0]; ty += e.clientY - last[1]; draw(); } last = [e.clientX, e.clientY]; }
+      else if (P.length >= 2) {
+        const d = Math.hypot(P[0][0] - P[1][0], P[0][1] - P[1][1]), cx = (P[0][0] + P[1][0]) / 2 - r.left, cy = (P[0][1] + P[1][1]) / 2 - r.top;
+        if (last && last.d) { tx += cx - last[0]; ty += cy - last[1]; zoomAt(s * d / last.d, cx, cy); }
+        last = [cx, cy]; last.d = d;
+      }
+    };
+    const onUp = e => { pts.delete(e.pointerId); last = null; };
+    view.addEventListener('pointerdown', onDown); view.addEventListener('pointermove', onMove); view.addEventListener('pointerup', onUp); view.addEventListener('pointercancel', onUp);
+    const onZoom = () => zoomAt(base * (1 + (MAXZ - 1) * zoom.value / 100), V / 2, V / 2);
+    zoom.addEventListener('input', onZoom);
+    const done = ok => {
+      view.removeEventListener('pointerdown', onDown); view.removeEventListener('pointermove', onMove); view.removeEventListener('pointerup', onUp); view.removeEventListener('pointercancel', onUp); zoom.removeEventListener('input', onZoom);
+      box.classList.add('hidden'); el.src = '';
+      if (!ok) return rej(new Error('취소'));
+      const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
+      c.getContext('2d').drawImage(img, -tx / s, -ty / s, V / s, V / s, 0, 0, S, S);   // 원의 외접 정사각 영역
+      c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', .86);
+    };
+    $('cr-ok').onclick = () => done(true); $('cr-cancel').onclick = () => done(false);
   });
 }
 async function uploadPhoto(blob, babyId) {
@@ -681,7 +735,8 @@ async function uploadPhoto(blob, babyId) {
 let setupPhoto = null;   // 첫 설정에서 고른 사진(blob)
 $('setup-file').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  try { setupPhoto = await squareJpeg(f); $('setup-photo').src = URL.createObjectURL(setupPhoto); $('setup-photo-clear').classList.remove('hidden'); } catch (err) { toast(err.message); }
+  try { setupPhoto = await squareJpeg(f); $('setup-photo').src = URL.createObjectURL(setupPhoto); $('setup-photo-clear').classList.remove('hidden'); } catch (err) { if (err.message !== '취소') toast(err.message); }
+  e.target.value = '';
 });
 $('setup-photo-clear').onclick = () => { setupPhoto = null; $('setup-file').value = ''; $('setup-photo').src = BABY_FACE; $('setup-photo-clear').classList.add('hidden'); };
 document.querySelector('header .who').onclick = () => openBabySheet();
@@ -690,7 +745,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8 · 09-27 17:30';
+const VER = 'v0.8a · 09-27 17:45';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
@@ -729,7 +784,8 @@ function openBabySheet() {
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
   $('b-file').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
-    try { photoBlob = await squareJpeg(f); clearPhoto = false; $('b-photo').src = URL.createObjectURL(photoBlob); $('b-photo-clear').classList.remove('hidden'); } catch (err) { toast(err.message); }
+    try { photoBlob = await squareJpeg(f); clearPhoto = false; $('b-photo').src = URL.createObjectURL(photoBlob); $('b-photo-clear').classList.remove('hidden'); } catch (err) { if (err.message !== '취소') toast(err.message); }
+    e.target.value = '';
   });
   $('b-photo-clear').onclick = () => { photoBlob = null; clearPhoto = true; $('b-photo').src = BABY_FACE; $('b-photo-clear').classList.add('hidden'); };
   $('sh-save').onclick = async () => {
