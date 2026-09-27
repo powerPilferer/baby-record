@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0b0b0d">
 <title>기특일기</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="img/icon-512-4e.png">
+<link rel="apple-touch-icon" href="img/icon-180-bottle.png">
 <script>(function(){var p=localStorage.getItem("bb-theme")||"system";document.documentElement.dataset.theme=(p==="light"||(p==="system"&&matchMedia("(prefers-color-scheme: light)").matches))?"light":"dark";})();</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
@@ -745,7 +745,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8e · 09-27 18:15';
+const VER = 'v0.8f · 09-27 18:25';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
