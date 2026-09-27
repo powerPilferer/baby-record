@@ -104,7 +104,7 @@
   .quick .tx { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: left; }
   .quick button:active { background: var(--card2); }
   .quick .k { font-size: 16px; font-weight: 600; color: var(--fg); letter-spacing: -.02em; }
-  .quick .s { font-size: 13px; color: var(--fg3); }
+  .quick .s { font-size: 13px; color: var(--fg3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .quick .feed { --c: var(--feed); } .quick .diaper { --c: var(--diaper); } .quick .sleep { --c: var(--sleep); } .quick .temp { --c: var(--temp); }
   .quick .sleep.on { background: var(--card2); }
   .quick .sleep.on .s { color: var(--fg2); }
@@ -556,7 +556,7 @@ function render() {
   const open = sorted.find(l => l.kind === 'sleep' && !l.ended_at);
   $('st-sleep').innerHTML = open ? `자는 중<small>${dur(open.at)}</small>` : (() => { const s = [...sorted].reverse().find(l => l.kind === 'sleep' && l.ended_at); return s ? `${hhmm(s.ended_at)} 깸<small>${ago(s.ended_at)}</small>` : '아직 없음'; })();
   const qs = $('q-sleep'); qs.classList.toggle('on', !!open);
-  qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 잤어요' : '지금부터';
+  qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 자는 중' : '지금부터';
   const qi = qs.querySelector('.ic img'); const want = open ? 'img/ic-wake.png' : 'img/ic-sleep.png';   // 자는 중이면 해, 아니면 달
   if (!qi.src.endsWith(want)) { qi.onerror = () => { qi.onerror = null; qi.src = 'img/ic-sleep.png'; }; qi.src = want; }
   const rows = $('rows');
@@ -746,7 +746,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8g · 09-27 18:35';
+const VER = 'v0.8h · 09-27 18:40';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
