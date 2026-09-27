@@ -273,7 +273,7 @@
       <p>먼저 만든 사람이 배우자를 초대해요</p>
       <div class="card form">
         <label>아기 사진 <small>안 넣으면 기본 캐릭터</small></label>
-        <div class="photo-pick"><img id="setup-photo" class="pv" src="img/아기-얼굴-4e.png" alt=""><label class="pbtn" for="setup-file">사진 고르기</label><input type="file" id="setup-file" accept="image/*" hidden><button type="button" class="pbtn ghost hidden" id="setup-photo-clear">기본 캐릭터로</button></div>
+        <div class="photo-pick"><img id="setup-photo" class="pv" src="img/아기-얼굴-4e.png" alt=""><button type="button" class="pbtn" id="setup-pick">사진 고르기</button><input type="file" id="setup-file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button type="button" class="pbtn ghost hidden" id="setup-photo-clear">기본 캐릭터로</button></div>
         <label for="baby-name">아기 이름 <small>태명도 좋아요</small></label>
         <input id="baby-name" maxlength="12" placeholder="예: 콩이" autocomplete="off">
         <label for="baby-birth">생년월일</label>
@@ -383,7 +383,7 @@ document.addEventListener('touchend', e => {
   const now = Date.now();
   if (now - _lastTap < 350 && e.touches.length === 0) {
     e.preventDefault();
-    const b = e.target.closest('button, a, label, .row, .ev'); if (b) b.click();
+    const b = e.target.closest('button, a, label, .row, .ev'); if (b && !b.classList.contains('pbtn')) b.click();
   }
   _lastTap = now;
 }, { passive: false });
@@ -734,6 +734,7 @@ async function uploadPhoto(blob, babyId) {
   return sb.storage.from('baby-photos').getPublicUrl(path).data.publicUrl;
 }
 let setupPhoto = null;   // 첫 설정에서 고른 사진(blob)
+$('setup-pick').onclick = () => $('setup-file').click();
 $('setup-file').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
   try { setupPhoto = await squareJpeg(f); $('setup-photo').src = URL.createObjectURL(setupPhoto); $('setup-photo-clear').classList.remove('hidden'); } catch (err) { if (err.message !== '취소') toast(err.message); }
@@ -746,7 +747,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8h · 09-27 18:40';
+const VER = 'v0.8i · 09-27 18:55';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
@@ -787,15 +788,17 @@ $('edit-baby').onclick = () => openBabySheet();
 function openBabySheet() {
   let photoBlob = null, clearPhoto = false;
   $('sheet').innerHTML = `<h3>아기 정보</h3>
-    <div class="frow"><label>사진</label><span class="photo-pick"><img id="b-photo" class="pv" src="${esc(babyFace())}" alt=""><label class="pbtn" for="b-file">고르기</label><input type="file" id="b-file" accept="image/*" hidden><button type="button" class="pbtn ghost ${baby.photo_url ? '' : 'hidden'}" id="b-photo-clear">기본으로</button></span></div>
+    <div class="frow"><label>사진</label><span class="photo-pick"><img id="b-photo" class="pv" src="${esc(babyFace())}" alt=""><button type="button" class="pbtn" id="b-pick">고르기</button><input type="file" id="b-file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button type="button" class="pbtn ghost ${baby.photo_url ? '' : 'hidden'}" id="b-photo-clear">기본으로</button></span></div>
     <div class="frow"><label>이름</label><input id="b-name" maxlength="12" value="${esc(baby.name)}"></div>
     <div class="frow"><label>생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
     <div class="foot" style="margin:2px 0 0">생일을 바꾸면 D+n이 다시 계산돼요</div>
     <div class="acts"><button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">저장</button></div>`;
   $('sheet').dataset.kind = 'baby';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  $('b-pick').onclick = () => $('b-file').click();
   $('b-file').addEventListener('change', async e => {
-    const f = e.target.files[0]; if (!f) return;
+    const f = e.target.files[0]; if (!f) { toast('사진이 선택되지 않았어요'); return; }
+    toast('사진 읽는 중…');
     try { photoBlob = await squareJpeg(f); clearPhoto = false; $('b-photo').src = URL.createObjectURL(photoBlob); $('b-photo-clear').classList.remove('hidden'); } catch (err) { if (err.message !== '취소') toast(err.message); }
     e.target.value = '';
   });
@@ -805,7 +808,7 @@ function openBabySheet() {
     if (!name || !birth_date) { toast('이름과 생년월일을 적어주세요'); return; }
     try {
       const patch = { name, birth_date };
-      if (photoBlob) patch.photo_url = await uploadPhoto(photoBlob, baby.id); else if (clearPhoto) patch.photo_url = null;
+      if (photoBlob) { toast('사진 올리는 중…'); patch.photo_url = await uploadPhoto(photoBlob, baby.id); } else if (clearPhoto) patch.photo_url = null;
       await db.updBaby(patch); closeSheet(); fillSettings(); render(); toast('고쳤어요');
     } catch (e) { alert('저장 실패: ' + e.message); }
   };
