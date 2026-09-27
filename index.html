@@ -107,6 +107,18 @@
   .sheet-title { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 8px; padding: 0 2px; }
   .sheet-title h2 { font-size: 13px; color: var(--fg3); font-weight: 500; margin: 0; }
   .sheet-title span { font-size: 12px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+  .vt { display: inline-flex; gap: 2px; background: var(--card); border-radius: 999px; padding: 3px; }
+  .vt button { width: 34px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--fg3); }
+  .vt button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .vt button.on { background: var(--card2); color: var(--fg); }
+  .clock { padding: 18px 12px 6px; }
+  .clock svg { width: 100%; height: auto; display: block; }
+  .clock .ck { cursor: pointer; }
+  .clock .ck.feed { fill: var(--feed); } .clock .ck.diaper { fill: var(--diaper); } .clock .ck.temp { fill: var(--temp); }
+  .clock .ck.sleep { fill: color-mix(in srgb, var(--sleep) 55%, var(--card)); } .clock .ck.sleep.open { fill: color-mix(in srgb, var(--sleep) 35%, var(--card)); }
+  .clock .lg { display: flex; justify-content: center; gap: 16px; padding: 12px 0 6px; font-size: 12px; color: var(--fg2); }
+  .clock .lg span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; }
+  .clock .lg .feed { --c: var(--feed); } .clock .lg .diaper { --c: var(--diaper); } .clock .lg .sleep { --c: var(--sleep); } .clock .lg .temp { --c: var(--temp); }
   .rows { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 22px; }
   .row { --c: var(--fg2); display: grid; grid-template-columns: 50px 22px 1fr auto; gap: 0 8px; align-items: stretch; padding: 0 14px 0 12px; width: 100%; text-align: left; }
   .row:active { background: var(--card2); }
@@ -281,8 +293,9 @@
     <button type="button" class="sleep" data-kind="sleep" id="q-sleep"><span class="ic"><img src="img/ic-sleep.png" alt=""></span><span class="tx"><span class="k">잠듦</span><span class="s">지금부터</span></span></button>
     <button type="button" class="temp" data-kind="temp"><span class="ic"><img src="img/ic-temp.png" alt=""></span><span class="tx"><span class="k">체온</span><span class="s">℃</span></span></button>
   </div>
-  <div class="sheet-title"><h2>오늘의 표</h2><span id="h-count"></span></div>
+  <div class="sheet-title"><h2>오늘의 표</h2><span class="vt" id="view-seg"><button type="button" data-v="list" aria-label="목록"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><button type="button" data-v="clock" aria-label="24시간"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></button></span></div>
   <div class="rows" id="rows"></div>
+  <div class="rows clock hidden" id="clock"></div>
   <div class="notes">
     <h2>서로에게 한마디</h2>
     <div id="notes"></div>
@@ -461,6 +474,40 @@ function detailOf(l) {
   if (l.kind === 'temp') return `${d.c ?? '—'}℃`;
   return '';
 }
+// ── 24시간 원형 생활계획표: 0시가 위, 시계 방향. 잠은 실제 길이 띠, 수유·기저귀·체온은 짧은 조각
+let view = localStorage.getItem('bb-view') || 'list';
+function renderClock(sorted, dayLogs, today) {
+  const C = 170, R = 138, r = 92, LR = 160;                      // 중심, 바깥/안쪽 반지름, 라벨 반지름
+  const ang = min => (min / 1440) * Math.PI * 2 - Math.PI / 2;
+  const pt = (rad, a) => [C + rad * Math.cos(a), C + rad * Math.sin(a)];
+  const arc = (m0, m1, ro, ri, cls, id) => {                      // 분 단위 구간 → 도넛 조각
+    if (m1 - m0 < 4) { const mid = (m0 + m1) / 2; m0 = mid - 2; m1 = mid + 2; }
+    const a0 = ang(m0), a1 = ang(m1), big = (m1 - m0) > 720 ? 1 : 0;
+    const [x0, y0] = pt(ro, a0), [x1, y1] = pt(ro, a1), [x2, y2] = pt(ri, a1), [x3, y3] = pt(ri, a0);
+    return `<path class="${cls}" ${id ? `data-id="${id}"` : ''} d="M${x0} ${y0}A${ro} ${ro} 0 ${big} 1 ${x1} ${y1}L${x2} ${y2}A${ri} ${ri} 0 ${big} 0 ${x3} ${y3}Z"/>`;
+  };
+  const minOf = ts => { const d = new Date(ts); return d.getHours() * 60 + d.getMinutes(); };
+  const dayStart = +new Date(day + 'T00:00'), dayEnd = dayStart + 86400000;
+  let g = '';
+  g += `<circle cx="${C}" cy="${C}" r="${(R + r) / 2}" fill="none" stroke="var(--card2)" stroke-width="${R - r}"/>`;
+  for (let h = 0; h < 24; h++) {                                  // 눈금 + 2시간마다 숫자
+    const a = ang(h * 60); const [x0, y0] = pt(R + 3, a), [x1, y1] = pt(R + (h % 2 ? 6 : 9), a);
+    g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--fg3)" stroke-width="1.2" stroke-linecap="round"/>`;
+    if (h % 2 === 0) { const [lx, ly] = pt(LR, a); g += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" fill="var(--fg3)" font-size="12">${h}</text>`; }
+  }
+  for (const l of sorted.filter(l => l.kind === 'sleep')) {       // 잠 띠 (자정 넘기면 잘라서)
+    const s0 = +new Date(l.at), e0 = l.ended_at ? +new Date(l.ended_at) : Date.now();
+    if (e0 <= dayStart || s0 >= dayEnd) continue;
+    const m0 = Math.max(0, (s0 - dayStart) / 60000), m1 = Math.min(1440, (e0 - dayStart) / 60000);
+    g += arc(m0, m1, R - 2, r + 2, 'ck sleep' + (l.ended_at ? '' : ' open'), l.id);
+  }
+  const W = { feed: 22, diaper: 14, temp: 10 };                   // 조각 폭(분)
+  for (const l of dayLogs.filter(l => l.kind !== 'sleep')) { const m = minOf(l.at); g += arc(m - W[l.kind] / 2, m + W[l.kind] / 2, R - 2, r + 2, 'ck ' + l.kind, l.id); }
+  if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 6, a), [x1, y1] = pt(R + 6, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
+  const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);
+  g += `<text x="${C}" y="${C - 6}" text-anchor="middle" fill="var(--fg)" font-size="22" font-weight="600">D+${dd}</text><text x="${C}" y="${C + 16}" text-anchor="middle" fill="var(--fg3)" font-size="11">${dayLogs.length ? dayLogs.length + '건' : '기록 없음'}</text>`;
+  return `<svg viewBox="0 0 340 340" style="max-width:340px;margin:0 auto">${g}</svg><div class="lg"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="temp">체온</span></div>`;
+}
 function render() {
   const today = dstr(new Date());
   $('h-name').textContent = baby.name;
@@ -479,9 +526,14 @@ function render() {
   qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 잤어요' : '지금부터';
   const qi = qs.querySelector('.ic img'); const want = open ? 'img/ic-wake.png' : 'img/ic-sleep.png';   // 자는 중이면 해, 아니면 달
   if (!qi.src.endsWith(want)) { qi.onerror = () => { qi.onerror = null; qi.src = 'img/ic-sleep.png'; }; qi.src = want; }
-
-  $('h-count').textContent = dayLogs.length ? `${dayLogs.length}건` : '';
   const rows = $('rows');
+  const feedsAll = dayLogs.filter(l => l.kind === 'feed'); const mlAll = feedsAll.reduce((s, l) => s + (+(l.detail || {}).ml || 0), 0);
+  const dpAll = dayLogs.filter(l => l.kind === 'diaper'); const peeAll = dpAll.filter(l => l.detail?.pee).length, pooAll = dpAll.filter(l => l.detail?.poo).length;
+  const slpAll = dayLogs.filter(l => l.kind === 'sleep' && l.ended_at).reduce((s, l) => s + (new Date(l.ended_at) - new Date(l.at)), 0);
+  const sumHtml = dayLogs.length ? `<div class="sum"><span>수유 <b>${feedsAll.length}회</b>${mlAll ? ` · <b>${mlAll}ml</b>` : ''}</span><span>소변 <b>${peeAll}</b> 대변 <b>${pooAll}</b></span>${slpAll ? `<span>잠 <b>${dur(0, slpAll)}</b></span>` : ''}</div>` : '';
+  for (const b of $('view-seg').children) b.classList.toggle('on', b.dataset.v === view);
+  rows.classList.toggle('hidden', view !== 'list'); $('clock').classList.toggle('hidden', view !== 'clock');
+  if (view === 'clock') { $('clock').innerHTML = renderClock(sorted, dayLogs, today) + sumHtml; }
   if (!dayLogs.length) rows.innerHTML = `<div class="empty">${day === today ? '위 버튼으로 첫 기록을 남겨보세요' : '기록이 없어요'}</div>`;
   else {
     const title = l => (l.kind === 'sleep' || l.kind === 'temp') ? `${KIND[l.kind]} ${detailOf(l)}` : detailOf(l);
@@ -489,10 +541,7 @@ function render() {
       <span class="t">${hhmm(l.at)}</span><span class="rl"></span>
       <span class="d"><b>${esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
       <span class="w">${avatar(l.user_id)}</span></button>`).join('');
-    const feeds = dayLogs.filter(l => l.kind === 'feed'); const ml = feeds.reduce((s, l) => s + (+(l.detail || {}).ml || 0), 0);
-    const dp = dayLogs.filter(l => l.kind === 'diaper'); const pee = dp.filter(l => l.detail?.pee).length, poo = dp.filter(l => l.detail?.poo).length;
-    const slp = dayLogs.filter(l => l.kind === 'sleep' && l.ended_at).reduce((s, l) => s + (new Date(l.ended_at) - new Date(l.at)), 0);
-    rows.insertAdjacentHTML('beforeend', `<div class="sum"><span>수유 <b>${feeds.length}회</b>${ml ? ` · <b>${ml}ml</b>` : ''}</span><span>소변 <b>${pee}</b> 대변 <b>${poo}</b></span>${slp ? `<span>잠 <b>${dur(0, slp)}</b></span>` : ''}</div>`);
+    rows.insertAdjacentHTML('beforeend', sumHtml);
   }
   const dn = notes.filter(n => n.day === day).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   $('notes').innerHTML = dn.length ? dn.map(n => `<div class="note ${n.user_id === me.id ? 'mine' : ''}"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span>${n.user_id === me.id ? `<button type="button" class="nx" data-id="${n.id}" aria-label="지우기">✕</button>` : ''}</div>`).join('')
@@ -580,6 +629,8 @@ document.querySelector('.quick').addEventListener('click', async e => {
   openSheet(kind);
 });
 $('rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = logs.find(x => x.id === r.dataset.id); if (l) openSheet(l.kind, l); });
+$('view-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; view = b.dataset.v; localStorage.setItem('bb-view', view); render(); });
+$('clock').addEventListener('click', e => { const p = e.target.closest('.ck'); if (!p) return; const l = logs.find(x => x.id === p.dataset.id); if (l) openSheet(l.kind, l); });
 $('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); day = dstr(d); render(); };
 $('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
 $('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
@@ -597,7 +648,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.6e · 09-27 15:50';
+const VER = 'v0.7 · 09-27 16:10';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
