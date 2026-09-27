@@ -134,6 +134,8 @@
   .note { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
   .note .who { flex: none; padding-top: 1px; }
   .note .tx { flex: 1; font-size: 15px; white-space: pre-wrap; }
+  .note .nx { flex: none; width: 24px; height: 24px; border-radius: 50%; color: var(--fg3); font-size: 12px; margin: -2px -6px 0 0; }
+  .note .nx:active { background: var(--card2); color: var(--temp); }
   .note .tm { font-size: 12px; color: var(--fg3); padding-top: 4px; font-variant-numeric: tabular-nums; }
     .noteform { display: flex; gap: 8px; margin-top: 8px; }
   .noteform input { flex: 1; min-width: 0; background: var(--bg); border: 0; border-radius: 999px; padding: 12px 16px; outline: none; }
@@ -417,6 +419,11 @@ const db = {
     const { data, error } = await sb.from('babies').update(patch).eq('id', baby.id).select().single();
     if (error) throw error; baby = data;
   },
+  async delNote(id) {
+    notes = notes.filter(x => x.id !== id);
+    if (MOCK) return;
+    const { error } = await sb.from('baby_notes').delete().eq('id', id); if (error) throw error;
+  },
   async addNote(text) {
     const row = { baby_id: baby.id, user_id: me.id, day, text };
     if (MOCK) { row.id = 'n' + Date.now(); row.created_at = new Date().toISOString(); notes.push(row); return; }
@@ -434,7 +441,7 @@ function subscribe() {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
     })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { upsertLocal(notes, p.new); render(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') notes = notes.filter(x => x.id !== p.old.id); else upsertLocal(notes, p.new); render(); })
     .subscribe();
 }
 
@@ -488,7 +495,7 @@ function render() {
     rows.insertAdjacentHTML('beforeend', `<div class="sum"><span>수유 <b>${feeds.length}회</b>${ml ? ` · <b>${ml}ml</b>` : ''}</span><span>소변 <b>${pee}</b> 대변 <b>${poo}</b></span>${slp ? `<span>잠 <b>${dur(0, slp)}</b></span>` : ''}</div>`);
   }
   const dn = notes.filter(n => n.day === day).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  $('notes').innerHTML = dn.length ? dn.map(n => `<div class="note ${n.user_id === me.id ? 'mine' : ''}"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span></div>`).join('')
+  $('notes').innerHTML = dn.length ? dn.map(n => `<div class="note ${n.user_id === me.id ? 'mine' : ''}"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span>${n.user_id === me.id ? `<button type="button" class="nx" data-id="${n.id}" aria-label="지우기">✕</button>` : ''}</div>`).join('')
     : `<div class="empty" style="padding:10px 0 4px">${day === today ? '오늘 서로에게 한 줄' : '남긴 말이 없어요'}</div>`;
   $('noteform').classList.toggle('hidden', day !== today);
 }
@@ -576,6 +583,11 @@ $('rows').addEventListener('click', e => { const r = e.target.closest('.row'); i
 $('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); day = dstr(d); render(); };
 $('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
 $('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
+$('notes').addEventListener('click', async e => {
+  const b = e.target.closest('.nx'); if (!b) return;
+  if (!confirm('이 한마디를 지울까요?')) return;
+  try { await db.delNote(b.dataset.id); render(); toast('지웠어요'); } catch (err) { alert('지우기 실패: ' + err.message); }
+});
 $('noteform').addEventListener('submit', async e => {
   e.preventDefault(); const t = $('note-in').value.trim(); if (!t) return;
   try { await db.addNote(t); $('note-in').value = ''; $('note-btn').disabled = true; render(); } catch (err) { alert('남기기 실패: ' + err.message); }
@@ -585,7 +597,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.6d · 09-27 15:30';
+const VER = 'v0.6e · 09-27 15:50';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
