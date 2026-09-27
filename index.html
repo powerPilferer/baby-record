@@ -58,6 +58,12 @@
   .card.form input:focus { box-shadow: 0 0 0 1.5px var(--fg3); }
   .card.form input[type=date] { font-variant-numeric: tabular-nums; -webkit-appearance: none; appearance: none; min-height: 46px; }
   .card.form input.code-in { font-family: ui-monospace, Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; font-size: 18px; }
+  .photo-pick { display: flex; align-items: center; gap: 12px; }
+  .photo-pick .pv { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--card2); }
+  .pbtn { padding: 8px 14px; border-radius: 999px; background: var(--card2); color: var(--fg); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .pbtn.ghost { background: none; color: var(--fg2); }
+  header .who { cursor: pointer; border-radius: 999px; }
+  header .who:active { opacity: .7; }
   .btn { display: block; width: 100%; padding: 15px; border-radius: 999px; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 16px; margin-top: 4px; }
   .btn.ghost { background: var(--card); color: var(--fg); }
   .btn:disabled { opacity: .4; }
@@ -255,6 +261,8 @@
       <h1>기특일기 시작하기</h1>
       <p>먼저 만든 사람이 배우자를 초대해요</p>
       <div class="card form">
+        <label>아기 사진 <small>안 넣으면 기본 캐릭터</small></label>
+        <div class="photo-pick"><img id="setup-photo" class="pv" src="img/아기-얼굴-4e.png" alt=""><label class="pbtn" for="setup-file">사진 고르기</label><input type="file" id="setup-file" accept="image/*" hidden><button type="button" class="pbtn ghost hidden" id="setup-photo-clear">기본 캐릭터로</button></div>
         <label for="baby-name">아기 이름 <small>태명도 좋아요</small></label>
         <input id="baby-name" maxlength="12" placeholder="예: 콩이" autocomplete="off">
         <label for="baby-birth">생년월일</label>
@@ -511,12 +519,13 @@ function renderClock(sorted, dayLogs, today) {
   if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 4, a), [x1, y1] = pt(R + 4, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);
   const dtxt = `D+${dd}`, dw = 20 + dtxt.length * 6.6;
-  g += `<image href="img/아기-전신-4e.png" x="${C - 19}" y="${C - 42}" width="38" height="54"/><rect x="${C - dw / 2}" y="${C + 16}" width="${dw}" height="20" rx="10" fill="var(--ok)" opacity=".16"/><text x="${C}" y="${C + 26.5}" text-anchor="middle" dominant-baseline="central" fill="var(--ok)" font-size="11" font-weight="500">${dtxt}</text>`;
+  g += baby.photo_url ? `<defs><clipPath id="ckp"><circle cx="${C}" cy="${C - 14}" r="26"/></clipPath></defs><image href="${esc(baby.photo_url)}" x="${C - 26}" y="${C - 40}" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#ckp)"/>` : `<image href="img/아기-전신-4e.png" x="${C - 19}" y="${C - 42}" width="38" height="54"/>`;
+  g += `<rect x="${C - dw / 2}" y="${C + 16}" width="${dw}" height="20" rx="10" fill="var(--ok)" opacity=".16"/><text x="${C}" y="${C + 26.5}" text-anchor="middle" dominant-baseline="central" fill="var(--ok)" font-size="11" font-weight="500">${dtxt}</text>`;
   return `<svg viewBox="0 0 340 340" style="max-width:340px;margin:0 auto">${g}</svg><div class="lg"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="temp">체온</span></div>`;
 }
 function render() {
   const today = dstr(new Date());
-  $('h-name').textContent = baby.name;
+  $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);   // 출생일 = D+0 (생후 n일)
   $('h-dday').textContent = `D+${dd}`;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
@@ -649,12 +658,38 @@ $('noteform').addEventListener('submit', async e => {
   e.preventDefault(); const t = $('note-in').value.trim(); if (!t) return;
   try { await db.addNote(t); $('note-in').value = ''; $('note-btn').disabled = true; render(); } catch (err) { alert('남기기 실패: ' + err.message); }
 });
+// ── 아기 사진: 정사각 512 JPEG로 줄여 Storage(baby-photos/<baby_id>/<ts>.jpg)에 올리고 공개 URL을 babies.photo_url에
+const BABY_FACE = 'img/아기-얼굴-4e.png';
+const babyFace = () => baby.photo_url || BABY_FACE;
+function squareJpeg(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => { const S = 512, m = Math.min(img.width, img.height); const c = document.createElement('canvas'); c.width = c.height = S;
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S); URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', .86); };
+    img.onerror = () => rej(new Error('이미지를 읽을 수 없어요')); img.src = url;
+  });
+}
+async function uploadPhoto(blob, babyId) {
+  if (MOCK) return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+  const path = `${babyId}/${Date.now()}.jpg`;
+  const { error } = await sb.storage.from('baby-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+  if (error) throw error;
+  return sb.storage.from('baby-photos').getPublicUrl(path).data.publicUrl;
+}
+let setupPhoto = null;   // 첫 설정에서 고른 사진(blob)
+$('setup-file').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { setupPhoto = await squareJpeg(f); $('setup-photo').src = URL.createObjectURL(setupPhoto); $('setup-photo-clear').classList.remove('hidden'); } catch (err) { toast(err.message); }
+});
+$('setup-photo-clear').onclick = () => { setupPhoto = null; $('setup-file').value = ''; $('setup-photo').src = BABY_FACE; $('setup-photo-clear').classList.add('hidden'); };
+document.querySelector('header .who').onclick = () => openBabySheet();
 function fillSettings() {
   $('set-baby').textContent = `${baby.name} · ${baby.birth_date.replace(/-/g, '.')} ›`; $('set-code').textContent = baby.invite_code;
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.7f · 09-27 17:10';
+const VER = 'v0.8 · 09-27 17:30';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
@@ -680,20 +715,32 @@ $('edit-nick').onclick = () => {
 };
 const penSvg = $('edit-nick').innerHTML;
 const nickHandler = $('edit-nick').onclick;
-$('edit-baby').onclick = () => {
+$('edit-baby').onclick = () => openBabySheet();
+function openBabySheet() {
+  let photoBlob = null, clearPhoto = false;
   $('sheet').innerHTML = `<h3>아기 정보</h3>
+    <div class="frow"><label>사진</label><span class="photo-pick"><img id="b-photo" class="pv" src="${esc(babyFace())}" alt=""><label class="pbtn" for="b-file">고르기</label><input type="file" id="b-file" accept="image/*" hidden><button type="button" class="pbtn ghost ${baby.photo_url ? '' : 'hidden'}" id="b-photo-clear">기본으로</button></span></div>
     <div class="frow"><label>이름</label><input id="b-name" maxlength="12" value="${esc(baby.name)}"></div>
     <div class="frow"><label>생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
     <div class="foot" style="margin:2px 0 0">생일을 바꾸면 D+n이 다시 계산돼요</div>
     <div class="acts"><button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">저장</button></div>`;
   $('sheet').dataset.kind = 'baby';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  $('b-file').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { photoBlob = await squareJpeg(f); clearPhoto = false; $('b-photo').src = URL.createObjectURL(photoBlob); $('b-photo-clear').classList.remove('hidden'); } catch (err) { toast(err.message); }
+  });
+  $('b-photo-clear').onclick = () => { photoBlob = null; clearPhoto = true; $('b-photo').src = BABY_FACE; $('b-photo-clear').classList.add('hidden'); };
   $('sh-save').onclick = async () => {
     const name = $('b-name').value.trim(), birth_date = $('b-birth').value;
     if (!name || !birth_date) { toast('이름과 생년월일을 적어주세요'); return; }
-    try { await db.updBaby({ name, birth_date }); closeSheet(); fillSettings(); render(); toast('고쳤어요'); } catch (e) { alert('저장 실패: ' + e.message); }
+    try {
+      const patch = { name, birth_date };
+      if (photoBlob) patch.photo_url = await uploadPhoto(photoBlob, baby.id); else if (clearPhoto) patch.photo_url = null;
+      await db.updBaby(patch); closeSheet(); fillSettings(); render(); toast('고쳤어요');
+    } catch (e) { alert('저장 실패: ' + e.message); }
   };
-};
+}
 $('close-settings').onclick = () => show('s-home');
 $('char-seg').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -745,7 +792,9 @@ $('baby-create').onclick = async () => {
   if (error) { $('baby-msg').textContent = '만들기 실패: ' + error.message; return; }
   const { error: e2 } = await sb.from('baby_members').insert({ baby_id: data.id, user_id: me.id, avatar_url: 'char:dad' });
   if (e2) { $('baby-msg').textContent = '등록 실패: ' + e2.message; return; }
-  baby = data; await enterHome();
+  baby = data;
+  if (setupPhoto) { try { const url = await uploadPhoto(setupPhoto, baby.id); await db.updBaby({ photo_url: url }); } catch (e) { toast('사진은 나중에 설정에서 다시 올려주세요'); } }
+  await enterHome();
 };
 $('join-go').onclick = async () => {
   const code = $('join-code').value.trim().toUpperCase(); if (code.length < 6) { $('join-msg').textContent = '6자리 코드를 적어주세요'; return; }
