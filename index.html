@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0b0d">
+<title>아기 기록표</title>
+<link rel="manifest" href="manifest.webmanifest">
+<script>(function(){var p=localStorage.getItem("bb-theme")||"system";document.documentElement.dataset.theme=(p==="light"||(p==="system"&&matchMedia("(prefers-color-scheme: light)").matches))?"light":"dark";})();</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #0b0b0d; --card: #151518; --card2: #1d1d22; --line: #222228;
+    --line2: #19191d; --fg: #f1f1f4; --fg2: #8f8f99; --fg3: #55555e;
+    --feed: #6f9ee0; --diaper: #cfae63; --sleep: #9d93d6; --temp: #d98079; --ok: #7fc39c;
+    --kakao: #fee500;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+  }
+  :root { --bg1: #101013; --dim: rgba(0,0,0,.6); color-scheme: dark; }
+  :root[data-theme="light"] {
+    --bg: #f4f4f6; --bg1: #ececef; --card: #ffffff; --card2: #eeeef1; --line: #e4e4e9; --line2: #ededf1;
+    --fg: #1b1b1f; --fg2: #6b6b75; --fg3: #9a9aa3;
+    --feed: #3b7bd4; --diaper: #b3841f; --sleep: #7565cf; --temp: #d4554d; --ok: #2f9e63;
+    --dim: rgba(0,0,0,.35); color-scheme: light;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; font-size: 15px; line-height: 1.35;
+    letter-spacing: -.015em; }
+  body { padding-top: var(--sat); min-height: 100dvh; overscroll-behavior-y: none; }
+  button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  .hidden { display: none !important; }
+  .screen { max-width: 480px; margin: 0 auto; padding: 0 16px calc(28px + var(--sab)); }
+
+  /* ── 로그인 / 설정 ── */
+  .center { min-height: calc(100dvh - var(--sat)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; }
+  .center h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -.03em; }
+  .center p { color: var(--fg2); margin: 0 0 24px; }
+  #kakao-login { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 280px;
+    padding: 15px; border-radius: 999px; background: var(--kakao); color: #191600; font-weight: 700; }
+  .foot { color: var(--fg3); font-size: 13px; margin-top: 16px; }
+  .field { width: 100%; max-width: 320px; text-align: left; }
+  .field label { display: block; font-size: 13px; color: var(--fg2); margin: 14px 0 6px; }
+  .uline { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 2px; font-size: 20px; outline: none; }
+  .uline:focus { border-color: var(--fg2); }
+  .btn { display: block; width: 100%; max-width: 320px; padding: 15px; border-radius: 999px; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 16px; }
+  .btn.ghost { background: var(--card); color: var(--fg); }
+  .btn:disabled { opacity: .4; }
+  .or { color: var(--fg3); font-size: 13px; margin: 18px 0 4px; }
+  .msg { color: var(--temp); font-size: 13px; min-height: 18px; }
+
+  /* ── 홈 ── */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 4px; }
+  header .name { font-size: 18px; font-weight: 600; letter-spacing: -.03em; }
+  header .dday { color: var(--fg3); font-size: 12px; margin-left: 7px; font-weight: 500; }
+  header .gear { color: var(--fg2); padding: 8px; margin-right: -8px; font-size: 20px; line-height: 1; }
+  .daynav { display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px; }
+  .daynav button { color: var(--fg2); width: 40px; height: 34px; border-radius: 10px; font-size: 20px; line-height: 1; }
+  .daynav button:active { background: var(--card); }
+  .daynav button:disabled { color: var(--line); }
+  .daynav .date { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .daynav .date small { color: var(--fg3); font-weight: 400; margin-left: 5px; font-size: 12px; }
+
+  /* 간편 상태 두 칸 */
+  .status { background: var(--bg1); border-radius: 14px; padding: 12px 14px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .status .chip { display: flex; align-items: center; gap: 10px; }
+  .status .chip b { display: inline-flex; align-items: center; font-size: 11px; color: var(--fg2); font-weight: 500; flex: none; padding: 4px 9px; border-radius: 7px; background: var(--card2); }
+  .status .chip span { font-size: 13px; font-weight: 500; color: var(--fg2); font-variant-numeric: tabular-nums; }
+  .status .chip span small { color: var(--fg3); font-weight: 400; font-size: 11px; margin-left: 5px; }
+  .status .chip.feed { --c: var(--feed); } .status .chip.sleep { --c: var(--sleep); }
+
+  /* 카테고리 버튼 2×2 */
+  .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+  .quick button { --c: var(--fg); height: 68px; border-radius: 16px; background: var(--card); display: flex; align-items: center; padding: 0 14px; gap: 12px; position: relative; overflow: hidden; }
+  .quick .ic { flex: none; width: 36px; height: 36px; border-radius: 11px; background: var(--card2); display: flex; align-items: center; justify-content: center; }
+  .quick .ic img { width: 26px; height: 26px; object-fit: contain; display: block; }
+  .quick .tx { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: left; }
+  .quick button:active { background: var(--card2); }
+  .quick .k { font-size: 14px; font-weight: 600; color: var(--fg); letter-spacing: -.02em; }
+  .quick .s { font-size: 11px; color: var(--fg3); }
+  .quick .feed { --c: var(--feed); } .quick .diaper { --c: var(--diaper); } .quick .sleep { --c: var(--sleep); } .quick .temp { --c: var(--temp); }
+  .quick .sleep.on { background: var(--card2); }
+  .quick .sleep.on .s { color: var(--fg2); }
+  .quick .sleep.on .ic { background: color-mix(in srgb, var(--sleep) 22%, var(--card2)); }
+
+  /* 오늘의 표 */
+  .sheet-title { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 8px; padding: 0 2px; }
+  .sheet-title h2 { font-size: 12px; color: var(--fg3); font-weight: 500; margin: 0; }
+  .sheet-title span { font-size: 11px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+  .rows { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 22px; }
+  .row { --c: var(--fg2); display: grid; grid-template-columns: 50px 22px 1fr auto; gap: 0 8px; align-items: stretch; padding: 0 14px 0 12px; width: 100%; text-align: left; }
+  .row:active { background: var(--card2); }
+  .row.feed { --c: var(--feed); } .row.diaper { --c: var(--diaper); } .row.sleep { --c: var(--sleep); } .row.temp { --c: var(--temp); }
+  .row .t { align-self: center; justify-self: start; padding: 3px 7px; border-radius: 7px; background: var(--card2); color: var(--fg2); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .row.feed .t, .row.diaper .t, .row.sleep .t { background: color-mix(in srgb, var(--c) 14%, var(--card)); color: var(--c); }
+  .row .rl { position: relative; }
+  .row .rl::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; margin-left: -.5px; background: var(--line); }
+  .row:first-child .rl::before { top: 50%; } .row.last .rl::before { bottom: 50%; }
+  .row .rl::after { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px var(--card); }
+  .row .d { padding: 21px 0; border-top: 1px solid var(--line2); min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+  .row:first-child .d, .row:first-child .w { border-top: 0; }
+  .row .d b { color: var(--fg); font-size: 13px; font-weight: 400; }
+  .row .d small { color: var(--fg3); display: block; font-size: 11px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .w { border-top: 1px solid var(--line2); display: flex; align-items: center; margin-left: -8px; padding-left: 12px; }
+  .av { width: 26px; height: 26px; border-radius: 50%; background: var(--card2); color: var(--fg2); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
+  .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .empty { padding: 26px 14px; text-align: center; color: var(--fg3); font-size: 14px; }
+  .sum { display: flex; gap: 14px; padding: 11px 16px; border-top: 1px solid var(--line); margin-top: 2px; font-size: 11px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+  .sum b { color: var(--fg2); font-weight: 500; }
+
+  /* 서로에게 한마디 */
+  .notes { background: var(--card); border-radius: 16px; padding: 14px 16px; }
+  .notes h2 { font-size: 12px; color: var(--fg3); font-weight: 500; margin: 0 0 8px; }
+  .note { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
+  .note .who { flex: none; padding-top: 1px; }
+  .note .tx { flex: 1; font-size: 14px; white-space: pre-wrap; }
+  .note .tm { font-size: 11px; color: var(--fg3); padding-top: 4px; font-variant-numeric: tabular-nums; }
+    .noteform { display: flex; gap: 8px; margin-top: 8px; }
+  .noteform input { flex: 1; min-width: 0; background: var(--bg); border: 0; border-radius: 999px; padding: 12px 16px; outline: none; }
+  .noteform button { padding: 0 18px; border-radius: 999px; background: var(--fg); color: var(--bg); font-weight: 700; }
+  .noteform button:disabled { opacity: .3; }
+
+  /* ── 바텀 시트 ── */
+  .dim { position: fixed; inset: 0; background: var(--dim); z-index: 40; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; background: var(--card); border-radius: 22px 22px 0 0;
+    padding: 14px 20px calc(20px + var(--sab)); max-width: 480px; margin: 0 auto; }
+  .sheet::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--card2); margin: 0 auto 14px; }
+  .sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
+  .sheet h3 { display: flex; align-items: center; gap: 8px; }
+  .sheet h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+  .sheet h3.feed { --c: var(--feed); } .sheet h3.diaper { --c: var(--diaper); } .sheet h3.sleep { --c: var(--sleep); } .sheet h3.temp { --c: var(--temp); }
+  .seg { display: flex; background: var(--bg); border-radius: 999px; padding: 4px; gap: 4px; margin-bottom: 14px; }
+  .seg button { flex: 1; padding: 10px 0; border-radius: 999px; font-weight: 600; color: var(--fg2); }
+  .seg button.on { background: var(--card2); color: var(--fg); }
+  .frow { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--line); }
+  .frow label { color: var(--fg2); font-size: 14px; }
+  .frow input { background: var(--bg); border: 0; border-radius: 10px; padding: 10px 12px; width: 140px; text-align: right; font-size: 18px; font-weight: 600; outline: none; font-variant-numeric: tabular-nums; }
+  .frow input[type=time] { width: 150px; }
+  .frow input.wide { width: 100%; text-align: left; font-size: 15px; font-weight: 400; }
+  .frow.col { flex-direction: column; align-items: stretch; gap: 8px; }
+  .ml { display: flex; gap: 6px; margin: 6px 0 4px; }
+  .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
+  .ml button.on { background: var(--card2); color: var(--fg); }
+  .acts { display: flex; gap: 8px; margin-top: 16px; }
+  .acts button { flex: 1; padding: 14px; border-radius: 999px; font-weight: 700; font-size: 16px; }
+  .acts .save { background: var(--fg); color: var(--bg); flex: 2; }
+  .acts .cancel { background: var(--bg); color: var(--fg2); }
+  .acts .del { background: none; color: var(--temp); flex: 0 0 auto; padding: 14px 12px; }
+
+  /* 설정 */
+  .menu { background: var(--card); border-radius: 16px; margin: 12px 0; padding: 0 16px; }
+  .menu > button, .menu > div { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 15px 0; border-top: 1px solid var(--line2); text-align: left; font-size: 14px; }
+  .menu > :first-child { border-top: 0; }
+  .menu .v { color: var(--fg2); font-size: 13px; }
+  .menu .lab { color: var(--fg); }
+  .seg.mini { margin: -6px 0; padding: 3px; gap: 2px; background: var(--card2); }
+  .seg.mini button { flex: none; white-space: nowrap; padding: 6px 12px; font-size: 13px; }
+  .seg.mini button.on { background: var(--card); }
+  :root[data-theme="light"] .seg.mini button.on { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  #s-settings header { padding: 16px 0 6px; }
+  #s-settings .name { font-size: 18px; font-weight: 600; letter-spacing: -.03em; }
+  #s-settings .gear { color: var(--fg2); padding: 8px; margin-right: -8px; font-size: 18px; }
+  .inl { display: inline-flex; align-items: center; gap: 8px; }
+  .pen { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--fg3); background: var(--card2); }
+  .pen svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .inl input { width: 120px; background: var(--card2); border: 0; border-radius: 8px; padding: 6px 10px; font-size: 14px; outline: none; text-align: right; color: var(--fg); }
+  .inl .ok { padding: 6px 12px; border-radius: 999px; background: var(--fg); color: var(--bg); font-size: 13px; font-weight: 600; }
+  .menu-title { font-size: 12px; color: var(--fg3); font-weight: 500; margin: 22px 2px 6px; }
+  .menu-title:first-of-type { margin-top: 10px; }
+  #logout { color: var(--temp); justify-content: center; }
+  .code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .12em; font-weight: 600; color: var(--fg); font-size: 14px; }
+  .toast { position: fixed; left: 50%; bottom: calc(28px + var(--sab)); transform: translateX(-50%); background: var(--fg); color: var(--bg);
+    padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<section id="s-login" class="screen hidden">
+  <div class="center">
+    <h1>아기 기록표</h1>
+    <p>부부가 같은 표를 보며 적어요</p>
+    <button type="button" id="kakao-login">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#191600" d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.8 5.2 4.6 6.6L5.5 21l4.4-2.9c.7.1 1.4.2 2.1.2 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg>
+      카카오로 시작하기
+    </button>
+    <div class="foot">이메일·연락처는 받지 않아요 — 카카오 닉네임만 써요.</div>
+  </div>
+</section>
+
+<!-- 첫 설정: 닉네임 → 아기 만들기 / 초대 코드 -->
+<section id="s-setup" class="screen hidden">
+  <div class="center">
+    <h1 id="setup-title">닉네임을 정해주세요</h1>
+    <div class="field" id="setup-nick">
+      <label>표에 표시될 이름</label>
+      <input class="uline" id="nick" maxlength="12" placeholder="예: 아빠, 엄마, 지은">
+      <p class="msg" id="nick-msg"></p>
+      <button type="button" class="btn" id="nick-save">이 이름으로 할게요</button>
+    </div>
+    <div class="field hidden" id="setup-baby">
+      <label>아기 이름 (태명도 좋아요)</label>
+      <input class="uline" id="baby-name" maxlength="12" placeholder="예: 콩이">
+      <label>생년월일</label>
+      <input class="uline" id="baby-birth" type="date">
+      <p class="msg" id="baby-msg"></p>
+      <button type="button" class="btn" id="baby-create">새 기록표 만들기</button>
+      <div class="or">— 배우자가 이미 만들었다면 —</div>
+      <label>초대 코드</label>
+      <input class="uline" id="join-code" maxlength="6" placeholder="6자리" style="text-transform:uppercase;letter-spacing:.15em">
+      <p class="msg" id="join-msg"></p>
+      <button type="button" class="btn ghost" id="join-go">코드로 합류하기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 홈: 오늘의 표 -->
+<section id="s-home" class="screen hidden">
+  <header>
+    <div><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
+    <button type="button" class="gear" id="open-settings" aria-label="설정">⋯</button>
+  </header>
+  <div class="daynav">
+    <button type="button" id="day-prev">‹</button>
+    <div class="date" id="h-date"></div>
+    <button type="button" id="day-next">›</button>
+  </div>
+  <div class="status">
+    <div class="chip feed"><b>마지막 수유</b><span id="st-feed">—</span></div>
+    <div class="chip sleep"><b>잠</b><span id="st-sleep">—</span></div>
+  </div>
+  <div class="quick">
+    <button type="button" class="feed" data-kind="feed"><span class="ic"><img src="img/ic-feed.png" alt=""></span><span class="tx"><span class="k">수유</span><span class="s">분유 · 모유 · 유축</span></span></button>
+    <button type="button" class="diaper" data-kind="diaper"><span class="ic"><img src="img/ic-diaper.png" alt=""></span><span class="tx"><span class="k">기저귀</span><span class="s">소변 · 대변</span></span></button>
+    <button type="button" class="sleep" data-kind="sleep" id="q-sleep"><span class="ic"><img src="img/ic-sleep.png" alt=""></span><span class="tx"><span class="k">잠듦</span><span class="s">지금부터</span></span></button>
+    <button type="button" class="temp" data-kind="temp"><span class="ic"><img src="img/ic-temp.png" alt=""></span><span class="tx"><span class="k">체온</span><span class="s">℃</span></span></button>
+  </div>
+  <div class="sheet-title"><h2>오늘의 표</h2><span id="h-count"></span></div>
+  <div class="rows" id="rows"></div>
+  <div class="notes">
+    <h2>서로에게 한마디</h2>
+    <div id="notes"></div>
+    <form class="noteform" id="noteform">
+      <input id="note-in" maxlength="300" placeholder="한 줄 남기기" autocomplete="off">
+      <button type="submit" id="note-btn" disabled>남기기</button>
+    </form>
+  </div>
+</section>
+
+<!-- 설정 -->
+<section id="s-settings" class="screen hidden">
+  <header><div class="name">설정</div><button type="button" class="gear" id="close-settings">✕</button></header>
+  <div class="menu-title">아기</div>
+  <div class="menu">
+    <button type="button" id="edit-baby"><span class="lab">이름 · 생일</span><span class="v" id="set-baby"></span></button>
+    <div><span class="lab">초대 코드</span><span class="code" id="set-code"></span></div>
+    <button type="button" id="copy-code"><span class="lab">초대 코드 보내기</span><span class="v">배우자에게 ›</span></button>
+  </div>
+  <div class="menu-title">나</div>
+  <div class="menu">
+    <div><span class="lab">내 이름</span><span class="v inl" id="nick-row"><span id="set-nick"></span><button type="button" class="pen" id="edit-nick" aria-label="이름 고치기"><svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M13.5 6.5l3 3"/></svg></button></span></div>
+    <div><span class="lab">함께 적는 사람</span><span class="v" id="set-members"></span></div>
+  </div>
+  <div class="menu-title">화면</div>
+  <div class="menu">
+    <div><span class="lab">테마</span><span class="seg mini" id="theme-seg"><button type="button" data-v="system">시스템</button><button type="button" data-v="dark">다크</button><button type="button" data-v="light">라이트</button></span></div>
+  </div>
+  <div class="menu" style="margin-top:24px">
+    <button type="button" id="logout"><span>로그아웃</span></button>
+  </div>
+</section>
+
+<!-- 입력 바텀 시트 -->
+<div id="dim" class="dim hidden"></div>
+<div id="sheet" class="sheet hidden"></div>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ═══ 아기 기록표 v0.3 (v0.1 구조 + 톤 정리) — 오늘 표 한 장 + 두 폰 공유 + 서로에게 한마디 ═══
+if (/KAKAOTALK/i.test(navigator.userAgent) && !location.search.includes('mock')) {
+  location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
+}
+const MOCK = new URLSearchParams(location.search).has('mock');
+const SB_URL = 'https://wbtgaydqpupxgmwmxbdv.supabase.co';
+const SB_KEY = 'sb_publishable_kZD_r_s3lca-tdu8NqABnA_WVgHWKBo';
+const SITE = location.origin + location.pathname;
+const sb = MOCK ? null : window.supabase.createClient(SB_URL, SB_KEY,
+  { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
+
+const $ = id => document.getElementById(id);
+// ── 테마: system(기기 따라감) / dark / light — localStorage 'bb-theme'
+const mq = matchMedia('(prefers-color-scheme: light)');
+function applyTheme() {
+  const pref = localStorage.getItem('bb-theme') || 'system';
+  const light = pref === 'light' || (pref === 'system' && mq.matches);
+  document.documentElement.dataset.theme = light ? 'light' : 'dark';
+  document.querySelector('meta[name=theme-color]').content = light ? '#f4f4f6' : '#0b0b0d';
+  const seg = document.getElementById('theme-seg');
+  if (seg) for (const b of seg.children) b.classList.toggle('on', b.dataset.v === pref);
+}
+mq.addEventListener('change', applyTheme);
+applyTheme();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+// DB timestamptz 는 UTC 로 온다 — 반드시 현지 날짜로 환산 (점빵이 09-29 교훈)
+const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localDay = ts => dstr(new Date(ts));
+const hhmm = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const fmtDate = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() + 1}월 ${d.getDate()}일 <small>${WD[d.getDay()]}</small>`; };
+const ago = ts => { const m = Math.max(0, Math.round((Date.now() - new Date(ts)) / 60000)); return m < 60 ? `${m}분 전` : `${Math.floor(m / 60)}시간 ${m % 60}분 전`; };
+const dur = (a, b) => { const m = Math.max(0, Math.round((new Date(b || Date.now()) - new Date(a)) / 60000)); return m < 60 ? `${m}분` : `${Math.floor(m / 60)}시간 ${m % 60}분`; };
+const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800); };
+const show = id => { for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id); window.scrollTo(0, 0); };
+
+// ── 상태
+let me = null;          // { id, nickname }
+let baby = null;        // { id, name, birth_date, invite_code }
+let nickById = {};      // user_id → nickname
+let logs = [];          // 현재 아기 전체 (최근 30일)
+let notes = [];
+let day = dstr(new Date());
+let channel = null;
+
+// ── 데이터 계층 (mock 은 메모리)
+const db = {
+  async loadAll() {
+    if (MOCK) return;
+    const since = new Date(Date.now() - 30 * 86400000).toISOString();
+    const [l, n, m] = await Promise.all([
+      sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at'),
+      sb.from('baby_notes').select('*').eq('baby_id', baby.id).order('created_at'),
+      sb.from('baby_members').select('user_id, avatar_url').eq('baby_id', baby.id)
+    ]);
+    logs = l.data || []; notes = n.data || [];
+    const ids = (m.data || []).map(x => x.user_id);
+    avatarById = Object.fromEntries((m.data || []).filter(x => x.avatar_url).map(x => [x.user_id, x.avatar_url]));
+    const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
+    nickById = Object.fromEntries((ps || []).map(p => [p.id, p.nickname]));
+  },
+  async addLog(row) {
+    if (MOCK) { row.id = 'm' + Date.now(); logs.push(row); return row; }
+    const { data, error } = await sb.from('baby_logs').insert(row).select().single();
+    if (error) throw error; upsertLocal(logs, data); return data;
+  },
+  async updLog(id, patch) {
+    if (MOCK) { Object.assign(logs.find(x => x.id === id), patch); return; }
+    const { data, error } = await sb.from('baby_logs').update(patch).eq('id', id).select().single();
+    if (error) throw error; upsertLocal(logs, data);
+  },
+  async delLog(id) {
+    logs = logs.filter(x => x.id !== id);
+    if (MOCK) return;
+    const { error } = await sb.from('baby_logs').delete().eq('id', id); if (error) throw error;
+  },
+  async updBaby(patch) {
+    if (MOCK) { Object.assign(baby, patch); return; }
+    const { data, error } = await sb.from('babies').update(patch).eq('id', baby.id).select().single();
+    if (error) throw error; baby = data;
+  },
+  async addNote(text) {
+    const row = { baby_id: baby.id, user_id: me.id, day, text };
+    if (MOCK) { row.id = 'n' + Date.now(); row.created_at = new Date().toISOString(); notes.push(row); return; }
+    const { data, error } = await sb.from('baby_notes').insert(row).select().single();
+    if (error) throw error; upsertLocal(notes, data);
+  }
+};
+function upsertLocal(arr, row) { const i = arr.findIndex(x => x.id === row.id); if (i < 0) arr.push(row); else arr[i] = row; }
+
+// ── 실시간: 다른 폰이 적으면 바로 반영
+function subscribe() {
+  if (MOCK || channel) return;
+  channel = sb.channel('baby-' + baby.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_logs', filter: 'baby_id=eq.' + baby.id }, p => {
+      if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
+      render();
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { upsertLocal(notes, p.new); render(); })
+    .subscribe();
+}
+
+// ── 렌더
+const KIND = { feed: '수유', diaper: '기저귀', sleep: '잠', temp: '체온' };
+const FEED = { formula: '분유', breast: '모유', pumped: '유축' };
+let avatarById = {};   // user_id → 이미지 URL (profiles.avatar_url, 없으면 첫 글자)
+const DEFAULT_AV = ['img/아빠.png', 'img/엄마.png'];   // 사진 없을 때 기본 캐릭터: 아기를 만든 사람 → 첫 번째, 합류한 사람 → 두 번째
+const avatarSrc = id => avatarById[id] || (id === baby.created_by ? DEFAULT_AV[0] : DEFAULT_AV[1]);
+const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
+function detailOf(l) {
+  const d = l.detail || {};
+  if (l.kind === 'feed') return `${FEED[d.type] || '수유'} ${d.type === 'breast' ? (d.min ? d.min + '분' : '') : (d.ml ? d.ml + 'ml' : '')}`.trim();
+  if (l.kind === 'diaper') return [d.pee && '소변', d.poo && '대변'].filter(Boolean).join(' + ') || '기저귀';
+  if (l.kind === 'sleep') return l.ended_at ? `→ ${hhmm(l.ended_at)} 깸 · ${dur(l.at, l.ended_at)}` : `자는 중 · ${dur(l.at)}`;
+  if (l.kind === 'temp') return `${d.c ?? '—'}℃`;
+  return '';
+}
+function render() {
+  const today = dstr(new Date());
+  $('h-name').textContent = baby.name;
+  const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);   // 출생일 = D+0 (생후 n일)
+  $('h-dday').textContent = `D+${dd}`;
+  $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
+  $('day-next').disabled = day >= today;
+
+  const sorted = [...logs].sort((a, b) => new Date(a.at) - new Date(b.at));
+  const dayLogs = sorted.filter(l => localDay(l.at) === day);
+  const lastFeed = [...sorted].reverse().find(l => l.kind === 'feed');
+  $('st-feed').innerHTML = lastFeed ? `${hhmm(lastFeed.at)}<small>${ago(lastFeed.at)}</small>` : '아직 없음';
+  const open = sorted.find(l => l.kind === 'sleep' && !l.ended_at);
+  $('st-sleep').innerHTML = open ? `자는 중<small>${dur(open.at)}</small>` : (() => { const s = [...sorted].reverse().find(l => l.kind === 'sleep' && l.ended_at); return s ? `${hhmm(s.ended_at)} 깸<small>${ago(s.ended_at)}</small>` : '아직 없음'; })();
+  const qs = $('q-sleep'); qs.classList.toggle('on', !!open);
+  qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 잤어요' : '지금부터';
+  const qi = qs.querySelector('.ic img'); const want = open ? 'img/ic-wake.png' : 'img/ic-sleep.png';   // 자는 중이면 해, 아니면 달
+  if (!qi.src.endsWith(want)) { qi.onerror = () => { qi.onerror = null; qi.src = 'img/ic-sleep.png'; }; qi.src = want; }
+
+  $('h-count').textContent = dayLogs.length ? `${dayLogs.length}건` : '';
+  const rows = $('rows');
+  if (!dayLogs.length) rows.innerHTML = `<div class="empty">${day === today ? '위 버튼으로 첫 기록을 남겨보세요' : '기록이 없어요'}</div>`;
+  else {
+    const title = l => (l.kind === 'sleep' || l.kind === 'temp') ? `${KIND[l.kind]} ${detailOf(l)}` : detailOf(l);
+    rows.innerHTML = dayLogs.map((l, i) => `<button type="button" class="row ${l.kind} ${i === dayLogs.length - 1 ? 'last' : ''}" data-id="${l.id}">
+      <span class="t">${hhmm(l.at)}</span><span class="rl"></span>
+      <span class="d"><b>${esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
+      <span class="w">${avatar(l.user_id)}</span></button>`).join('');
+    const feeds = dayLogs.filter(l => l.kind === 'feed'); const ml = feeds.reduce((s, l) => s + (+(l.detail || {}).ml || 0), 0);
+    const dp = dayLogs.filter(l => l.kind === 'diaper'); const pee = dp.filter(l => l.detail?.pee).length, poo = dp.filter(l => l.detail?.poo).length;
+    const slp = dayLogs.filter(l => l.kind === 'sleep' && l.ended_at).reduce((s, l) => s + (new Date(l.ended_at) - new Date(l.at)), 0);
+    rows.insertAdjacentHTML('beforeend', `<div class="sum"><span>수유 <b>${feeds.length}회</b>${ml ? ` · <b>${ml}ml</b>` : ''}</span><span>소변 <b>${pee}</b> 대변 <b>${poo}</b></span>${slp ? `<span>잠 <b>${dur(0, slp)}</b></span>` : ''}</div>`);
+  }
+  const dn = notes.filter(n => n.day === day).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  $('notes').innerHTML = dn.length ? dn.map(n => `<div class="note ${n.user_id === me.id ? 'mine' : ''}"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span></div>`).join('')
+    : `<div class="empty" style="padding:10px 0 4px">${day === today ? '오늘 서로에게 한 줄' : '남긴 말이 없어요'}</div>`;
+  $('noteform').classList.toggle('hidden', day !== today);
+}
+setInterval(() => { if (!$('s-home').classList.contains('hidden')) render(); }, 30000);
+
+// ── 바텀 시트 (새로 적기 / 고치기)
+let editing = null;
+function nowTime() { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function openSheet(kind, log) {
+  editing = log || null;
+  const d = (log && log.detail) || {};
+  const t = log ? hhmm(log.at) : nowTime();
+  let body = '';
+  if (kind === 'feed') {
+    const type = d.type || localStorage.getItem('bb-feedtype') || 'formula';
+    const lastMl = +(localStorage.getItem('bb-ml') || 60);
+    body = `<div class="seg" id="feed-type">${Object.entries(FEED).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === type ? 'on' : ''}">${v}</button>`).join('')}</div>
+      <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml">${[10, 20, 30, 40, 60, 80].map(v => `<button type="button" data-v="${v}" class="${(d.ml || lastMl) === v ? 'on' : ''}">${v}</button>`).join('')}</div>
+      <div class="frow"><label>양 (ml)</label><input type="number" inputmode="numeric" id="f-ml" value="${d.ml || lastMl}"></div></div>
+      <div id="feed-min" class="${type === 'breast' ? '' : 'hidden'}"><div class="frow"><label>시간 (분)</label><input type="number" inputmode="numeric" id="f-min" value="${d.min || 15}"></div></div>`;
+  } else if (kind === 'diaper') {
+    body = `<div class="seg" id="dp-type">
+      <button type="button" data-v="pee" class="${d.pee && !d.poo ? 'on' : ''}">소변</button>
+      <button type="button" data-v="poo" class="${d.poo && !d.pee ? 'on' : ''}">대변</button>
+      <button type="button" data-v="both" class="${d.pee && d.poo ? 'on' : (!log ? 'on' : '')}">둘 다</button></div>`;
+  } else if (kind === 'sleep') {
+    body = `<div class="frow"><label>깬 시각</label><input type="time" id="f-end" value="${log && log.ended_at ? hhmm(log.ended_at) : ''}"></div>
+      <div class="foot" style="margin:0 0 4px">비워두면 "자는 중"으로 남아요</div>`;
+  } else if (kind === 'temp') {
+    body = `<div class="frow"><label>체온 (℃)</label><input type="number" inputmode="decimal" step="0.1" id="f-c" value="${d.c || 36.8}"></div>`;
+  }
+  $('sheet').innerHTML = `<h3 class="${kind}">${KIND[kind]} ${log ? '고치기' : ''}</h3>${body}
+    <div class="frow"><label>${kind === 'sleep' ? '잠든 시각' : '시각'}</label><input type="time" id="f-at" value="${t}"></div>
+    <div class="frow col"><label>메모</label><input class="wide" id="f-note" maxlength="60" placeholder="트림 안 시킴, 조금 보챔…" value="${esc(log ? log.note : '')}"></div>
+    <div class="acts">${log ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">${log ? '저장' : '기록'}</button></div>`;
+  $('sheet').dataset.kind = kind;
+  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden');
+  // 세그먼트·ml 칩
+  for (const seg of $('sheet').querySelectorAll('.seg')) seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    for (const x of seg.children) x.classList.toggle('on', x === b);
+    if (seg.id === 'feed-type') { $('feed-ml').classList.toggle('hidden', b.dataset.v === 'breast'); $('feed-min').classList.toggle('hidden', b.dataset.v !== 'breast'); }
+  });
+  $('sheet').querySelector('.ml')?.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('f-ml').value = b.dataset.v; for (const x of b.parentNode.children) x.classList.toggle('on', x === b); });
+  $('f-ml')?.addEventListener('input', () => { for (const x of $('sheet').querySelectorAll('.ml button')) x.classList.toggle('on', +x.dataset.v === +$('f-ml').value); });
+  $('sh-cancel').onclick = closeSheet; $('dim').onclick = closeSheet;
+  $('sh-save').onclick = saveSheet;
+  if ($('sh-del')) $('sh-del').onclick = async () => { if (!confirm('이 기록을 지울까요?')) return; await db.delLog(editing.id); closeSheet(); render(); toast('지웠어요'); };
+}
+function closeSheet() { $('dim').classList.add('hidden'); $('sheet').classList.add('hidden'); editing = null; }
+function atFromTime(hm, baseDay) { const [h, m] = hm.split(':').map(Number); const d = new Date(baseDay + 'T00:00'); d.setHours(h, m, 0, 0); return d; }
+async function saveSheet() {
+  const kind = $('sheet').dataset.kind;
+  const baseDay = editing ? localDay(editing.at) : day;
+  const at = atFromTime($('f-at').value || nowTime(), baseDay);
+  if (!editing && at > Date.now() + 60000) at.setDate(at.getDate() - 1);   // 새벽에 "어제 23:50" 을 적는 경우
+  const detail = {}; let ended_at = editing ? editing.ended_at : null;
+  if (kind === 'feed') {
+    detail.type = $('feed-type').querySelector('.on').dataset.v;
+    if (detail.type === 'breast') detail.min = +$('f-min').value || 0; else { detail.ml = +$('f-ml').value || 0; localStorage.setItem('bb-ml', detail.ml); }
+    localStorage.setItem('bb-feedtype', detail.type);
+  } else if (kind === 'diaper') { const v = $('dp-type').querySelector('.on').dataset.v; detail.pee = v !== 'poo'; detail.poo = v !== 'pee'; }
+  else if (kind === 'temp') detail.c = +$('f-c').value || null;
+  else if (kind === 'sleep') { const e = $('f-end').value; if (e) { const ed = atFromTime(e, baseDay); if (ed < at) ed.setDate(ed.getDate() + 1); ended_at = ed.toISOString(); } else ended_at = null; }
+  const row = { baby_id: baby.id, user_id: me.id, kind, at: at.toISOString(), ended_at, detail, note: $('f-note').value.trim() };
+  try {
+    if (editing) await db.updLog(editing.id, row); else await db.addLog(row);
+    closeSheet(); render(); toast(editing ? '고쳤어요' : `${KIND[kind]} 기록했어요`);
+  } catch (e) { alert('저장 실패: ' + e.message); }
+}
+
+// ── 홈 이벤트
+document.querySelector('.quick').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const kind = b.dataset.kind;
+  if (kind === 'sleep') {
+    const open = logs.find(l => l.kind === 'sleep' && !l.ended_at);
+    if (open) { await db.updLog(open.id, { ended_at: new Date().toISOString() }); render(); toast(`${dur(open.at)} 잤어요`); return; }
+    await db.addLog({ baby_id: baby.id, user_id: me.id, kind: 'sleep', at: new Date().toISOString(), ended_at: null, detail: {}, note: '' });
+    render(); toast('잠든 시각 기록했어요'); return;
+  }
+  openSheet(kind);
+});
+$('rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = logs.find(x => x.id === r.dataset.id); if (l) openSheet(l.kind, l); });
+$('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); day = dstr(d); render(); };
+$('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
+$('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
+$('noteform').addEventListener('submit', async e => {
+  e.preventDefault(); const t = $('note-in').value.trim(); if (!t) return;
+  try { await db.addNote(t); $('note-in').value = ''; $('note-btn').disabled = true; render(); } catch (err) { alert('남기기 실패: ' + err.message); }
+});
+function fillSettings() {
+  $('set-baby').textContent = `${baby.name} · ${baby.birth_date.replace(/-/g, '.')} ›`; $('set-code').textContent = baby.invite_code;
+  $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
+}
+$('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
+$('edit-nick').onclick = () => {
+  const row = $('nick-row');
+  row.innerHTML = `<input id="nick-in" maxlength="12" value="${esc(me.nickname)}"><button type="button" class="ok" id="nick-ok">확인</button>`;
+  const inp = $('nick-in'); inp.focus(); inp.select();
+  const done = async () => {
+    const n = inp.value.trim().slice(0, 12);
+    if (n && n !== me.nickname) {
+      if (!MOCK) {
+        const { data: taken } = await sb.from('profiles').select('id').eq('nickname', n).neq('id', me.id);
+        if (taken && taken.length) { toast('이미 쓰고 있는 이름이에요'); inp.focus(); return; }
+        const { error } = await sb.from('profiles').upsert({ id: me.id, nickname: n });
+        if (error) { toast('저장 실패: ' + error.message); return; }
+      }
+      me.nickname = n; nickById[me.id] = n; toast('이름을 바꿨어요');
+    }
+    row.innerHTML = `<span id="set-nick"></span><button type="button" class="pen" id="edit-nick" aria-label="이름 고치기">${penSvg}</button>`;
+    $('edit-nick').onclick = nickHandler; fillSettings(); render();
+  };
+  $('nick-ok').onclick = done;
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); done(); } if (e.key === 'Escape') { inp.value = me.nickname; done(); } });
+};
+const penSvg = $('edit-nick').innerHTML;
+const nickHandler = $('edit-nick').onclick;
+$('edit-baby').onclick = () => {
+  $('sheet').innerHTML = `<h3>아기 정보</h3>
+    <div class="frow"><label>이름</label><input id="b-name" maxlength="12" value="${esc(baby.name)}"></div>
+    <div class="frow"><label>생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
+    <div class="foot" style="margin:2px 0 0">생일을 바꾸면 D+n이 다시 계산돼요</div>
+    <div class="acts"><button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">저장</button></div>`;
+  $('sheet').dataset.kind = 'baby';
+  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  $('sh-save').onclick = async () => {
+    const name = $('b-name').value.trim(), birth_date = $('b-birth').value;
+    if (!name || !birth_date) { toast('이름과 생년월일을 적어주세요'); return; }
+    try { await db.updBaby({ name, birth_date }); closeSheet(); fillSettings(); render(); toast('고쳤어요'); } catch (e) { alert('저장 실패: ' + e.message); }
+  };
+};
+$('close-settings').onclick = () => show('s-home');
+$('theme-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; localStorage.setItem('bb-theme', b.dataset.v); applyTheme(); });
+$('copy-code').onclick = async () => {
+  const text = `아기 기록표 초대 코드: ${baby.invite_code}\n${SITE}`;
+  try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast('복사했어요'); } } catch (_) {}
+};
+$('logout').onclick = async () => { if (MOCK) return; await sb.auth.signOut(); location.reload(); };
+
+// ── 로그인·설정 흐름
+$('kakao-login').onclick = async () => {
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'kakao', options: { redirectTo: SITE } });
+  if (error) alert('카카오 로그인 시작 실패: ' + error.message);
+};
+$('nick-save').onclick = async () => {
+  const n = $('nick').value.trim().slice(0, 12); if (!n) return;
+  const { data: taken } = await sb.from('profiles').select('id').eq('nickname', n).neq('id', me.id);
+  if (taken && taken.length) { $('nick-msg').textContent = '이미 쓰고 있는 이름이에요'; return; }
+  const { error } = await sb.from('profiles').upsert({ id: me.id, nickname: n });
+  if (error) { $('nick-msg').textContent = '저장 실패: ' + error.message; return; }
+  me.nickname = n; stepBaby();
+};
+function stepBaby() { $('setup-title').textContent = '아기 기록표'; $('setup-nick').classList.add('hidden'); $('setup-baby').classList.remove('hidden'); }
+const genCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('');
+$('baby-create').onclick = async () => {
+  const name = $('baby-name').value.trim(), birth = $('baby-birth').value;
+  if (!name || !birth) { $('baby-msg').textContent = '이름과 생년월일을 적어주세요'; return; }
+  const { data, error } = await sb.from('babies').insert({ name, birth_date: birth, invite_code: genCode(), created_by: me.id }).select().single();
+  if (error) { $('baby-msg').textContent = '만들기 실패: ' + error.message; return; }
+  const { error: e2 } = await sb.from('baby_members').insert({ baby_id: data.id, user_id: me.id, avatar_url: me.avatar || null });
+  if (e2) { $('baby-msg').textContent = '등록 실패: ' + e2.message; return; }
+  baby = data; await enterHome();
+};
+$('join-go').onclick = async () => {
+  const code = $('join-code').value.trim().toUpperCase(); if (code.length < 6) { $('join-msg').textContent = '6자리 코드를 적어주세요'; return; }
+  const { data, error } = await sb.rpc('join_baby', { code, avatar: me.avatar || null });
+  if (error) { $('join-msg').textContent = error.message.replace(/^.*?: /, ''); return; }
+  const { data: b } = await sb.from('babies').select('*').eq('id', data).single();
+  baby = b; await enterHome();
+};
+async function enterHome() { await db.loadAll(); subscribe(); day = dstr(new Date()); show('s-home'); render(); }
+
+async function boot() {
+  if (MOCK) { mock(); show('s-home'); render(); return; }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { show('s-login'); return; }
+  const u = session.user;
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', u.id).maybeSingle();
+  me = { id: u.id, nickname: profile?.nickname || '', avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || '' };
+  const { data: mem } = await sb.from('baby_members').select('baby_id').eq('user_id', u.id).limit(1);
+  if (mem && mem.length) { const { data: b } = await sb.from('babies').select('*').eq('id', mem[0].baby_id).single(); baby = b; await enterHome(); return; }
+  show('s-setup');
+  if (me.nickname) stepBaby(); else $('nick').value = u.user_metadata?.name || u.user_metadata?.full_name || '';
+}
+if (!MOCK) sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_IN' && !me) boot(); });
+if (!MOCK && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// ── 로컬 확인용 가짜 데이터 (?mock=1)
+function mock() {
+  me = { id: 'u-dad', nickname: '아빠' }; nickById = { 'u-dad': '아빠', 'u-mom': '엄마' };
+  avatarById = {};   // 사진 없음 → 기본 캐릭터(미지 2R 채택본)
+  baby = { id: 'b1', name: '콩이', birth_date: '2026-09-15', invite_code: 'K7M2PQ', created_by: 'u-dad' };
+  const T = (h, m, dayOff = 0) => { const d = new Date(); d.setDate(d.getDate() + dayOff); d.setHours(h, m, 0, 0); return d.toISOString(); };
+  logs = [
+    { id: 'a1', kind: 'feed', at: T(0, 40), detail: { type: 'formula', ml: 60 }, note: '', user_id: 'u-dad' },
+    { id: 'a2', kind: 'diaper', at: T(0, 55), detail: { pee: true, poo: false }, note: '', user_id: 'u-dad' },
+    { id: 'a3', kind: 'sleep', at: T(1, 10), ended_at: T(3, 30), detail: {}, note: '', user_id: 'u-dad' },
+    { id: 'a4', kind: 'feed', at: T(3, 40), detail: { type: 'breast', min: 20 }, note: '트림 안 시킴', user_id: 'u-mom' },
+    { id: 'a5', kind: 'diaper', at: T(3, 55), detail: { pee: true, poo: true }, note: '', user_id: 'u-mom' },
+    { id: 'a6', kind: 'sleep', at: T(4, 10), ended_at: T(6, 50), detail: {}, note: '', user_id: 'u-mom' },
+    { id: 'a7', kind: 'feed', at: T(7, 0), detail: { type: 'formula', ml: 80 }, note: '', user_id: 'u-mom' },
+    { id: 'a8', kind: 'temp', at: T(7, 20), detail: { c: 36.9 }, note: '', user_id: 'u-mom' },
+    { id: 'a9', kind: 'diaper', at: T(9, 15), detail: { pee: true, poo: false }, note: '', user_id: 'u-dad' },
+    { id: 'a10', kind: 'feed', at: T(10, 10), detail: { type: 'formula', ml: 80 }, note: '조금 남김', user_id: 'u-dad' },
+    { id: 'a11', kind: 'sleep', at: T(10, 40), ended_at: null, detail: {}, note: '', user_id: 'u-dad' },
+  ].filter(l => new Date(l.at) <= Date.now() || true);
+  notes = [
+    { id: 'n1', day: dstr(new Date()), user_id: 'u-mom', text: '새벽 두 번 봐줘서 고마워. 오후엔 내가 볼게', created_at: T(7, 25) },
+  ];
+}
+boot();
+</script>
+</body>
+</html>
