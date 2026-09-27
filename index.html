@@ -74,6 +74,9 @@
   /* ── 홈 ── */
   header { display: flex; align-items: center; justify-content: space-between; height: 46px; margin: 12px 0 10px; padding: 0; }
   header .who { display: flex; align-items: center; }
+  #s-home header .who { height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  :root[data-theme="light"] #s-home header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  #s-home header .bf { width: 34px; height: 34px; margin-right: 9px; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
   header .name { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
   header .dday { color: var(--ok); font-size: 13px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); font-variant-numeric: tabular-nums; }
@@ -973,7 +976,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9l · 09-28 01:45';
+const VER = 'v0.9m · 09-28 01:55';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
