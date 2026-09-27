@@ -163,13 +163,13 @@
   .noteform button:disabled { opacity: .3; }
 
   /* ── 하단 탭 ── */
-  .tabbed { padding-bottom: calc(90px + var(--sab)) !important; }
-  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: center; gap: 4px; padding: 8px 16px calc(10px + var(--sab));
+  .tabbed { padding-bottom: calc(112px + var(--sab)) !important; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: center; gap: 4px; padding: 10px 16px calc(12px + var(--sab));
     background: color-mix(in srgb, var(--bg) 86%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border-top: 1px solid var(--line2); }
-  .tabs button { flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 4px; border-radius: 12px; color: var(--fg3); font-size: 11px; font-weight: 500; }
+  .tabs button { flex: 1; max-width: 130px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 0 5px; border-radius: 12px; color: var(--fg3); font-size: 12px; font-weight: 500; }
   .tabs button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .tabs button.on { color: var(--fg); }
-  .tabs button img { width: 25px; height: 25px; object-fit: contain; opacity: .55; transition: opacity .15s; }
+  .tabs button img { width: 30px; height: 30px; object-fit: contain; opacity: .55; transition: opacity .15s; }
   .tabs button img.tab-face { border-radius: 50%; }
   .tabs button.on img { opacity: 1; }
   /* ── 일지 달력 ── */
@@ -335,7 +335,7 @@
 </section>
 
 <!-- 홈: 오늘의 표 -->
-<section id="s-home" class="screen hidden">
+<section id="s-home" class="screen tabbed hidden">
   <header>
     <div class="who"><img class="bf" src="img/아기-얼굴-4e.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
     <button type="button" class="gear" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
@@ -736,7 +736,7 @@ function renderClock(sorted, dayLogs, today) {
 }
 function render() {
   const today = dstr(new Date());
-  $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace(); document.querySelector('.tab-face').src = babyFace();
+  $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
   $('h-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
@@ -940,7 +940,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9a · 09-27 23:40';
+const VER = 'v0.9b · 09-28 00:05';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
