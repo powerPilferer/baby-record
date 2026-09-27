@@ -170,7 +170,7 @@
   .back-fab { right: auto; left: 16px; }
   .back-fab svg.chev { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   #s-settings { padding-top: calc(var(--sat) + 4px); }
-  #s-settings header.sub { display: flex; justify-content: center; padding: 20px 0 6px; margin: 0; }
+  #s-settings header.sub { display: flex; justify-content: center; align-items: center; height: 46px; margin: 8px 0 10px; padding: 0; }
   .gear-fab:active { background: var(--card2); }
   :root[data-theme="light"] .gear-fab { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   .tabbed header { padding-right: 56px; }
@@ -263,8 +263,6 @@
   .pick button.on img { opacity: 1; box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--fg); }
   .seg.mini button img { width: 20px; height: 20px; border-radius: 50%; margin-right: 6px; vertical-align: -5px; }
   :root[data-theme="light"] .seg.mini button.on { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-  #s-settings header.sub { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 12px 0 6px; margin: 0 -8px; }
-  #s-settings header.sub .name { text-align: center; }
   .back { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg); }
   .back svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .back:active { background: var(--card); }
@@ -976,7 +974,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9j · 09-28 01:30';
+const VER = 'v0.9k · 09-28 01:35';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
