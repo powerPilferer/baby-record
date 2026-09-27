@@ -41,9 +41,11 @@
   #s-login .onb { text-align: center; padding-top: 18vh; }
   .onb h1 { font-size: 23px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
   .onb > p, .onb > div > p:not(.msg) { color: var(--fg2); font-size: 14px; margin: 0 0 22px; }
-  .family { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 22px; }
-  .family img { width: 56px; height: 56px; border-radius: 50%; }
-  .family img.baby { width: 96px; height: 96px; }
+  .family { display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+  .family img { width: 76px; height: 76px; border-radius: 50%; box-shadow: 0 0 0 3px var(--bg); position: relative; }
+  .family img:nth-child(1) { margin-right: -18px; z-index: 1; }
+  .family img.baby { z-index: 3; }
+  .family img:nth-child(3) { margin-left: -18px; z-index: 2; }
   #kakao-login { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
     padding: 15px; border-radius: 999px; background: var(--kakao); color: #191600; font-weight: 700; font-size: 16px; }
   .foot { color: var(--fg3); font-size: 13px; margin-top: 14px; }
