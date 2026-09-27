@@ -466,13 +466,21 @@ const sb = MOCK ? null : window.supabase.createClient(SB_URL, SB_KEY,
 
 const $ = id => document.getElementById(id);
 // iOS 사파리 두 번 탭 확대 막기: 350ms 안의 두 번째 탭은 확대 대신 그 자리의 버튼 클릭으로 처리 (touch-action만으론 홈 화면 앱에서 새는 경우가 있음)
-let _lastTap = 0;
-document.addEventListener('touchstart', e => { if (Date.now() - _lastTap < 350 && e.touches.length === 1) e.preventDefault(); }, { passive: false });
+let _lastTap = 0, _ts = null;   // 진짜 '탭'(짧고 안 움직인 터치)만 센다 — 스크롤 손 뗀 직후의 터치를 두 번째 탭으로 오해해 먹통이 되던 버그(09-28)
+document.addEventListener('touchstart', e => {
+  if (e.touches.length !== 1) { _ts = null; return; }
+  const t = e.touches[0]; _ts = { x: t.clientX, y: t.clientY, at: Date.now() };
+  if (Date.now() - _lastTap < 300 && e.target.closest('button, a, label, .row, .ev')) e.preventDefault();   // 버튼 위 두 번째 탭만 확대 차단
+}, { passive: false });
 document.addEventListener('touchend', e => {
+  if (!_ts || e.touches.length !== 0) return;
+  const t = e.changedTouches[0], moved = Math.hypot(t.clientX - _ts.x, t.clientY - _ts.y) > 10, long = Date.now() - _ts.at > 300;
+  _ts = null;
+  if (moved || long) { _lastTap = 0; return; }                                   // 스크롤·길게 누름은 탭이 아님
   const now = Date.now();
-  if (now - _lastTap < 350 && e.touches.length === 0) {
-    e.preventDefault();
-    const b = e.target.closest('button, a, label, .row, .ev'); if (b && !b.classList.contains('pbtn')) b.click();
+  if (now - _lastTap < 300) {
+    const b = e.target.closest('button, a, label, .row, .ev');
+    if (b && !b.classList.contains('pbtn')) { e.preventDefault(); b.click(); }
   }
   _lastTap = now;
 }, { passive: false });
@@ -982,7 +990,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9p · 09-28 02:30';
+const VER = 'v0.9q · 09-28 02:40';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
