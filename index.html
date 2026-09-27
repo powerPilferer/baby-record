@@ -116,7 +116,8 @@
   .clock .ck { cursor: pointer; }
   .clock .ck.feed { fill: var(--feed); } .clock .ck.diaper { fill: var(--diaper); } .clock .ck.temp { fill: var(--temp); }
   .clock .ck.sleep { fill: color-mix(in srgb, var(--sleep) 55%, var(--card)); } .clock .ck.sleep.open { fill: color-mix(in srgb, var(--sleep) 35%, var(--card)); }
-  .clock .lg { display: flex; justify-content: center; gap: 16px; padding: 12px 0 6px; font-size: 12px; color: var(--fg2); }
+  .clock .lg { display: flex; justify-content: center; gap: 6px; padding: 12px 0 6px; font-size: 12px; color: var(--fg2); }
+  .clock .lg span { padding: 5px 10px; border-radius: 999px; background: var(--card2); }
   .clock .lg span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; }
   .clock .lg .feed { --c: var(--feed); } .clock .lg .diaper { --c: var(--diaper); } .clock .lg .sleep { --c: var(--sleep); } .clock .lg .temp { --c: var(--temp); }
   .rows { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 22px; }
@@ -477,7 +478,7 @@ function detailOf(l) {
 // ── 24시간 원형 생활계획표: 0시가 위, 시계 방향. 잠은 실제 길이 띠, 수유·기저귀·체온은 짧은 조각
 let view = localStorage.getItem('bb-view') || 'list';
 function renderClock(sorted, dayLogs, today) {
-  const C = 170, R = 140, r = 58, LR = 160;                      // 마미톡처럼 두꺼운 도넛 (구멍 작게)                      // 중심, 바깥/안쪽 반지름, 라벨 반지름
+  const C = 170, R = 138, r = 66, LR = 158;                      // 두꺼운 도넛, 가운데 구멍엔 아기 캐릭터                      // 중심, 바깥/안쪽 반지름, 라벨 반지름
   const ang = min => (min / 1440) * Math.PI * 2 - Math.PI / 2;
   const pt = (rad, a) => [C + rad * Math.cos(a), C + rad * Math.sin(a)];
   const arc = (m0, m1, ro, ri, cls, id) => {                      // 분 단위 구간 → 도넛 조각
@@ -493,7 +494,7 @@ function renderClock(sorted, dayLogs, today) {
   for (let h = 0; h < 24; h++) {                                  // 짝수 시각 = 숫자, 홀수 시각 = 짧은 눈금 (마미톡 문법)
     const a = ang(h * 60);
     if (h % 2 === 0) { const [lx, ly] = pt(LR, a); g += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" fill="var(--fg3)" font-size="12">${h}</text>`; }
-    else { const [x0, y0] = pt(R + 6, a), [x1, y1] = pt(R + 11, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--fg3)" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>`; }
+    else { const [x0, y0] = pt(LR - 3, a), [x1, y1] = pt(LR + 3, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--fg3)" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>`; }   // 숫자와 같은 반지름에 눈금
   }
   for (const l of sorted.filter(l => l.kind === 'sleep')) {       // 잠 띠 (자정 넘기면 잘라서)
     const s0 = +new Date(l.at), e0 = l.ended_at ? +new Date(l.ended_at) : Date.now();
@@ -505,7 +506,7 @@ function renderClock(sorted, dayLogs, today) {
   for (const l of dayLogs.filter(l => l.kind !== 'sleep')) { const m = minOf(l.at); g += arc(m - W[l.kind] / 2, m + W[l.kind] / 2, R, r, 'ck ' + l.kind, l.id); }
   if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 4, a), [x1, y1] = pt(R + 4, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);
-  g += `<text x="${C}" y="${C + 1}" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="20" font-weight="600">D+${dd}</text>`;
+  g += `<defs><clipPath id="ckc"><circle cx="${C}" cy="${C - 10}" r="30"/></clipPath></defs><image href="img/아기-얼굴-4e.png" x="${C - 30}" y="${C - 40}" width="60" height="60" clip-path="url(#ckc)"/><text x="${C}" y="${C + 36}" text-anchor="middle" fill="var(--fg2)" font-size="12" font-weight="500">D+${dd}</text>`;
   return `<svg viewBox="0 0 340 340" style="max-width:340px;margin:0 auto">${g}</svg><div class="lg"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="temp">체온</span></div>`;
 }
 function render() {
@@ -648,7 +649,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.7a · 09-27 16:25';
+const VER = 'v0.7b · 09-27 16:35';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
