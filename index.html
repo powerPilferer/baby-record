@@ -702,7 +702,17 @@ function renderStats() {
     <div class="stat-card diaper"><h3>기저귀</h3><div class="sub">하루 평균 소변 <b>${(tot('pee') / n).toFixed(1)}</b> · 대변 <b>${(tot('poo') / n).toFixed(1)}</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: per[d].pee + per[d].poo })), 'var(--diaper)', v => v)}</div>`;
 }
 $('stat-range').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; statRange = +b.dataset.v; localStorage.setItem('bb-stat', statRange); renderStats(); });
+// 탭·설정은 관성 스크롤 중에도 먹게: iOS는 스크롤 중 첫 탭의 click을 삼키므로 touchend에서 직접 처리 (뒤따르는 click은 무시)
+let _tabHandled = 0;
+function goTab(id) {
+  if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
+  else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
+  else { show(id); renderStats(); }
+}
+$('tabs').addEventListener('touchend', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); _tabHandled = Date.now(); goTab(b.dataset.tab); }, { passive: false });
+$('open-settings').addEventListener('touchend', e => { e.preventDefault(); _tabHandled = Date.now(); fillSettings(); show('s-settings'); }, { passive: false });
 $('tabs').addEventListener('click', e => {
+  if (Date.now() - _tabHandled < 500) return;
   const b = e.target.closest('button'); if (!b) return; const id = b.dataset.tab;
   if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
   else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
@@ -957,7 +967,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9h · 09-28 01:10';
+const VER = 'v0.9i · 09-28 01:20';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
@@ -970,7 +980,7 @@ async function checkUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
 setTimeout(checkUpdate, 4000); setInterval(checkUpdate, 30 * 60000);
-$('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
+$('open-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
   const row = $('nick-row');
   row.innerHTML = `<input id="nick-in" maxlength="12" value="${esc(me.nickname)}"><button type="button" class="ok" id="nick-ok">확인</button>`;
