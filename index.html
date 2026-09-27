@@ -160,6 +160,7 @@
   .seg.mini { margin: -6px 0; padding: 3px; gap: 2px; background: var(--card2); }
   .seg.mini button { flex: none; white-space: nowrap; padding: 6px 12px; font-size: 14px; }
   .seg.mini button.on { background: var(--card); }
+  .seg.mini button img { width: 20px; height: 20px; border-radius: 50%; margin-right: 6px; vertical-align: -5px; }
   :root[data-theme="light"] .seg.mini button.on { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
   #s-settings header { padding: 16px 0 6px; }
   #s-settings .name { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
@@ -264,6 +265,7 @@
   <div class="menu-title">나</div>
   <div class="menu">
     <div><span class="lab">내 이름</span><span class="v inl" id="nick-row"><span id="set-nick"></span><button type="button" class="pen" id="edit-nick" aria-label="이름 고치기"><svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M13.5 6.5l3 3"/></svg></button></span></div>
+    <div><span class="lab">내 캐릭터</span><span class="seg mini" id="char-seg"><button type="button" data-v="dad"><img src="img/아빠.png" alt="">아빠</button><button type="button" data-v="mom"><img src="img/엄마.png" alt="">엄마</button></span></div>
     <div><span class="lab">함께 적는 사람</span><span class="v" id="set-members"></span></div>
   </div>
   <div class="menu-title">화면</div>
@@ -340,7 +342,7 @@ const db = {
     ]);
     logs = l.data || []; notes = n.data || [];
     const ids = (m.data || []).map(x => x.user_id);
-    avatarById = Object.fromEntries((m.data || []).filter(x => x.avatar_url).map(x => [x.user_id, x.avatar_url]));
+    avatarById = Object.fromEntries((m.data || []).map(x => [x.user_id, x.avatar_url || '']));
     const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
     nickById = Object.fromEntries((ps || []).map(p => [p.id, p.nickname]));
   },
@@ -389,8 +391,9 @@ function subscribe() {
 const KIND = { feed: '수유', diaper: '기저귀', sleep: '잠', temp: '체온' };
 const FEED = { formula: '분유', breast: '모유', pumped: '유축' };
 let avatarById = {};   // user_id → 이미지 URL (profiles.avatar_url, 없으면 첫 글자)
-const DEFAULT_AV = ['img/아빠.png', 'img/엄마.png'];   // 사진 없을 때 기본 캐릭터: 아기를 만든 사람 → 첫 번째, 합류한 사람 → 두 번째
-const avatarSrc = id => avatarById[id] || (id === baby.created_by ? DEFAULT_AV[0] : DEFAULT_AV[1]);
+const CHAR = { dad: 'img/아빠.png', mom: 'img/엄마.png' };   // 프로필은 카카오 사진이 아니라 캐릭터 (09-27 사장님)
+const charOf = id => { const v = avatarById[id] || ''; return v === 'char:mom' ? 'mom' : v === 'char:dad' ? 'dad' : (id === baby.created_by ? 'dad' : 'mom'); };   // 기본: 만든 사람=아빠, 합류=엄마
+const avatarSrc = id => CHAR[charOf(id)];
 const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
 function detailOf(l) {
   const d = l.detail || {};
@@ -529,6 +532,7 @@ $('noteform').addEventListener('submit', async e => {
 function fillSettings() {
   $('set-baby').textContent = `${baby.name} · ${baby.birth_date.replace(/-/g, '.')} ›`; $('set-code').textContent = baby.invite_code;
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
+  for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
@@ -569,6 +573,12 @@ $('edit-baby').onclick = () => {
   };
 };
 $('close-settings').onclick = () => show('s-home');
+$('char-seg').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const v = 'char:' + b.dataset.v;
+  if (!MOCK) { const { error } = await sb.from('baby_members').update({ avatar_url: v }).eq('baby_id', baby.id).eq('user_id', me.id); if (error) { toast('저장 실패: ' + error.message); return; } }
+  avatarById[me.id] = v; fillSettings(); render();
+});
 $('theme-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; localStorage.setItem('bb-theme', b.dataset.v); applyTheme(); });
 $('copy-code').onclick = async () => {
   const text = `아기 기록표 초대 코드: ${baby.invite_code}\n${SITE}`;
@@ -596,13 +606,13 @@ $('baby-create').onclick = async () => {
   if (!name || !birth) { $('baby-msg').textContent = '이름과 생년월일을 적어주세요'; return; }
   const { data, error } = await sb.from('babies').insert({ name, birth_date: birth, invite_code: genCode(), created_by: me.id }).select().single();
   if (error) { $('baby-msg').textContent = '만들기 실패: ' + error.message; return; }
-  const { error: e2 } = await sb.from('baby_members').insert({ baby_id: data.id, user_id: me.id, avatar_url: me.avatar || null });
+  const { error: e2 } = await sb.from('baby_members').insert({ baby_id: data.id, user_id: me.id, avatar_url: 'char:dad' });
   if (e2) { $('baby-msg').textContent = '등록 실패: ' + e2.message; return; }
   baby = data; await enterHome();
 };
 $('join-go').onclick = async () => {
   const code = $('join-code').value.trim().toUpperCase(); if (code.length < 6) { $('join-msg').textContent = '6자리 코드를 적어주세요'; return; }
-  const { data, error } = await sb.rpc('join_baby', { code, avatar: me.avatar || null });
+  const { data, error } = await sb.rpc('join_baby', { code, avatar: 'char:mom' });
   if (error) { $('join-msg').textContent = error.message.replace(/^.*?: /, ''); return; }
   const { data: b } = await sb.from('babies').select('*').eq('id', data).single();
   baby = b; await enterHome();
