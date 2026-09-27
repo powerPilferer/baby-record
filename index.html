@@ -506,7 +506,7 @@ function renderClock(sorted, dayLogs, today) {
   for (const l of dayLogs.filter(l => l.kind !== 'sleep')) { const m = minOf(l.at); g += arc(m - W[l.kind] / 2, m + W[l.kind] / 2, R, r, 'ck ' + l.kind, l.id); }
   if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 4, a), [x1, y1] = pt(R + 4, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);
-  g += `<defs><clipPath id="ckc"><circle cx="${C}" cy="${C - 10}" r="30"/></clipPath></defs><image href="img/아기-얼굴-4e.png" x="${C - 30}" y="${C - 40}" width="60" height="60" clip-path="url(#ckc)"/><text x="${C}" y="${C + 36}" text-anchor="middle" fill="var(--fg2)" font-size="12" font-weight="500">D+${dd}</text>`;
+  g += `<image href="img/아기-전신-4e.png" x="${C - 23}" y="${C - 48}" width="46" height="66"/><text x="${C}" y="${C + 34}" text-anchor="middle" fill="var(--fg2)" font-size="12" font-weight="500">D+${dd}</text>`;
   return `<svg viewBox="0 0 340 340" style="max-width:340px;margin:0 auto">${g}</svg><div class="lg"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="temp">체온</span></div>`;
 }
 function render() {
@@ -649,7 +649,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.7c · 09-27 16:45';
+const VER = 'v0.7d · 09-27 16:55';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
