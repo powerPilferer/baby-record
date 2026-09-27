@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0b0d">
@@ -302,6 +302,17 @@ const sb = MOCK ? null : window.supabase.createClient(SB_URL, SB_KEY,
   { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
 
 const $ = id => document.getElementById(id);
+// iOS 사파리 두 번 탭 확대 막기: 350ms 안의 두 번째 탭은 확대 대신 그 자리의 버튼 클릭으로 처리 (touch-action만으론 홈 화면 앱에서 새는 경우가 있음)
+let _lastTap = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - _lastTap < 350 && e.touches.length === 0) {
+    e.preventDefault();
+    const b = e.target.closest('button, a, label, .row, .ev'); if (b) b.click();
+  }
+  _lastTap = now;
+}, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
 // ── 테마: system(기기 따라감) / dark / light — localStorage 'bb-theme'
 const mq = matchMedia('(prefers-color-scheme: light)');
 function applyTheme() {
