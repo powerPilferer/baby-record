@@ -30,7 +30,8 @@
   html, body { margin: 0; background: var(--bg); color: var(--fg);
     font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; font-size: 17px; line-height: 1.35;
     letter-spacing: -.015em; }
-  body { padding-top: var(--sat); min-height: 100dvh; overscroll-behavior-y: none; }
+  body { height: 100dvh; overflow: hidden; overscroll-behavior-y: none; }
+  #scroller { height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; padding-top: var(--sat); box-sizing: border-box; }   /* 스크롤은 이 상자만 — 고정 메뉴는 바깥이라 관성 스크롤 중 탭이 그대로 먹음 */
   button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
   button { cursor: pointer; border: 0; background: none; padding: 0; touch-action: manipulation; }   /* 빠른 두 번 탭이 확대로 먹히지 않게 */
   html, body, * { touch-action: manipulation; }
@@ -297,6 +298,7 @@
 </style>
 </head>
 <body>
+<div id="scroller">
 
 <!-- 로그인 -->
 <section id="s-login" class="screen hidden">
@@ -397,6 +399,8 @@
   <div class="stat-tools"><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></div>
   <div id="stats"></div>
 </section>
+
+</div>
 
 <!-- 좌상단 고정 뒤로 (설정 화면) -->
 <button type="button" class="gear-fab back-fab hidden" id="close-settings" aria-label="뒤로"><svg viewBox="0 0 24 24" class="chev"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -506,7 +510,7 @@ const show = id => {
   $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id));
   $('close-settings').classList.toggle('hidden', id !== 's-settings');
   for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === id);
-  window.scrollTo(0, 0);
+  $('scroller').scrollTo(0, 0);
 };
 
 // ── 상태
@@ -976,7 +980,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9m · 09-28 01:55';
+const VER = 'v0.9n · 09-28 02:05';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
