@@ -56,12 +56,15 @@
   /* ── 홈 ── */
   header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 4px; }
   header .name { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
-  header .dday { color: var(--fg3); font-size: 13px; margin-left: 7px; font-weight: 500; }
-  header .gear { color: var(--fg2); padding: 8px; margin-right: -8px; font-size: 21px; line-height: 1; }
+  header .dday { color: var(--fg2); font-size: 12px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: var(--card2); font-variant-numeric: tabular-nums; }
+  header .gear { width: 40px; height: 40px; margin-right: -8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg2); }
+  header .gear svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  header .gear:active { background: var(--card); }
   .daynav { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 20px; }
-  .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; font-size: 26px; line-height: 1; }
+  .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .daynav button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .daynav button:active { background: var(--card); }
-  .daynav button:disabled { color: var(--line); }
+  .daynav button:disabled { color: var(--fg3); opacity: .35; }
   .daynav .date { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
   .daynav .date small { color: var(--fg3); font-weight: 400; margin-left: 5px; font-size: 13px; }
 
@@ -162,9 +165,12 @@
   .seg.mini button.on { background: var(--card); }
   .seg.mini button img { width: 20px; height: 20px; border-radius: 50%; margin-right: 6px; vertical-align: -5px; }
   :root[data-theme="light"] .seg.mini button.on { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-  #s-settings header { padding: 16px 0 6px; }
+  #s-settings header.sub { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 12px 0 6px; margin: 0 -8px; }
+  #s-settings header.sub .name { text-align: center; }
+  .back { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg); }
+  .back svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .back:active { background: var(--card); }
   #s-settings .name { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
-  #s-settings .gear { color: var(--fg2); padding: 8px; margin-right: -8px; font-size: 19px; }
   .inl { display: inline-flex; align-items: center; gap: 8px; }
   .pen { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--fg3); background: var(--card2); }
   .pen svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -224,12 +230,12 @@
 <section id="s-home" class="screen hidden">
   <header>
     <div><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
-    <button type="button" class="gear" id="open-settings" aria-label="설정">⋯</button>
+    <button type="button" class="gear" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </header>
   <div class="daynav">
-    <button type="button" id="day-prev">‹</button>
+    <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="date" id="h-date"></div>
-    <button type="button" id="day-next">›</button>
+    <button type="button" id="day-next" aria-label="다음 날"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <div class="status">
     <div class="chip feed"><b>마지막 수유</b><span id="st-feed">—</span></div>
@@ -255,7 +261,7 @@
 
 <!-- 설정 -->
 <section id="s-settings" class="screen hidden">
-  <header><div class="name">설정</div><button type="button" class="gear" id="close-settings">✕</button></header>
+  <header class="sub"><button type="button" class="back" id="close-settings" aria-label="뒤로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="name">설정</div><span class="back-sp"></span></header>
   <div class="menu-title">아기</div>
   <div class="menu">
     <button type="button" id="edit-baby"><span class="lab">이름 · 생일</span><span class="v" id="set-baby"></span></button>
