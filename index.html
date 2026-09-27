@@ -72,7 +72,7 @@
   .msg { color: var(--temp); font-size: 14px; min-height: 18px; margin: 8px 2px; }
 
   /* ── 홈 ── */
-  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 4px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 17px 0 5px; }
   header .who { display: flex; align-items: center; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
   header .name { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
@@ -80,7 +80,7 @@
   header .gear { width: 40px; height: 40px; margin-right: -8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg2); }
   header .gear svg { width: 25px; height: 25px; fill: currentColor; }
   header .gear:active { background: var(--card); }
-  .daynav { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 20px; }
+  .daynav { display: flex; align-items: center; justify-content: space-between; margin: 7px 0 21px; }
   .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
   .daynav button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .daynav button:active { background: var(--card); }
@@ -89,7 +89,7 @@
   .daynav .date small { color: var(--fg3); font-weight: 400; margin-left: 5px; font-size: 14px; }
 
   /* 간편 상태 두 칸 */
-  .status { background: var(--bg1); border-radius: 14px; padding: 12px 14px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .status { background: var(--bg1); border-radius: 14px; padding: 13px 15px; margin-bottom: 19px; display: flex; flex-direction: column; gap: 8px; }
   .status .chip { display: flex; align-items: center; gap: 10px; }
   .status .chip b { display: inline-flex; align-items: center; font-size: 13px; color: var(--c); font-weight: 500; flex: none; padding: 4px 9px; border-radius: 7px; background: color-mix(in srgb, var(--c) 14%, var(--bg1)); }
   .status .chip span { font-size: 15px; font-weight: 500; color: var(--fg2); font-variant-numeric: tabular-nums; }
@@ -98,7 +98,7 @@
 
   /* 카테고리 버튼 2×2 */
   .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
-  .quick button { --c: var(--fg); height: 68px; border-radius: 16px; background: var(--card); display: flex; align-items: center; padding: 0 14px; gap: 12px; position: relative; overflow: hidden; }
+  .quick button { --c: var(--fg); height: 70px; border-radius: 16px; background: var(--card); display: flex; align-items: center; padding: 0 15px; gap: 13px; position: relative; overflow: hidden; }
   .quick .ic { flex: none; width: 38px; height: 38px; border-radius: 11px; background: var(--card2); display: flex; align-items: center; justify-content: center; }
   .quick .ic img { width: 27px; height: 27px; object-fit: contain; display: block; }
   .quick .tx { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: left; }
@@ -111,7 +111,7 @@
   .quick .sleep.on .ic { background: color-mix(in srgb, var(--sleep) 22%, var(--card2)); }
 
   /* 오늘의 표 */
-  .sheet-title { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 8px; padding: 0 2px; }
+  .sheet-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 9px; padding: 0 2px; }
   .sheet-title h2 { font-size: 14px; color: var(--fg3); font-weight: 500; margin: 0; }
   .sheet-title span { font-size: 13px; color: var(--fg3); font-variant-numeric: tabular-nums; }
   .vt { display: inline-flex; gap: 2px; background: var(--card); border-radius: 999px; padding: 3px; }
@@ -128,16 +128,16 @@
   .clock .lg span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; }
   .clock .lg .feed { --c: var(--feed); } .clock .lg .diaper { --c: var(--diaper); } .clock .lg .sleep { --c: var(--sleep); } .clock .lg .temp { --c: var(--temp); }
   .rows { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 22px; }
-  .row { --c: var(--fg2); display: grid; grid-template-columns: 50px 22px 1fr auto; gap: 0 8px; align-items: stretch; padding: 0 14px 0 12px; width: 100%; text-align: left; }
+  .row { --c: var(--fg2); display: grid; grid-template-columns: 52px 22px 1fr auto; gap: 0 8px; align-items: stretch; padding: 0 15px 0 13px; width: 100%; text-align: left; }
   .row:active { background: var(--card2); }
   .row.feed { --c: var(--feed); } .row.diaper { --c: var(--diaper); } .row.sleep { --c: var(--sleep); } .row.temp { --c: var(--temp); }
-  .row .t { align-self: center; justify-self: start; padding: 3px 7px; border-radius: 7px; background: var(--card2); color: var(--fg2); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .row .t { align-self: center; justify-self: start; padding: 4px 8px; border-radius: 7px; background: var(--card2); color: var(--fg2); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
   .row.feed .t, .row.diaper .t, .row.sleep .t { background: color-mix(in srgb, var(--c) 14%, var(--card)); color: var(--c); }
   .row .rl { position: relative; }
   .row .rl::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; margin-left: -.5px; background: var(--line); }
   .row:first-child .rl::before { top: 50%; } .row.last .rl::before { bottom: 50%; }
   .row .rl::after { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px var(--card); }
-  .row .d { padding: 21px 0; border-top: 1px solid var(--line2); min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+  .row .d { padding: 22px 0; border-top: 1px solid var(--line2); min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
   .row:first-child .d, .row:first-child .w { border-top: 0; }
   .row .d b { color: var(--fg); font-size: 15px; font-weight: 400; }
   .row .d small { color: var(--fg3); display: block; font-size: 13px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -149,16 +149,16 @@
   .sum b { color: var(--fg2); font-weight: 500; }
 
   /* 서로에게 한마디 */
-  .notes { background: var(--card); border-radius: 16px; padding: 14px 16px; }
+  .notes { background: var(--card); border-radius: 16px; padding: 15px 17px; }
   .notes h2 { font-size: 14px; color: var(--fg3); font-weight: 500; margin: 0 0 8px; }
-  .note { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
+  .note { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; }
   .note .who { flex: none; padding-top: 1px; }
   .note .tx { flex: 1; font-size: 16px; white-space: pre-wrap; }
   .note .nx { flex: none; width: 32px; height: 32px; border-radius: 50%; color: var(--fg3); font-size: 16px; margin: -6px -8px 0 0; }
   .note .nx:active { background: var(--card2); color: var(--temp); }
   .note .tm { font-size: 13px; color: var(--fg3); padding-top: 4px; font-variant-numeric: tabular-nums; }
     .noteform { display: flex; gap: 8px; margin-top: 8px; }
-  .noteform input { flex: 1; min-width: 0; background: var(--bg); border: 0; border-radius: 999px; padding: 12px 16px; outline: none; }
+  .noteform input { flex: 1; min-width: 0; background: var(--bg); border: 0; border-radius: 999px; padding: 13px 17px; outline: none; }
   .noteform button { padding: 0 18px; border-radius: 999px; background: var(--fg); color: var(--bg); font-weight: 700; }
   .noteform button:disabled { opacity: .3; }
 
@@ -174,7 +174,7 @@
   .seg { display: flex; background: var(--bg); border-radius: 999px; padding: 4px; gap: 4px; margin-bottom: 14px; }
   .seg button { flex: 1; padding: 10px 0; border-radius: 999px; font-weight: 600; color: var(--fg2); }
   .seg button.on { background: var(--card2); color: var(--fg); }
-  .frow { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--line); }
+  .frow { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-top: 1px solid var(--line); }
   .frow label { color: var(--fg2); font-size: 16px; }
   .frow input { background: var(--bg); border: 0; border-radius: 10px; padding: 10px 12px; width: 140px; text-align: right; font-size: 20px; font-weight: 600; outline: none; font-variant-numeric: tabular-nums; }
   .frow input[type=time] { width: 150px; }
@@ -184,14 +184,14 @@
   .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
   .ml button.on { background: var(--card2); color: var(--fg); }
   .acts { display: flex; gap: 8px; margin-top: 16px; }
-  .acts button { flex: 1; padding: 14px; border-radius: 999px; font-weight: 700; font-size: 18px; }
+  .acts button { flex: 1; padding: 15px; border-radius: 999px; font-weight: 700; font-size: 18px; }
   .acts .save { background: var(--fg); color: var(--bg); flex: 2; }
   .acts .cancel { background: var(--bg); color: var(--fg2); }
   .acts .del { background: none; color: var(--temp); flex: 0 0 auto; padding: 14px 12px; }
 
   /* 설정 */
   .menu { background: var(--card); border-radius: 16px; margin: 12px 0; padding: 0 16px; }
-  .menu > button, .menu > div { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 15px 0; border-top: 1px solid var(--line2); text-align: left; font-size: 16px; }
+  .menu > button, .menu > div { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 16px 0; border-top: 1px solid var(--line2); text-align: left; font-size: 16px; }
   .menu > :first-child { border-top: 0; }
   .menu .v { color: var(--fg2); font-size: 15px; }
   .menu .lab { color: var(--fg); }
@@ -745,7 +745,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8b · 09-27 17:55';
+const VER = 'v0.8c · 09-27 18:00';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
