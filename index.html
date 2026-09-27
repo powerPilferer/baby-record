@@ -477,7 +477,7 @@ function detailOf(l) {
 // ── 24시간 원형 생활계획표: 0시가 위, 시계 방향. 잠은 실제 길이 띠, 수유·기저귀·체온은 짧은 조각
 let view = localStorage.getItem('bb-view') || 'list';
 function renderClock(sorted, dayLogs, today) {
-  const C = 170, R = 138, r = 92, LR = 160;                      // 중심, 바깥/안쪽 반지름, 라벨 반지름
+  const C = 170, R = 140, r = 58, LR = 160;                      // 마미톡처럼 두꺼운 도넛 (구멍 작게)                      // 중심, 바깥/안쪽 반지름, 라벨 반지름
   const ang = min => (min / 1440) * Math.PI * 2 - Math.PI / 2;
   const pt = (rad, a) => [C + rad * Math.cos(a), C + rad * Math.sin(a)];
   const arc = (m0, m1, ro, ri, cls, id) => {                      // 분 단위 구간 → 도넛 조각
@@ -490,22 +490,22 @@ function renderClock(sorted, dayLogs, today) {
   const dayStart = +new Date(day + 'T00:00'), dayEnd = dayStart + 86400000;
   let g = '';
   g += `<circle cx="${C}" cy="${C}" r="${(R + r) / 2}" fill="none" stroke="var(--card2)" stroke-width="${R - r}"/>`;
-  for (let h = 0; h < 24; h++) {                                  // 눈금 + 2시간마다 숫자
-    const a = ang(h * 60); const [x0, y0] = pt(R + 3, a), [x1, y1] = pt(R + (h % 2 ? 6 : 9), a);
-    g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--fg3)" stroke-width="1.2" stroke-linecap="round"/>`;
+  for (let h = 0; h < 24; h++) {                                  // 짝수 시각 = 숫자, 홀수 시각 = 짧은 눈금 (마미톡 문법)
+    const a = ang(h * 60);
     if (h % 2 === 0) { const [lx, ly] = pt(LR, a); g += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" fill="var(--fg3)" font-size="12">${h}</text>`; }
+    else { const [x0, y0] = pt(R + 6, a), [x1, y1] = pt(R + 11, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--fg3)" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>`; }
   }
   for (const l of sorted.filter(l => l.kind === 'sleep')) {       // 잠 띠 (자정 넘기면 잘라서)
     const s0 = +new Date(l.at), e0 = l.ended_at ? +new Date(l.ended_at) : Date.now();
     if (e0 <= dayStart || s0 >= dayEnd) continue;
     const m0 = Math.max(0, (s0 - dayStart) / 60000), m1 = Math.min(1440, (e0 - dayStart) / 60000);
-    g += arc(m0, m1, R - 2, r + 2, 'ck sleep' + (l.ended_at ? '' : ' open'), l.id);
+    g += arc(m0, m1, R, r, 'ck sleep' + (l.ended_at ? '' : ' open'), l.id);
   }
   const W = { feed: 22, diaper: 14, temp: 10 };                   // 조각 폭(분)
-  for (const l of dayLogs.filter(l => l.kind !== 'sleep')) { const m = minOf(l.at); g += arc(m - W[l.kind] / 2, m + W[l.kind] / 2, R - 2, r + 2, 'ck ' + l.kind, l.id); }
-  if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 6, a), [x1, y1] = pt(R + 6, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
+  for (const l of dayLogs.filter(l => l.kind !== 'sleep')) { const m = minOf(l.at); g += arc(m - W[l.kind] / 2, m + W[l.kind] / 2, R, r, 'ck ' + l.kind, l.id); }
+  if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 4, a), [x1, y1] = pt(R + 4, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000);
-  g += `<text x="${C}" y="${C - 6}" text-anchor="middle" fill="var(--fg)" font-size="22" font-weight="600">D+${dd}</text><text x="${C}" y="${C + 16}" text-anchor="middle" fill="var(--fg3)" font-size="11">${dayLogs.length ? dayLogs.length + '건' : '기록 없음'}</text>`;
+  g += `<text x="${C}" y="${C + 1}" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="20" font-weight="600">D+${dd}</text>`;
   return `<svg viewBox="0 0 340 340" style="max-width:340px;margin:0 auto">${g}</svg><div class="lg"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="temp">체온</span></div>`;
 }
 function render() {
@@ -648,7 +648,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.7 · 09-27 16:10';
+const VER = 'v0.7a · 09-27 16:25';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
