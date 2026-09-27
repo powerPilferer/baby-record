@@ -184,6 +184,8 @@
   .back:active { background: var(--card); }
   #s-settings .name { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
   .inl { display: inline-flex; align-items: center; gap: 8px; }
+  .copy { padding: 5px 11px; border-radius: 999px; background: var(--card2); color: var(--fg2); font-size: 12px; font-weight: 600; }
+  .copy:active { background: var(--fg); color: var(--bg); }
   .pen { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--fg3); background: var(--card2); }
   .pen svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .inl input { width: 120px; background: var(--card2); border: 0; border-radius: 8px; padding: 6px 10px; font-size: 15px; outline: none; text-align: right; color: var(--fg); }
@@ -287,8 +289,7 @@
   <div class="menu-title">아기</div>
   <div class="menu">
     <button type="button" id="edit-baby"><span class="lab">이름 · 생일</span><span class="v" id="set-baby"></span></button>
-    <div><span class="lab">초대 코드</span><span class="code" id="set-code"></span></div>
-    <button type="button" id="copy-code"><span class="lab">초대 코드 보내기</span><span class="v">배우자에게 ›</span></button>
+    <div><span class="lab">초대 코드</span><span class="inl"><span class="code" id="set-code"></span><button type="button" class="copy" id="copy-code">복사</button></span></div>
     <button type="button" id="leave-baby"><span class="lab" style="color:var(--temp)">이 기록표 나가기</span><span class="v">다른 코드로 합류하려면</span></button>
   </div>
   <div class="menu-title">나</div>
@@ -621,8 +622,8 @@ $('char-seg').addEventListener('click', async e => {
 });
 $('theme-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; localStorage.setItem('bb-theme', b.dataset.v); applyTheme(); });
 $('copy-code').onclick = async () => {
-  const text = `기특일기 초대 코드: ${baby.invite_code}\n${SITE}`;
-  try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast('복사했어요'); } } catch (_) {}
+  try { await navigator.clipboard.writeText(baby.invite_code); toast(`코드 ${baby.invite_code} 복사했어요`); }
+  catch (_) { prompt('초대 코드를 복사하세요', baby.invite_code); }
 };
 $('leave-baby').onclick = async () => {
   const others = Object.keys(nickById).filter(id => id !== me.id).length;
