@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0b0d">
-<title>아기 기록표</title>
+<title>기특일기</title>
 <link rel="manifest" href="manifest.webmanifest">
 <script>(function(){var p=localStorage.getItem("bb-theme")||"system";document.documentElement.dataset.theme=(p==="light"||(p==="system"&&matchMedia("(prefers-color-scheme: light)").matches))?"light":"dark";})();</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -40,8 +40,9 @@
   .onb { padding: 14vh 0 40px; max-width: 360px; margin: 0 auto; }
   .onb h1 { font-size: 23px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
   .onb > p, .onb > div > p:not(.msg) { color: var(--fg2); font-size: 14px; margin: 0 0 22px; }
-  .family { display: flex; gap: 10px; margin-bottom: 18px; }
+  .family { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 20px; }
   .family img { width: 56px; height: 56px; border-radius: 50%; }
+  .family img.baby { width: 68px; height: 68px; }
   #kakao-login { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
     padding: 15px; border-radius: 999px; background: var(--kakao); color: #191600; font-weight: 700; font-size: 16px; }
   .foot { color: var(--fg3); font-size: 13px; margin-top: 14px; }
@@ -61,6 +62,8 @@
 
   /* ── 홈 ── */
   header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 4px; }
+  header .who { display: flex; align-items: center; }
+  header .bf { width: 34px; height: 34px; border-radius: 50%; margin-right: 10px; }
   header .name { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
   header .dday { color: var(--ok); font-size: 12px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); font-variant-numeric: tabular-nums; }
   header .gear { width: 40px; height: 40px; margin-right: -8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg2); }
@@ -196,8 +199,8 @@
 <!-- 로그인 -->
 <section id="s-login" class="screen hidden">
   <div class="onb">
-    <div class="family"><img src="img/아빠.png" alt=""><img src="img/엄마.png" alt=""></div>
-    <h1>아기 기록표</h1>
+    <div class="family"><img src="img/아빠.png" alt=""><img class="baby" src="img/아기.png" alt=""><img src="img/엄마.png" alt=""></div>
+    <h1>기특일기</h1>
     <p>부부가 같은 표를 보며 적어요</p>
     <button type="button" id="kakao-login">
       <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#191600" d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.8 5.2 4.6 6.6L5.5 21l4.4-2.9c.7.1 1.4.2 2.1.2 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg>
@@ -221,7 +224,7 @@
       <button type="button" class="btn" id="nick-save">이 이름으로 할게요</button>
     </div>
     <div id="setup-baby" class="hidden">
-      <h1>아기 기록표 만들기</h1>
+      <h1>기특일기 시작하기</h1>
       <p>먼저 만든 사람이 배우자를 초대해요</p>
       <div class="card form">
         <label for="baby-name">아기 이름 <small>태명도 좋아요</small></label>
@@ -245,7 +248,7 @@
 <!-- 홈: 오늘의 표 -->
 <section id="s-home" class="screen hidden">
   <header>
-    <div><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
+    <div class="who"><img class="bf" src="img/아기.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
     <button type="button" class="gear" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   </header>
   <div class="daynav">
@@ -614,7 +617,7 @@ $('char-seg').addEventListener('click', async e => {
 });
 $('theme-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; localStorage.setItem('bb-theme', b.dataset.v); applyTheme(); });
 $('copy-code').onclick = async () => {
-  const text = `아기 기록표 초대 코드: ${baby.invite_code}\n${SITE}`;
+  const text = `기특일기 초대 코드: ${baby.invite_code}\n${SITE}`;
   try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast('복사했어요'); } } catch (_) {}
 };
 $('logout').onclick = async () => { if (MOCK) return; await sb.auth.signOut(); location.reload(); };
