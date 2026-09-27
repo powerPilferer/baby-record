@@ -38,11 +38,12 @@
 
   /* ── 로그인 / 첫 설정 ── */
   .onb { padding: 14vh 0 40px; max-width: 360px; margin: 0 auto; }
+  #s-login .onb { text-align: center; padding-top: 18vh; }
   .onb h1 { font-size: 23px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
   .onb > p, .onb > div > p:not(.msg) { color: var(--fg2); font-size: 14px; margin: 0 0 22px; }
-  .family { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 20px; }
+  .family { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 22px; }
   .family img { width: 56px; height: 56px; border-radius: 50%; }
-  .family img.baby { width: 68px; height: 68px; }
+  .family img.baby { width: 96px; height: 96px; }
   #kakao-login { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
     padding: 15px; border-radius: 999px; background: var(--kakao); color: #191600; font-weight: 700; font-size: 16px; }
   .foot { color: var(--fg3); font-size: 13px; margin-top: 14px; }
@@ -199,7 +200,7 @@
 <!-- 로그인 -->
 <section id="s-login" class="screen hidden">
   <div class="onb">
-    <div class="family"><img src="img/아빠.png" alt=""><img class="baby" src="img/아기.png" alt=""><img src="img/엄마.png" alt=""></div>
+    <div class="family"><img src="img/아빠.png" alt=""><img class="baby" src="img/아기-얼굴.png" alt=""><img src="img/엄마.png" alt=""></div>
     <h1>기특일기</h1>
     <p>부부가 같은 표를 보며 적어요</p>
     <button type="button" id="kakao-login">
@@ -248,7 +249,7 @@
 <!-- 홈: 오늘의 표 -->
 <section id="s-home" class="screen hidden">
   <header>
-    <div class="who"><img class="bf" src="img/아기.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
+    <div class="who"><img class="bf" src="img/아기-얼굴.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
     <button type="button" class="gear" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   </header>
   <div class="daynav">
