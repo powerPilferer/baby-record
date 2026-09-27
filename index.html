@@ -745,8 +745,19 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8d · 09-27 18:05';
+const VER = 'v0.8e · 09-27 18:15';
 $('ver').textContent = '기특일기 ' + VER;
+// ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
+async function checkUpdate() {
+  if (MOCK) return;
+  try {
+    const t = await (await fetch(location.pathname + '?u=' + Date.now(), { cache: 'no-store' })).text();
+    const m = t.match(/const VER = '([^']+)'/);
+    if (m && m[1] !== VER) { toast('새 버전으로 바꿔요'); setTimeout(() => location.reload(), 600); }
+  } catch (_) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
+setTimeout(checkUpdate, 4000); setInterval(checkUpdate, 30 * 60000);
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
   const row = $('nick-row');
