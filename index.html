@@ -162,6 +162,46 @@
   .noteform button { padding: 0 18px; border-radius: 999px; background: var(--fg); color: var(--bg); font-weight: 700; }
   .noteform button:disabled { opacity: .3; }
 
+  /* ── 하단 탭 ── */
+  .tabbed { padding-bottom: calc(90px + var(--sab)) !important; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: center; gap: 4px; padding: 8px 16px calc(10px + var(--sab));
+    background: color-mix(in srgb, var(--bg) 86%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border-top: 1px solid var(--line2); }
+  .tabs button { flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 4px; border-radius: 12px; color: var(--fg3); font-size: 11px; font-weight: 500; }
+  .tabs button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tabs button.on { color: var(--fg); }
+  .tabs button img { width: 25px; height: 25px; object-fit: contain; opacity: .55; transition: opacity .15s; }
+  .tabs button img.tab-face { border-radius: 50%; }
+  .tabs button.on img { opacity: 1; }
+  /* ── 일지 달력 ── */
+  .cal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .cal .d { aspect-ratio: 1 / 1.1; border-radius: 16px; background: var(--card); padding: 12px 11px 11px; display: flex; flex-direction: column; text-align: left; position: relative; }
+  .cal .d.future { opacity: .35; }
+  .cal .d .n { font-size: 19px; font-weight: 600; color: var(--fg); line-height: 1; display: flex; align-items: baseline; gap: 5px; }
+  .cal .d .n small { font-size: 12px; color: var(--fg3); font-weight: 500; }
+  .cal .d .n small.sun { color: var(--temp); }
+  .cal .d.today .n { color: var(--ok); }
+  .cal .d.sel { outline: 1.5px solid var(--fg2); }
+  .cal .d .tx { font-size: 12px; color: var(--fg2); line-height: 1.35; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .cal .d .m { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; max-height: 13px; overflow: hidden; }
+  .cal .d .m i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+  .cal .d .m i.feed { --c: var(--feed); } .cal .d .m i.diaper { --c: var(--diaper); } .cal .d .m i.sleep { --c: var(--sleep); } .cal .d .m i.nt { --c: var(--ok); }
+  .cal .d .stk { position: absolute; right: -6px; top: -9px; width: 44px; height: 44px; transform: rotate(-10deg); filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); pointer-events: none; }
+  .cal .d .stk img { width: 100%; height: 100%; object-fit: contain; }
+  .cal .d .stl { font-size: 11px; font-weight: 700; color: var(--ok); margin-top: 5px; line-height: 1; }
+  .cal-legend { display: flex; justify-content: center; gap: 12px; margin-top: 14px; font-size: 11px; color: var(--fg3); }
+  .cal-legend span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; background: var(--c); }
+  .cal-legend .feed { --c: var(--feed); } .cal-legend .diaper { --c: var(--diaper); } .cal-legend .sleep { --c: var(--sleep); } .cal-legend .nt { --c: var(--ok); }
+  /* ── 통계 ── */
+  #s-stats header { justify-content: space-between; }
+  .stat-card { background: var(--card); border-radius: 16px; padding: 14px 16px 12px; margin-bottom: 12px; }
+  .stat-card h3 { margin: 0 0 2px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .stat-card h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+  .stat-card.feed { --c: var(--feed); } .stat-card.sleep { --c: var(--sleep); } .stat-card.diaper { --c: var(--diaper); }
+  .stat-card .sub { font-size: 12px; color: var(--fg3); margin-bottom: 10px; }
+  .stat-card .sub b { color: var(--fg2); font-weight: 600; }
+  .stat-card svg { width: 100%; height: auto; display: block; }
+  .stat-empty { padding: 30px 0; text-align: center; color: var(--fg3); font-size: 14px; }
+
   /* ── 바텀 시트 ── */
   .dim { position: fixed; inset: 0; background: var(--dim); z-index: 40; }
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; background: var(--card); border-radius: 22px 22px 0 0;
@@ -326,6 +366,27 @@
   </div>
 </section>
 
+<!-- 기록일지: 달력 -->
+<section id="s-diary" class="screen tabbed hidden">
+  <header><div class="who"><span class="name">기록일지</span></div></header>
+  <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="date" id="mon-label"></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+  <div class="cal" id="cal"></div>
+  <div class="cal-legend"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span><span class="nt">한마디</span></div>
+</section>
+
+<!-- 통계 -->
+<section id="s-stats" class="screen tabbed hidden">
+  <header><div class="who"><span class="name">통계</span></div><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></header>
+  <div id="stats"></div>
+</section>
+
+<!-- 하단 탭 -->
+<nav class="tabs hidden" id="tabs">
+  <button type="button" data-tab="s-home"><img class="tab-face" src="img/아기-얼굴-4e.png" alt=""><span>홈</span></button>
+  <button type="button" data-tab="s-diary"><img src="img/ic-diary.png" alt=""><span>일지</span></button>
+  <button type="button" data-tab="s-stats"><img src="img/ic-stats.png" alt="" style="transform:scale(.9)"><span>통계</span></button>
+</nav>
+
 <!-- 설정 -->
 <section id="s-settings" class="screen hidden">
   <header class="sub"><button type="button" class="back" id="close-settings" aria-label="뒤로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="name">설정</div><span class="back-sp"></span></header>
@@ -415,7 +476,13 @@ const fmtDate = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() 
 const ago = ts => { const m = Math.max(0, Math.round((Date.now() - new Date(ts)) / 60000)); return m < 60 ? `${m}분 전` : `${Math.floor(m / 60)}시간 ${m % 60}분 전`; };
 const dur = (a, b) => { const m = Math.max(0, Math.round((new Date(b || Date.now()) - new Date(a)) / 60000)); return m < 60 ? `${m}분` : `${Math.floor(m / 60)}시간 ${m % 60}분`; };
 const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800); };
-const show = id => { for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id); window.scrollTo(0, 0); };
+const TABBED = ['s-home', 's-diary', 's-stats'];
+const show = id => {
+  for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id);
+  $('tabs').classList.toggle('hidden', !TABBED.includes(id));
+  for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === id);
+  window.scrollTo(0, 0);
+};
 
 // ── 상태
 let me = null;          // { id, nickname }
@@ -442,6 +509,17 @@ const db = {
     const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
     nickById = Object.fromEntries((ps || []).map(p => [p.id, p.nickname]));
   },
+  loaded: new Set(),                       // 추가로 불러온 달 'YYYY-MM'
+  async loadMonth(ym) {                    // 일지에서 지난달로 가면 그 달치를 더 불러옴 (기본은 최근 30일)
+    if (MOCK || this.loaded.has(ym)) return;
+    const from = new Date(ym + '-01T00:00'), to = new Date(from); to.setMonth(to.getMonth() + 1);
+    const [l, n] = await Promise.all([
+      sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', from.toISOString()).lt('at', to.toISOString()),
+      sb.from('baby_notes').select('*').eq('baby_id', baby.id).gte('day', dstr(from)).lt('day', dstr(to))
+    ]);
+    for (const r of l.data || []) upsertLocal(logs, r); for (const r of n.data || []) upsertLocal(notes, r);
+    this.loaded.add(ym);
+  },
   async addLog(row) {
     if (MOCK) { row.id = 'm' + Date.now(); logs.push(row); return row; }
     const { data, error } = await sb.from('baby_logs').insert(row).select().single();
@@ -467,8 +545,8 @@ const db = {
     if (MOCK) return;
     const { error } = await sb.from('baby_notes').delete().eq('id', id); if (error) throw error;
   },
-  async addNote(text) {
-    const row = { baby_id: baby.id, user_id: me.id, day, text };
+  async addNote(text, forDay) {
+    const row = { baby_id: baby.id, user_id: me.id, day: forDay || day, text };
     if (MOCK) { row.id = 'n' + Date.now(); row.created_at = new Date().toISOString(); notes.push(row); return; }
     const { data, error } = await sb.from('baby_notes').insert(row).select().single();
     if (error) throw error; upsertLocal(notes, data);
@@ -504,6 +582,96 @@ function detailOf(l) {
   if (l.kind === 'temp') return `${d.c ?? '—'}℃`;
   return '';
 }
+// ── 날짜 도장: 생일 기준 자동 (출생일 = 1일)
+const MILESTONES = { 50: '50일', 100: '100일', 200: '200일', 300: '300일', 365: '첫돌' };
+const dayNo = d => Math.floor((new Date(d + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
+const stampOf = d => MILESTONES[dayNo(d)] || '';
+const STICKER = { _: 'img/ic-wake.png' };   // 특별한 날 스티커 그림 (임시: 해 아이콘. 미지 도장 그림 오면 날짜별로 교체)
+
+// ── 기록일지: 달력 (칸 = 그날 요약 점 + 도장, 누르면 홈에서 그날 표)
+let ym = dstr(new Date()).slice(0, 7);
+async function renderDiary() {
+  await db.loadMonth(ym);
+  const today = dstr(new Date());
+  const first = new Date(ym + '-01T00:00'), y = first.getFullYear(), mo = first.getMonth();
+  $('mon-label').innerHTML = `${y}년 ${mo + 1}월`;
+  $('mon-next').disabled = ym >= today.slice(0, 7);
+  const days = new Date(y, mo + 1, 0).getDate();
+  const byDay = {};
+  for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0, byDay[d].slp += (l.kind === 'sleep' && l.ended_at) ? (new Date(l.ended_at) - new Date(l.at)) : 0; }
+  for (const n of notes) if (n.day.startsWith(ym)) (byDay[n.day] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 }).note += 1;
+  const lastNote = {}; for (const n of notes) if (n.day.startsWith(ym) && (!lastNote[n.day] || n.created_at > lastNote[n.day].created_at)) lastNote[n.day] = n;
+  let h = '';
+  for (let d = 1; d <= days; d++) {
+    const ds = `${ym}-${pad(d)}`, v = byDay[ds], st = stampOf(ds), future = ds > today, born = ds >= baby.birth_date;
+    const dots = v ? ['feed', 'diaper', 'sleep', 'note'].map(k => `<i class="${k === 'note' ? 'nt' : k}"></i>`.repeat(Math.min(v[k], k === 'note' ? 1 : 3))).join('') : '';
+    const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
+    const wd = new Date(ds + 'T00:00').getDay(), ln = lastNote[ds];
+    h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${future || !born ? 'future' : ''}" data-d="${ds}" ${future ? 'disabled' : ''}>
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${st ? `<span class="stk"><img src="${STICKER[st] || STICKER._}" alt=""></span><span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln.text)}</span>` : ''}<span class="m">${dots}</span></button>`;
+  }
+  $('cal').innerHTML = h;
+}
+$('mon-prev').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() - 1); ym = dstr(d).slice(0, 7); renderDiary(); };
+$('mon-next').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() + 1); ym = dstr(d).slice(0, 7); renderDiary(); };
+$('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]'); if (!b || b.disabled) return; openDayNotes(b.dataset.d); });
+// ── 일지에서 날짜를 누르면: 그날 한마디 보기 + 쓰기 (지난 날에도 남길 수 있음) + 그날 표로 가기
+function openDayNotes(ds) {
+  const list = () => { const dn = notes.filter(n => n.day === ds).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    $('dn-list').innerHTML = dn.length ? dn.map(n => `<div class="note"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span>${n.user_id === me.id ? `<button type="button" class="nx" data-id="${n.id}">✕</button>` : ''}</div>`).join('') : '<div class="empty" style="padding:14px 0">아직 남긴 말이 없어요</div>'; };
+  const d = new Date(ds + 'T00:00');
+  $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">D+${dayNo(ds)}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
+    <div class="notes" id="dn-list" style="padding:0;background:none;max-height:40vh;overflow:auto"></div>
+    <form class="noteform" id="dn-form"><input id="dn-in" maxlength="300" placeholder="예: 많이 운 날 ㅜㅜ · 처음 뒤집은 날" autocomplete="off"><button type="submit" id="dn-btn" disabled>남기기</button></form>
+    <div class="acts"><button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="dn-go">이날 기록 보기</button></div>`;
+  $('sheet').dataset.kind = 'daynotes'; list();
+  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  $('dn-in').addEventListener('input', () => $('dn-btn').disabled = !$('dn-in').value.trim());
+  $('dn-form').addEventListener('submit', async e => { e.preventDefault(); const t = $('dn-in').value.trim(); if (!t) return;
+    try { await db.addNote(t, ds); $('dn-in').value = ''; $('dn-btn').disabled = true; list(); renderDiary(); } catch (err) { alert('남기기 실패: ' + err.message); } });
+  $('dn-list').addEventListener('click', async e => { const b = e.target.closest('.nx'); if (!b) return; if (!confirm('이 한마디를 지울까요?')) return; try { await db.delNote(b.dataset.id); list(); renderDiary(); } catch (err) { alert('지우기 실패: ' + err.message); } });
+  $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
+}
+
+// ── 통계: 최근 7/30일 막대 (인라인 SVG)
+let statRange = +(localStorage.getItem('bb-stat') || 7);
+function bars(series, color, fmt, unit) {                         // series: [{label, v}]
+  const W = 320, H = 120, padL = 4, padB = 18, n = series.length, gap = n > 10 ? 2 : 6, bw = (W - padL * 2 - gap * (n - 1)) / n;
+  const max = Math.max(1, ...series.map(s => s.v)); let g = '';
+  series.forEach((s, i) => {
+    const x = padL + i * (bw + gap), bh = s.v / max * (H - padB - 16), y = H - padB - bh;
+    g += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="${Math.min(4, bw / 2)}" fill="${color}" opacity="${s.v ? .9 : .15}"/>`;
+    if (s.v && n <= 10) g += `<text x="${x + bw / 2}" y="${y - 4}" text-anchor="middle" font-size="10" fill="var(--fg2)">${fmt(s.v)}</text>`;
+    if (n <= 10 || i % 5 === 0 || i === n - 1) g += `<text x="${x + bw / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--fg3)">${s.label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
+}
+function renderStats() {
+  for (const b of $('stat-range').children) b.classList.toggle('on', +b.dataset.v === statRange);
+  const today = new Date(); const daysArr = [];
+  for (let i = statRange - 1; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); daysArr.push(dstr(d)); }
+  const per = Object.fromEntries(daysArr.map(d => [d, { feed: 0, ml: 0, slp: 0, pee: 0, poo: 0 }]));
+  for (const l of logs) { const d = localDay(l.at); const p = per[d]; if (!p) continue;
+    if (l.kind === 'feed') { p.feed++; p.ml += +(l.detail || {}).ml || 0; }
+    if (l.kind === 'diaper') { if (l.detail?.pee) p.pee++; if (l.detail?.poo) p.poo++; }
+    if (l.kind === 'sleep' && l.ended_at) p.slp += new Date(l.ended_at) - new Date(l.at); }
+  const lab = d => statRange <= 7 ? WD[new Date(d + 'T00:00').getDay()] : String(+d.slice(8));
+  const tot = k => daysArr.reduce((s, d) => s + per[d][k], 0), has = daysArr.some(d => per[d].feed || per[d].pee || per[d].slp);
+  if (!has) { $('stats').innerHTML = '<div class="stat-empty">아직 기록이 쌓이지 않았어요</div>'; return; }
+  const n = daysArr.filter(d => per[d].feed || per[d].pee || per[d].slp).length || 1;
+  $('stats').innerHTML = `
+    <div class="stat-card feed"><h3>수유량</h3><div class="sub">하루 평균 <b>${Math.round(tot('ml') / n)}ml</b> · <b>${(tot('feed') / n).toFixed(1)}회</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: per[d].ml })), 'var(--feed)', v => v)}</div>
+    <div class="stat-card sleep"><h3>잠</h3><div class="sub">하루 평균 <b>${(tot('slp') / n / 3600000).toFixed(1)}시간</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: Math.round(per[d].slp / 360000) / 10 })), 'var(--sleep)', v => v + 'h')}</div>
+    <div class="stat-card diaper"><h3>기저귀</h3><div class="sub">하루 평균 소변 <b>${(tot('pee') / n).toFixed(1)}</b> · 대변 <b>${(tot('poo') / n).toFixed(1)}</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: per[d].pee + per[d].poo })), 'var(--diaper)', v => v)}</div>`;
+}
+$('stat-range').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; statRange = +b.dataset.v; localStorage.setItem('bb-stat', statRange); renderStats(); });
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const id = b.dataset.tab;
+  if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
+  else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
+  else { show(id); renderStats(); }
+});
+
 // ── 24시간 원형 생활계획표: 0시가 위, 시계 방향. 잠은 실제 길이 띠, 수유·기저귀·체온은 짧은 조각
 let view = localStorage.getItem('bb-view') || 'list';
 function renderClock(sorted, dayLogs, today) {
@@ -531,9 +699,14 @@ function renderClock(sorted, dayLogs, today) {
     const m0 = Math.max(0, (s0 - dayStart) / 60000), m1 = Math.min(1440, (e0 - dayStart) / 60000);
     g += arc(m0, m1, R, r, 'ck sleep' + (l.ended_at ? '' : ' open'), l.id);
   }
-  const W = { feed: 22, diaper: 20, temp: 8 }, MID = (R + r) / 2;   // 조각 폭(분). 겹쳐도 다 보이게 띠를 안팎으로 나눔: 바깥=수유, 안쪽=기저귀, 체온은 전체 폭 가는 조각(맨 위)
-  const lane = { feed: [R, MID + 1], diaper: [MID - 1, r], temp: [R, r] };
-  for (const k of ['feed', 'diaper', 'temp']) for (const l of dayLogs.filter(l => l.kind === k)) { const m = minOf(l.at); g += arc(m - W[k] / 2, m + W[k] / 2, lane[k][0], lane[k][1], 'ck ' + k, l.id); }
+  const W = { feed: 22, diaper: 20, temp: 8 }, MID = (R + r) / 2;   // 조각 폭(분)
+  const iv = l => { const m = minOf(l.at); return [m - W[l.kind] / 2, m + W[l.kind] / 2]; };
+  const feeds = dayLogs.filter(l => l.kind === 'feed'), dps = dayLogs.filter(l => l.kind === 'diaper');
+  const hits = (l, others) => others.some(o => { const [a0, a1] = iv(l), [b0, b1] = iv(o); return a0 < b1 && b0 < a1; });
+  // 수유·기저귀가 겹치는 조각만 반반(바깥=수유, 안쪽=기저귀), 안 겹치면 전체 폭. 체온은 전체 폭 가는 조각(맨 위)
+  for (const l of feeds) { const [m0, m1] = iv(l); g += arc(m0, m1, R, hits(l, dps) ? MID + 1 : r, 'ck feed', l.id); }
+  for (const l of dps) { const [m0, m1] = iv(l); g += arc(m0, m1, hits(l, feeds) ? MID - 1 : R, r, 'ck diaper', l.id); }
+  for (const l of dayLogs.filter(l => l.kind === 'temp')) { const [m0, m1] = iv(l); g += arc(m0, m1, R, r, 'ck temp', l.id); }
   if (day === today) { const a = ang(minOf(Date.now())); const [x0, y0] = pt(r - 4, a), [x1, y1] = pt(R + 4, a); g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--now, #ff4a4a)" stroke-width="2" stroke-linecap="round"/>`; }
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
   const dtxt = `D+${dd}`, dw = 20 + dtxt.length * 6.6;
@@ -543,9 +716,9 @@ function renderClock(sorted, dayLogs, today) {
 }
 function render() {
   const today = dstr(new Date());
-  $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace();
+  $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace(); document.querySelector('.tab-face').src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
-  $('h-dday').textContent = `D+${dd}`;
+  $('h-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
   $('day-next').disabled = day >= today;
 
@@ -747,7 +920,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.8i · 09-27 18:55';
+const VER = 'v0.9 · 09-27 19:20';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
@@ -912,6 +1085,9 @@ function mock() {
     { id: 'a10', kind: 'feed', at: T(10, 10), detail: { type: 'formula', ml: 80 }, note: '조금 남김', user_id: 'u-dad' },
     { id: 'a11', kind: 'sleep', at: T(10, 40), ended_at: null, detail: {}, note: '', user_id: 'u-dad' },
   ].filter(l => new Date(l.at) <= Date.now() || true);
+  for (let off = 1; off <= 9; off++) for (const [h, k, d] of [[1, 'feed', { type: 'formula', ml: 40 + off * 5 }], [4, 'diaper', { pee: true, poo: off % 3 === 0 }], [5, 'feed', { type: 'formula', ml: 60 }], [9, 'diaper', { pee: true }], [12, 'feed', { type: 'breast', min: 15 }], [18, 'feed', { type: 'formula', ml: 70 }]])
+    logs.push({ id: `p${off}-${h}`, kind: k, at: T(h, 0, -off), detail: d, note: '', user_id: off % 2 ? 'u-dad' : 'u-mom' });
+  for (let off = 1; off <= 9; off++) logs.push({ id: `s${off}`, kind: 'sleep', at: T(22, 0, -off - 1), ended_at: T(3, 30, -off), detail: {}, note: '', user_id: 'u-mom' });
   notes = [
     { id: 'n1', day: dstr(new Date()), user_id: 'u-mom', text: '새벽 두 번 봐줘서 고마워. 오후엔 내가 볼게', created_at: T(7, 25) },
   ];
