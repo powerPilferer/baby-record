@@ -211,7 +211,7 @@
 <!-- 로그인 -->
 <section id="s-login" class="screen hidden">
   <div class="onb">
-    <div class="family"><img src="img/아빠.png" alt=""><img class="baby" src="img/아기-얼굴.png" alt=""><img src="img/엄마.png" alt=""></div>
+    <div class="family"><img src="img/아빠.png" alt=""><img class="baby" src="img/아기-얼굴-4e.png" alt=""><img src="img/엄마.png" alt=""></div>
     <h1>기특일기</h1>
     <p>부부가 같은 표를 보며 적어요</p>
     <button type="button" id="kakao-login">
@@ -260,7 +260,7 @@
 <!-- 홈: 오늘의 표 -->
 <section id="s-home" class="screen hidden">
   <header>
-    <div class="who"><img class="bf" src="img/아기-얼굴.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
+    <div class="who"><img class="bf" src="img/아기-얼굴-4e.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
     <button type="button" class="gear" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   </header>
   <div class="daynav">
@@ -584,7 +584,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.6c · 09-27 15:20';
+const VER = 'v0.6d · 09-27 15:30';
 $('ver').textContent = '기특일기 ' + VER;
 $('open-settings').onclick = () => { fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
