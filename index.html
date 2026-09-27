@@ -164,22 +164,23 @@
 
   /* ── 하단 탭 ── */
   .gear-fab { position: fixed; top: calc(var(--sat) + 12px); right: 16px; z-index: 31; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg);
-    background: color-mix(in srgb, var(--card) 78%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
-    border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+    background: rgba(28,28,32,.55); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
   .gear-fab svg { width: 24px; height: 24px; fill: currentColor; }
   .gear-fab:active { background: var(--card2); }
-  :root[data-theme="light"] .gear-fab { background: color-mix(in srgb, #fff 82%, transparent); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  :root[data-theme="light"] .gear-fab { background: rgba(255,255,255,.55); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   .tabbed header { padding-right: 56px; }
   .tabbed { padding-bottom: 112px !important; }
   .tabs { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 30; display: flex; gap: 2px; padding: 6px; border-radius: 999px;
-    background: color-mix(in srgb, var(--card) 78%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
-    border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent); box-shadow: 0 10px 30px rgba(0,0,0,.35); max-width: 448px; margin: 0 auto; }
+    background: rgba(28,28,32,.55); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,.08); box-shadow: 0 10px 30px rgba(0,0,0,.35); max-width: 448px; margin: 0 auto; }
   .tabs button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 999px; color: var(--fg3); font-size: 11.5px; font-weight: 600; transition: background .15s, color .15s; }
   .tabs button img { width: 28px; height: 28px; object-fit: contain; opacity: .55; transition: opacity .15s, transform .15s; }
   .tabs button img.tab-face { border-radius: 50%; }
-  .tabs button.on { background: color-mix(in srgb, var(--fg) 10%, transparent); color: var(--ok); }
+  .tabs button.on { background: rgba(255,255,255,.12); color: var(--ok); }
+  :root[data-theme="light"] .tabs button.on { background: rgba(0,0,0,.07); }
   .tabs button.on img { opacity: 1; transform: translateY(-1px); }
-  :root[data-theme="light"] .tabs { background: color-mix(in srgb, #fff 82%, transparent); box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+  :root[data-theme="light"] .tabs { background: rgba(255,255,255,.55); border-color: rgba(0,0,0,.06); box-shadow: 0 10px 30px rgba(0,0,0,.12); }
   /* ── 일지 달력 ── */
   .cal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .cal .d { aspect-ratio: 1 / 1.1; border-radius: 16px; background: var(--card); padding: 12px 11px 11px; display: flex; flex-direction: column; text-align: left; position: relative; }
@@ -956,7 +957,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9f · 09-28 00:55';
+const VER = 'v0.9g · 09-28 01:05';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
