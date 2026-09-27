@@ -163,6 +163,13 @@
   .noteform button:disabled { opacity: .3; }
 
   /* ── 하단 탭 ── */
+  .gear-fab { position: fixed; top: calc(var(--sat) + 12px); right: 16px; z-index: 31; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg);
+    background: color-mix(in srgb, var(--card) 78%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+    border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  .gear-fab svg { width: 24px; height: 24px; fill: currentColor; }
+  .gear-fab:active { background: var(--card2); }
+  :root[data-theme="light"] .gear-fab { background: color-mix(in srgb, #fff 82%, transparent); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  .tabbed header { padding-right: 56px; }
   .tabbed { padding-bottom: calc(112px + var(--sab)) !important; }
   .tabs { position: fixed; left: 16px; right: 16px; bottom: calc(16px + var(--sab)); z-index: 30; display: flex; gap: 2px; padding: 6px; border-radius: 999px;
     background: color-mix(in srgb, var(--card) 78%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
@@ -197,7 +204,7 @@
   .cal-legend span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; background: var(--c); }
   .cal-legend .feed { --c: var(--feed); } .cal-legend .diaper { --c: var(--diaper); } .cal-legend .sleep { --c: var(--sleep); } .cal-legend .nt { --c: var(--ok); }
   /* ── 통계 ── */
-  #s-stats header { justify-content: space-between; }
+  .stat-tools { display: flex; justify-content: flex-end; margin: 4px 0 12px; }
   .stat-card { background: var(--card); border-radius: 16px; padding: 14px 16px 12px; margin-bottom: 12px; }
   .stat-card h3 { margin: 0 0 2px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
   .stat-card h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
@@ -341,7 +348,7 @@
 <section id="s-home" class="screen tabbed hidden">
   <header>
     <div class="who"><img class="bf" src="img/아기-얼굴-4e.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
-    <button type="button" class="gear" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+    
   </header>
   <div class="daynav">
     <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -381,9 +388,13 @@
 
 <!-- 통계 -->
 <section id="s-stats" class="screen tabbed hidden">
-  <header><div class="who"><span class="name">통계</span></div><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></header>
+  <header><div class="who"><span class="name">통계</span></div></header>
+  <div class="stat-tools"><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></div>
   <div id="stats"></div>
 </section>
+
+<!-- 우상단 고정 설정 -->
+<button type="button" class="gear-fab hidden" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
 
 <!-- 하단 탭 -->
 <nav class="tabs hidden" id="tabs">
@@ -484,7 +495,7 @@ const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add
 const TABBED = ['s-home', 's-diary', 's-stats'];
 const show = id => {
   for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id);
-  $('tabs').classList.toggle('hidden', !TABBED.includes(id));
+  $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id));
   for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === id);
   window.scrollTo(0, 0);
 };
@@ -945,7 +956,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.9d · 09-28 00:35';
+const VER = 'v0.9e · 09-28 00:45';
 $('ver').textContent = '기특일기 ' + VER;
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
 async function checkUpdate() {
