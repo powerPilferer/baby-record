@@ -74,9 +74,9 @@
   /* ── 홈 ── */
   header { display: flex; align-items: center; justify-content: space-between; height: 46px; margin: 12px 0 10px; padding: 0; }
   header .who { display: flex; align-items: center; }
-  #s-home header .who { position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 94px); height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
-  :root[data-theme="light"] #s-home header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
-  #s-home header .bf { width: 34px; height: 34px; margin-right: 9px; }
+  #s-home header .who, #s-stats header .who { position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 94px); height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  :root[data-theme="light"] #s-home header .who, :root[data-theme="light"] #s-stats header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  #s-home header .bf, #s-stats header .bf { width: 34px; height: 34px; margin-right: 9px; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
   header .name { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
   header .dday { color: var(--ok); font-size: 13px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); font-variant-numeric: tabular-nums; }
@@ -242,6 +242,18 @@
   .g-sex .gs-btns { display: flex; gap: 8px; margin-top: 10px; }
   .g-sex button { flex: 1; padding: 10px 0; border-radius: 999px; background: var(--card2); font-weight: 600; font-size: 14px; color: var(--fg); }
   .g-cnt { font-size: 12px; color: var(--fg3); }
+  /* 성장 프로필 헤더 (시안 v0.18: 인스타 프로필 문법) */
+  .gp { padding: 6px 2px 16px; }
+  .gp-top { display: flex; align-items: center; gap: 12px; }
+  .gp-av { flex: none; width: 76px; height: 76px; border-radius: 50%; padding: 3px; background: var(--line); }
+  .gp-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: 3px solid var(--bg); background: var(--card2); }
+  .gp-info { min-width: 0; }
+  .gp-name { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+  .gp-name .dday { color: var(--ok); font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); }
+  .gp-bio { margin-top: 4px; font-size: 14px; color: var(--fg2); line-height: 1.5; }
+  .gp-bio em { font-style: normal; color: var(--ok); font-weight: 600; }
+  .stat-head { display: flex; align-items: center; justify-content: space-between; margin: 24px 2px 14px; }
+  .stat-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
   .g-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .g-quick button { position: relative; min-height: 78px; border-radius: 16px; background: var(--card); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; padding: 12px 13px; text-align: left; }
   .g-quick button:active { background: var(--card2); }
@@ -448,8 +460,8 @@
 
 <!-- 통계 -->
 <section id="s-stats" class="screen tabbed hidden">
-  <header><div class="who"><span class="name">통계</span></div></header>
-  <div class="stat-tools"><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></div>
+  <header><div class="who" id="st-who"><img class="bf" src="img/아기-얼굴-4e.png" alt=""><span class="name st-name"></span><span class="dday st-dday"></span></div></header>
+  <div class="stat-head"><h2>통계</h2><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></div>
   <div id="stats"></div>
 </section>
 
@@ -778,6 +790,8 @@ function bars(series, color, fmt, unit) {                         // series: [{l
   return `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
 }
 function renderStats() {
+  $('st-who').querySelector('.bf').src = babyFace(); $('st-who').querySelector('.st-name').textContent = baby.name;
+  $('st-who').querySelector('.st-dday').textContent = 'D+' + dayNo(dstr(new Date()));
   for (const b of $('stat-range').children) b.classList.toggle('on', +b.dataset.v === statRange);
   const today = new Date(); const daysArr = [];
   for (let i = statRange - 1; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); daysArr.push(dstr(d)); }
@@ -872,10 +886,17 @@ function renderGrowth() {
       <span class="v">${['w', 'l', 'h'].filter(k => r[GM[k].key] != null).map(k => fmtV(k, r[GM[k].key])).join(' · ')}</span>
       ${r.note ? `<span class="nt">${esc(r.note)}</span>` : ''}${avatar(r.user_id)}</button>`).join('')}</div>
       ${rows.length > 3 && !gShowAll ? `<button type="button" class="g-more" id="g-more">이전 기록 ${rows.length - 3}개 더 보기</button>` : ''}` : '';
-  const quick = Object.entries(GM).map(([k, g]) => { const lp = growth.filter(r => r[g.key] != null).sort((a, b) => a.day < b.day ? -1 : 1).pop();
-    const pc = lp ? pctOf(k, lp.day, +lp[g.key]) : null;
+  const lastOf = k => growth.filter(r => r[GM[k].key] != null).sort((a, b) => a.day < b.day ? -1 : 1).pop();
+  // 측정 버튼 3개 = v0.13 카드 디자인 그대로 (사장님 "버튼은 기존 디자인대로 밑으로")
+  const quick = ['w', 'l', 'h'].map(k => { const g = GM[k], lp = lastOf(k), pc = lp ? pctOf(k, lp.day, +lp[g.key]) : null;
     return `<button type="button" data-gq="${k}"><span class="plus">+</span><span class="k">${g.label}</span><span class="v ${lp ? '' : 'none'}">${lp ? fmtV(k, lp[g.key]) : '기록 없음'}</span>${pc != null ? `<span class="p">백분위 ${fmtPct(pc)}</span>` : ''}</button>`; }).join('');
-  el.innerHTML = `<div class="g-quick" id="g-quick">${quick}</div><div class="stat-card grow">
+  const bd = new Date(baby.birth_date + 'T00:00');
+  // 프로필 = 사진 + 이름·D+n·설명 (v0.18)
+  const profile = `<div class="gp"><div class="gp-top"><button type="button" class="gp-av" id="gp-av" aria-label="아기 정보"><img src="${esc(babyFace())}" alt=""></button>
+      <div class="gp-info"><div class="gp-name">${esc(baby.name)}<span class="dday">D+${dayNo(dstr(new Date()))}</span></div>
+      <div class="gp-bio">${bd.getFullYear()}년 ${bd.getMonth() + 1}월 ${bd.getDate()}일생 · ${baby.sex === 'f' ? '여아' : baby.sex === 'm' ? '남아' : '성별 미정'}</div></div></div></div>
+    <div class="g-quick" id="g-quick">${quick}</div>`;
+  el.innerHTML = `${profile}<div class="stat-card grow">
     <div class="g-head"><h3>성장곡선</h3></div>
     <div class="seg mini g-metric" id="g-metric">${Object.entries(GM).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === m ? 'on' : ''}">${v.label}</button>`).join('')}</div>
     ${now}${sexAsk}${growthChart(m, pts)}
@@ -883,6 +904,7 @@ function renderGrowth() {
     <div class="stat-card grow"><div class="g-head" style="margin-bottom:4px"><h3>측정 기록</h3><span class="g-cnt">${rows.length ? rows.length + '회' : ''}</span></div>
     ${list || '<div class="g-empty">아직 측정 기록이 없어요. 맨 위 버튼으로 시작해요</div>'}</div>`;
   el.querySelectorAll('[data-gq]').forEach(b => b.onclick = () => openGrowthSheet(null, b.dataset.gq));
+  $('gp-av').onclick = () => openBabySheet();
   $('g-metric').onclick = e => { const b = e.target.closest('button'); if (!b) return; gMetric = b.dataset.v; localStorage.setItem('bb-gm', gMetric); renderGrowth(); };
   el.querySelectorAll('.g-row').forEach(b => b.onclick = () => openGrowthSheet(growth.find(r => r.id === b.dataset.id)));
   el.querySelectorAll('[data-sex]').forEach(b => b.onclick = async () => { try { await db.updBaby({ sex: b.dataset.sex }); renderGrowth(); toast('기준 곡선을 켰어요'); } catch (e) { alert('저장 실패: ' + e.message); } });
@@ -1231,6 +1253,7 @@ $('setup-file').addEventListener('change', async e => {
 });
 $('setup-photo-clear').onclick = () => { setupPhoto = null; $('setup-file').value = ''; $('setup-photo').src = BABY_FACE; $('setup-photo-clear').classList.add('hidden'); };
 // 아기 알약도 고정 (v0.12): 스크롤 중 첫 탭을 iOS가 삼키지 않게 설정 버튼과 같은 touchend 처리
+$('st-who').onclick = () => openBabySheet();
 const _who = document.querySelector('#s-home header .who');
 let _whoT = null;
 _who.addEventListener('touchstart', e => { const t = e.touches[0]; _whoT = { x: t.clientX, y: t.clientY, at: Date.now() }; }, { passive: true });
@@ -1243,7 +1266,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.17 · 09-28 버터';
+const VER = 'v0.18 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -1308,7 +1331,7 @@ function openBabySheet() {
     try {
       const patch = { name, birth_date }; const sx = $('b-sex').querySelector('.on'); if (sx) patch.sex = sx.dataset.v;
       if (photoBlob) { toast('사진 올리는 중…'); patch.photo_url = await uploadPhoto(photoBlob, baby.id); } else if (clearPhoto) patch.photo_url = null;
-      await db.updBaby(patch); closeSheet(); fillSettings(); render(); toast('고쳤어요');
+      await db.updBaby(patch); closeSheet(); fillSettings(); render(); if (!$('s-growth').classList.contains('hidden')) renderGrowth(); if (!$('s-stats').classList.contains('hidden')) renderStats(); toast('고쳤어요');
     } catch (e) { alert('저장 실패: ' + e.message); }
   };
 }
