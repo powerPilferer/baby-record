@@ -252,6 +252,40 @@
   .gp-name .dday { color: var(--ok); font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); }
   .gp-bio { margin-top: 4px; font-size: 14px; color: var(--fg2); line-height: 1.5; }
   .gp-bio em { font-style: normal; color: var(--ok); font-weight: 600; }
+  /* 성장 하위 탭 (인스타 프로필 탭처럼 밑줄) + 접종·검진 (v0.19) */
+  .g-sub { display: flex; margin: 0 -16px 14px; border-bottom: 1px solid var(--line); }
+  .g-sub button { flex: 1; padding: 12px 0 11px; font-size: 15px; font-weight: 600; color: var(--fg3); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .g-sub button.on { color: var(--fg); border-bottom-color: var(--fg); }
+  .vx-row, .vx-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 11px 0; border-top: 1px solid var(--line); }
+  .vx-next .vx-row:first-of-type { border-top: 0; }
+  .stat-card.vx-next { background: color-mix(in srgb, var(--ok) 9%, var(--card)); }
+  :root[data-theme="light"] .stat-card.vx-next { background: color-mix(in srgb, var(--ok) 13%, #fff); border: 1px solid color-mix(in srgb, var(--ok) 28%, #fff); }   /* 7%는 라이트에서 안 보임 (사장님) → 13% + 테두리 */
+  .vx-next .vx-row { border-top-color: color-mix(in srgb, var(--ok) 14%, var(--line)); }
+  .vx-cat { flex: none; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 7px; color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, var(--card)); }
+  .vx-cat.chk { color: var(--feed); background: color-mix(in srgb, var(--feed) 14%, var(--card)); }
+  .vx-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .vx-t b { font-size: 15px; font-weight: 600; }
+  .vx-t b em { font-style: normal; color: var(--fg2); font-weight: 500; }
+  .vx-t small { font-size: 12px; color: var(--fg3); }
+  .vx-d { flex: none; font-size: 12px; font-weight: 600; color: var(--fg3); font-variant-numeric: tabular-nums; }
+  .now .vx-d, .soon .vx-d { color: var(--ok); } .late .vx-d { color: var(--temp); }
+  .vx-ck { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .vx-item.done .vx-ck { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+  .vx-item.now .vx-ck, .vx-item.soon .vx-ck { border-color: var(--ok); }
+  .vx-item.late .vx-ck { border-color: var(--temp); }
+  .vx-item.done .vx-t b { color: var(--fg2); }
+  .vx-group { margin-top: 6px; }
+  .vx-group.far { opacity: .6; }
+  .vx-gh { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 0 2px; }
+  .vx-gh span { font-size: 13px; font-weight: 700; color: var(--fg); }
+  .vx-gh small { font-size: 12px; color: var(--fg3); }
+  .vx-own { font-style: normal; font-size: 11px; font-weight: 600; color: var(--sleep); margin-left: 6px; padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--sleep) 14%, var(--card)); vertical-align: 1px; }
+  .vx-cat.own { color: var(--sleep); background: color-mix(in srgb, var(--sleep) 14%, var(--card)); }
+  .xv-sug { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+  .xv-sug button { padding: 6px 11px; border-radius: 999px; background: var(--bg); color: var(--fg2); font-size: 13px; font-weight: 500; }
+  .vx-info { font-size: 13px; color: var(--fg2); line-height: 1.5; margin: -6px 0 12px; }
+  .status .chip.vx { --c: var(--ok); width: 100%; text-align: left; padding: 0; }
+  .status.vx-box { margin-top: -9px; padding: 11px 15px; }   /* 안내 상자 바로 아래 같은 모양 상자, 간격 10px */
   .stat-head { display: flex; align-items: center; justify-content: space-between; margin: 24px 2px 14px; }
   .stat-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
   .g-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -425,6 +459,7 @@
     <div class="chip feed"><b>마지막 수유</b><span id="st-feed">—</span></div>
     <div class="chip sleep"><b>잠</b><span id="st-sleep">—</span></div>
   </div>
+  <div class="status vx-box hidden" id="st-vax-wrap"></div>
   <div class="quick">
     <button type="button" class="feed" data-kind="feed"><span class="ic"><img src="img/ic-feed.png" alt=""></span><span class="tx"><span class="k">수유</span><span class="s">분유 · 모유 · 유축</span></span></button>
     <button type="button" class="diaper" data-kind="diaper"><span class="ic"><img src="img/ic-diaper.png" alt=""></span><span class="tx"><span class="k">기저귀</span><span class="s">소변 · 대변</span></span></button>
@@ -455,7 +490,10 @@
 <!-- 성장 (v0.11: 통계에서 분리, 사장님 "성장은 하단 메뉴로 따로") -->
 <section id="s-growth" class="screen tabbed hidden">
   <header><div class="who"><span class="name">성장</span></div></header>
+  <div id="g-prof"></div>
+  <div class="g-sub" id="g-sub"><button type="button" data-v="grow">성장</button><button type="button" data-v="vax">접종·검진</button></div>
   <div id="growth"></div>
+  <div id="g-vax" class="hidden"></div>
 </section>
 
 <!-- 통계 -->
@@ -607,13 +645,17 @@ const db = {
   async loadAll() {
     if (MOCK) return;
     const since = new Date(Date.now() - 30 * 86400000).toISOString();
-    const [l, n, m, sd, gr] = await Promise.all([
+    const [l, n, m, sd, gr, ck, xv] = await Promise.all([
       sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at'),
       sb.from('baby_notes').select('*').eq('baby_id', baby.id).order('created_at'),
       sb.from('baby_members').select('user_id, avatar_url').eq('baby_id', baby.id),
       sb.from('baby_days').select('day, sticker, tilt, diary').eq('baby_id', baby.id),
-      sb.from('baby_growth').select('*').eq('baby_id', baby.id).order('day')
+      sb.from('baby_growth').select('*').eq('baby_id', baby.id).order('day'),
+      sb.from('baby_checks').select('*').eq('baby_id', baby.id),
+      sb.from('baby_extra_vax').select('*').eq('baby_id', baby.id)
     ]);
+    extras = xv.data || [];
+    checks = Object.fromEntries((ck.data || []).map(r => [r.item, r]));
     logs = l.data || []; notes = n.data || []; growth = gr.data || [];
     stickers = Object.fromEntries((sd.data || []).filter(x => x.sticker).map(x => [x.day, x.sticker]));
     tilts = Object.fromEntries((sd.data || []).map(x => [x.day, x.tilt || 1]));
@@ -687,6 +729,27 @@ const db = {
     if (MOCK) return;
     const { error } = await sb.from('baby_growth').delete().eq('id', id); if (error) throw error;
   },
+  async setCheck(item, v) {                // v = { done_on, note } 또는 null(완료 취소)
+    if (v) checks[item] = { item, ...v, user_id: checks[item]?.user_id || me.id }; else delete checks[item];
+    if (MOCK) return;
+    if (v) { const { error } = await sb.from('baby_checks').upsert({ baby_id: baby.id, item, done_on: v.done_on, note: v.note, user_id: checks[item].user_id }); if (error) throw error; }
+    else { const { error } = await sb.from('baby_checks').delete().eq('baby_id', baby.id).eq('item', item); if (error) throw error; }
+  },
+  async addExtra(row) {
+    if (MOCK) { extras.push({ id: 'x' + Date.now(), user_id: me.id, ...row }); return; }
+    const { data, error } = await sb.from('baby_extra_vax').insert({ baby_id: baby.id, user_id: me.id, ...row }).select().single();
+    if (error) throw error; upsertLocal(extras, data);
+  },
+  async updExtra(id, patch) {
+    if (MOCK) { Object.assign(extras.find(x => x.id === id), patch); return; }
+    const { data, error } = await sb.from('baby_extra_vax').update(patch).eq('id', id).select().single();
+    if (error) throw error; upsertLocal(extras, data);
+  },
+  async delExtra(id) {
+    extras = extras.filter(x => x.id !== id);
+    if (MOCK) return;
+    const { error } = await sb.from('baby_extra_vax').delete().eq('id', id); if (error) throw error;
+  },
   async addNote(text, forDay) {
     const row = { baby_id: baby.id, user_id: me.id, day: forDay || day, text };
     if (MOCK) { row.id = 'n' + Date.now(); row.created_at = new Date().toISOString(); notes.push(row); return; }
@@ -705,6 +768,8 @@ function subscribe() {
       render();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; } else { if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_extra_vax', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') extras = extras.filter(x => x.id !== p.old.id); else upsertLocal(extras, p.new); render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_checks', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') delete checks[p.old.item]; else checks[p.new.item] = p.new; render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_growth', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') growth = growth.filter(x => x.id !== p.old.id); else upsertLocal(growth, p.new); if (!$('s-growth').classList.contains('hidden')) renderGrowth(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') notes = notes.filter(x => x.id !== p.old.id); else upsertLocal(notes, p.new); render(); })
     .subscribe();
@@ -894,9 +959,9 @@ function renderGrowth() {
   // 프로필 = 사진 + 이름·D+n·설명 (v0.18)
   const profile = `<div class="gp"><div class="gp-top"><button type="button" class="gp-av" id="gp-av" aria-label="아기 정보"><img src="${esc(babyFace())}" alt=""></button>
       <div class="gp-info"><div class="gp-name">${esc(baby.name)}<span class="dday">D+${dayNo(dstr(new Date()))}</span></div>
-      <div class="gp-bio">${bd.getFullYear()}년 ${bd.getMonth() + 1}월 ${bd.getDate()}일생 · ${baby.sex === 'f' ? '여아' : baby.sex === 'm' ? '남아' : '성별 미정'}</div></div></div></div>
-    <div class="g-quick" id="g-quick">${quick}</div>`;
-  el.innerHTML = `${profile}<div class="stat-card grow">
+      <div class="gp-bio">${bd.getFullYear()}년 ${bd.getMonth() + 1}월 ${bd.getDate()}일생 · ${baby.sex === 'f' ? '여아' : baby.sex === 'm' ? '남아' : '성별 미정'}</div></div></div></div>`;
+  $('g-prof').innerHTML = profile;
+  el.innerHTML = `<div class="g-quick" id="g-quick">${quick}</div><div class="stat-card grow">
     <div class="g-head"><h3>성장곡선</h3></div>
     <div class="seg mini g-metric" id="g-metric">${Object.entries(GM).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === m ? 'on' : ''}">${v.label}</button>`).join('')}</div>
     ${now}${sexAsk}${growthChart(m, pts)}
@@ -956,13 +1021,186 @@ function openGrowthSheet(rec, focus) {
   };
 }
 
+// ═══ 접종·검진 (v0.19) ═══
+// 출처: 질병관리청 「어린이 국가예방접종 표준예방접종일정표(2026)」 이미지(nip.kdca.go.kr, 2026-09-28 확인),
+//       영유아 건강검진 8차·구강검진 4차(보건복지부·건강보험 안내). 기간 표기: d=일, m=개월, y=세. to는 그 시점 직전까지.
+const VAX = [
+  // [id, 종류, 이름, 차수, 시작, 끝, 메모]
+  ['hepb1', 'vax', 'B형간염', '1차', '0d', '7d', '보통 출산 병원에서 접종'],
+  ['bcg', 'vax', '결핵(BCG)', '1차', '0d', '28d', '생후 4주 이내'],
+  ['chk1', 'chk', '영유아 건강검진', '1차', '14d', '36d', '생후 14~35일'],
+  ['hepb2', 'vax', 'B형간염', '2차', '1m', '2m', ''],
+  ['dtap1', 'vax', 'DTaP(디프테리아·파상풍·백일해)', '1차', '2m', '3m', ''],
+  ['ipv1', 'vax', '폴리오', '1차', '2m', '3m', ''],
+  ['hib1', 'vax', 'b형헤모필루스인플루엔자', '1차', '2m', '3m', ''],
+  ['pcv1', 'vax', '폐렴구균', '1차', '2m', '3m', ''],
+  ['rota1', 'vax', '로타바이러스', '1차', '2m', '3m', 'RV1 2회 또는 RV5 3회'],
+  ['dtap2', 'vax', 'DTaP(디프테리아·파상풍·백일해)', '2차', '4m', '5m', ''],
+  ['ipv2', 'vax', '폴리오', '2차', '4m', '5m', ''],
+  ['hib2', 'vax', 'b형헤모필루스인플루엔자', '2차', '4m', '5m', ''],
+  ['pcv2', 'vax', '폐렴구균', '2차', '4m', '5m', ''],
+  ['rota2', 'vax', '로타바이러스', '2차', '4m', '5m', 'RV1은 여기서 끝'],
+  ['chk2', 'chk', '영유아 건강검진', '2차', '4m', '7m', '생후 4~6개월'],
+  ['hepb3', 'vax', 'B형간염', '3차', '6m', '7m', ''],
+  ['dtap3', 'vax', 'DTaP(디프테리아·파상풍·백일해)', '3차', '6m', '7m', ''],
+  ['ipv3', 'vax', '폴리오', '3차', '6m', '19m', '생후 6~18개월'],
+  ['hib3', 'vax', 'b형헤모필루스인플루엔자', '3차', '6m', '7m', ''],
+  ['pcv3', 'vax', '폐렴구균', '3차', '6m', '7m', ''],
+  ['rota3', 'vax', '로타바이러스', '3차', '6m', '7m', 'RV5만'],
+  ['chk3', 'chk', '영유아 건강검진', '3차', '9m', '13m', '생후 9~12개월'],
+  ['hib4', 'vax', 'b형헤모필루스인플루엔자', '4차', '12m', '16m', '생후 12~15개월'],
+  ['pcv4', 'vax', '폐렴구균', '4차', '12m', '16m', '생후 12~15개월'],
+  ['mmr1', 'vax', 'MMR(홍역·유행성이하선염·풍진)', '1차', '12m', '16m', '생후 12~15개월'],
+  ['var1', 'vax', '수두', '1차', '12m', '16m', '생후 12~15개월'],
+  ['hepa1', 'vax', 'A형간염', '1차', '12m', '24m', '생후 12~23개월'],
+  ['je1', 'vax', '일본뇌염', '1차', '12m', '24m', '불활성화 백신 기준(생백신은 2회)'],
+  ['je2', 'vax', '일본뇌염', '2차', '12m', '24m', '불활성화: 1차 후 7~30일'],
+  ['dtap4', 'vax', 'DTaP(디프테리아·파상풍·백일해)', '4차', '15m', '19m', '생후 15~18개월'],
+  ['hepa2', 'vax', 'A형간염', '2차', '18m', '36m', '1차 후 6~12개월'],
+  ['chk4', 'chk', '영유아 건강검진', '4차', '18m', '25m', '생후 18~24개월'],
+  ['dn1', 'chk', '영유아 구강검진', '1차', '18m', '30m', '생후 18~29개월'],
+  ['je3', 'vax', '일본뇌염', '3차', '24m', '36m', '불활성화 기준 · 생백신은 2차'],
+  ['chk5', 'chk', '영유아 건강검진', '5차', '30m', '37m', '생후 30~36개월'],
+  ['dn2', 'chk', '영유아 구강검진', '2차', '30m', '42m', '생후 30~41개월'],
+  ['chk6', 'chk', '영유아 건강검진', '6차', '42m', '49m', '생후 42~48개월'],
+  ['dn3', 'chk', '영유아 구강검진', '3차', '42m', '54m', '생후 42~53개월'],
+  ['dtap5', 'vax', 'DTaP(디프테리아·파상풍·백일해)', '5차', '4y', '7y', '만 4~6세'],
+  ['ipv4', 'vax', '폴리오', '4차', '4y', '7y', '만 4~6세'],
+  ['mmr2', 'vax', 'MMR(홍역·유행성이하선염·풍진)', '2차', '4y', '7y', '만 4~6세'],
+  ['chk7', 'chk', '영유아 건강검진', '7차', '54m', '61m', '생후 54~60개월'],
+  ['dn4', 'chk', '영유아 구강검진', '4차', '54m', '66m', '생후 54~65개월'],
+  ['chk8', 'chk', '영유아 건강검진', '8차', '66m', '72m', '생후 66~71개월'],
+  ['je4', 'vax', '일본뇌염', '4차', '6y', '7y', '불활성화 기준 · 만 6세'],
+  ['tdap6', 'vax', 'Tdap/Td', '6차', '11y', '13y', '만 11~12세'],
+  ['hpv1', 'vax', '사람유두종바이러스(HPV)', '1~2차', '11y', '13y', '만 11~12세'],
+  ['je5', 'vax', '일본뇌염', '5차', '12y', '13y', '불활성화 기준 · 만 12세'],
+].map(([id, cat, name, dose, from, to, memo]) => ({ id, cat, name, dose, from, to, memo }));
+let checks = {};            // item id → { done_on, user_id, note }  (baby_checks)
+let extras = [];            // 직접 추가한 접종·검진 (baby_extra_vax): { id, name, dose, due_on, done_on, note, user_id }
+// 표준 항목 + 직접 추가 항목을 같은 모양으로: a/b = 기간 시작·끝(Date)
+const xItem = r => { const d = new Date((r.done_on || r.due_on) + 'T00:00'), e = new Date(d); e.setDate(e.getDate() + 1);
+  return { id: 'x:' + r.id, cat: 'own', name: r.name, dose: r.dose || '', memo: '', a: d, b: e, rec: r }; };
+const allVax = () => VAX.concat(extras.map(xItem));
+const A = it => it.a || ageDate(it.from), B = it => it.b || ageDate(it.to);
+const doneOf = it => it.rec ? (it.rec.done_on ? it.rec : null) : checks[it.id];
+let gSub = localStorage.getItem('bb-gsub') || 'grow';
+function ageDate(spec) {                          // 생일 + '14d' / '2m' / '4y'
+  const n = parseInt(spec), u = spec.slice(-1), d = new Date(baby.birth_date + 'T00:00');
+  if (u === 'd') d.setDate(d.getDate() + n); else if (u === 'm') d.setMonth(d.getMonth() + n); else d.setFullYear(d.getFullYear() + n);
+  return d;
+}
+function vaxState(it) {
+  const t0 = new Date(dstr(new Date()) + 'T00:00'), a = A(it), b = B(it);
+  if (doneOf(it)) return 'done';
+  if (t0 >= b) return 'late';
+  if (t0 >= a) return 'now';
+  return (a - t0) / 86400000 <= 14 ? 'soon' : 'later';
+}
+const md = d => `${d.getMonth() + 1}.${d.getDate()}`;
+const ymd = d => `${String(d.getFullYear()).slice(2)}.${d.getMonth() + 1}.${d.getDate()}`;
+function vaxWhen(it) {                             // '10.13까지' / '11.15 ~ 12.14'
+  const a = A(it), b = new Date(B(it)); b.setDate(b.getDate() - 1);
+  const f = a.getFullYear() === new Date().getFullYear() && b.getFullYear() === a.getFullYear() ? md : ymd;
+  if (it.rec) return `${f(a)} 예정`;
+  return it.from === '0d' ? `${f(b)}까지` : `${f(a)} ~ ${f(b)}`;
+}
+function vaxDday(it) {
+  const t0 = new Date(dstr(new Date()) + 'T00:00'), a = A(it), b = B(it);
+  const st = vaxState(it);
+  if (it.rec && st === 'now') return '오늘';
+  if (st === 'now') { const left = Math.round((b - t0) / 86400000) - 1; return left <= 0 ? '오늘까지' : `${left}일 남음`; }
+  if (st === 'soon') return `D-${Math.round((a - t0) / 86400000)}`;
+  if (st === 'late') return '기간 지남';
+  return '';
+}
+// 시기 묶음 제목
+const VGROUP = s => ({ '0d': '출생 ~ 1개월', '7d': '출생 ~ 1개월', '14d': '출생 ~ 1개월', '28d': '출생 ~ 1개월', '1m': '출생 ~ 1개월' }[s]
+  || (s.endsWith('m') ? (+parseInt(s) < 12 ? `${parseInt(s)}개월` : `${parseInt(s)}개월`) : `만 ${parseInt(s)}세`));
+function vaxGroupKey(it) {                         // 같은 시작 월끼리 (직접 추가는 날짜로 개월 계산)
+  if (it.rec) { const m = Math.floor(ageMon(dstr(A(it)))); const ks = [...new Set(VAX.map(vaxGroupKey))].map(Number).sort((a, b) => a - b); return String(ks.filter(k => k <= Math.max(0, m)).pop() ?? 0); }
+  const s = it.from; if (s.endsWith('d') || s === '1m') return '0';
+  return s.endsWith('m') ? String(parseInt(s)) : String(parseInt(s) * 12);
+}
+function vaxGroupLabel(k) { const m = +k; if (m === 0) return '출생 ~ 1개월'; if (m < 24) return `${m}개월`; if (m % 12 === 0) return `만 ${m / 12}세`; return `${m}개월`; }
+function upcomingVax(limit) {                      // 해야 할 순서: 지남 → 지금 → 곧 → 나중
+  const order = { late: 0, now: 1, soon: 2, later: 3 };
+  return allVax().filter(it => vaxState(it) !== 'done').sort((x, y) => order[vaxState(x)] - order[vaxState(y)] || A(x) - A(y)).slice(0, limit);
+}
+function renderVax() {
+  const el = $('g-vax'); if (!el) return;
+  const next = upcomingVax(3).filter(it => vaxState(it) !== 'later');
+  const nx = next.length ? next : upcomingVax(1);
+  const hero = `<div class="stat-card grow vx-next"><div class="g-head" style="margin-bottom:6px"><h3>다음 할 일</h3><span class="g-cnt">${allVax().filter(i => doneOf(i)).length}/${allVax().length} 완료</span></div>
+    ${nx.map(it => { const st = vaxState(it); return `<button type="button" class="vx-row ${st}" data-vx="${it.id}"><span class="vx-cat ${it.cat}">${it.cat === 'vax' ? '접종' : it.cat === 'own' ? '직접' : '검진'}</span><span class="vx-t"><b>${esc(it.name)} ${it.dose}</b><small>${vaxWhen(it)}${it.memo ? ' · ' + esc(it.memo) : ''}</small></span><span class="vx-d">${vaxDday(it)}</span></button>`; }).join('') || '<div class="g-empty">모두 마쳤어요</div>'}</div>`;
+  const groups = {}; for (const it of allVax()) (groups[vaxGroupKey(it)] ||= []).push(it);
+  for (const k in groups) groups[k].sort((x, y) => A(x) - A(y));
+  const list = Object.keys(groups).sort((a, b) => a - b).map(k => {
+    const its = groups[k], allDone = its.every(i => doneOf(i)), far = its.every(i => vaxState(i) === 'later') && +k > 6;
+    return `<div class="vx-group ${far ? 'far' : ''}"><div class="vx-gh"><span>${vaxGroupLabel(k)}</span><small>${allDone ? '완료' : md(A(its[0])) + (A(its[0]).getFullYear() !== new Date().getFullYear() ? ' (' + A(its[0]).getFullYear() + ')' : '') + '부터'}</small></div>
+      ${its.map(it => { const st = vaxState(it), c = doneOf(it); return `<button type="button" class="vx-item ${st}" data-vx="${it.id}"><span class="vx-ck">${st === 'done' ? '✓' : ''}</span><span class="vx-t"><b>${esc(it.name)} <em>${esc(it.dose)}</em>${it.rec ? '<i class="vx-own">직접</i>' : ''}</b><small>${st === 'done' ? `${fmtDate(c.done_on).replace(/<[^>]+>/g, ' ')} 완료${c.note ? ' · ' + esc(c.note) : ''}` : vaxWhen(it) + (it.memo ? ' · ' + esc(it.memo) : '')}</small></span>${st === 'done' ? avatar(c.user_id) : `<span class="vx-d">${vaxDday(it)}</span>`}</button>`; }).join('')}</div>`;
+  }).join('');
+  el.innerHTML = hero + `<div class="stat-card grow"><div class="g-head" style="margin-bottom:2px"><h3>전체 일정</h3><button type="button" class="g-add" id="vx-add">+ 직접 추가</button></div>${list}
+    <div class="g-src">질병관리청 표준예방접종일정표(2026) · 영유아 건강검진 기준. 병원 안내가 우선이에요. 인플루엔자는 생후 6개월부터 매년 가을</div></div>`;
+  el.querySelectorAll('[data-vx]').forEach(b => b.onclick = () => { const it = allVax().find(i => i.id === b.dataset.vx); if (it.rec) openExtraSheet(it.rec); else openVaxSheet(it); });
+  $('vx-add').onclick = () => openExtraSheet(null);
+}
+function openVaxSheet(it) {
+  const c = checks[it.id];
+  $('sheet').innerHTML = `<h3 class="grow">${esc(it.name)} ${it.dose}</h3>
+    <div class="vx-info">${it.cat === 'vax' ? '예방접종' : '건강검진'} · 권장 ${vaxWhen(it)}${it.memo ? '<br>' + esc(it.memo) : ''}</div>
+    <div class="frow"><label>${it.cat === 'vax' ? '맞은 날' : '받은 날'}</label><input type="date" id="vx-day" value="${c ? c.done_on : dstr(new Date())}" min="${baby.birth_date}" max="${dstr(new Date())}" style="width:170px"></div>
+    <div class="frow col"><label>메모</label><input class="wide" id="vx-note" maxlength="60" placeholder="병원 이름, 반응 등" value="${esc(c ? c.note || '' : '')}"></div>
+    <div class="acts">${c ? '<button type="button" class="del" id="vx-undo">완료 취소</button>' : ''}<button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="vx-save">${c ? '저장' : '완료로 표시'}</button></div>`;
+  $('sheet').dataset.kind = 'vax';
+  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  $('vx-save').onclick = async () => { const d = $('vx-day').value; if (!d) { toast('날짜를 골라주세요'); return; }
+    try { await db.setCheck(it.id, { done_on: d, note: $('vx-note').value.trim() }); closeSheet(); renderVax(); render(); toast(`${it.name} ${it.dose} 완료`); } catch (e) { alert('저장 실패: ' + e.message); } };
+  if ($('vx-undo')) $('vx-undo').onclick = async () => { if (!confirm('완료 표시를 지울까요?')) return; try { await db.setCheck(it.id, null); closeSheet(); renderVax(); render(); toast('완료를 취소했어요'); } catch (e) { alert('실패: ' + e.message); } };
+}
+// 홈 안내 상자: 7일 안에 시작하거나 지금 기간이거나 지난 것 중 가장 급한 하나
+// 직접 추가: 필수 말고 선택접종(유료) 등. 맞은 날 또는 예정일 하나만 적는다 (v0.19, 사장님 "돈 더내고 맞는 주사도 직접 기입")
+function openExtraSheet(rec) {
+  const done = rec ? !!rec.done_on : true;
+  $('sheet').innerHTML = `<h3 class="grow">${rec ? '직접 추가한 항목' : '접종·검진 직접 추가'}</h3>
+    <div class="frow col"><label>이름</label><input class="wide" id="xv-name" maxlength="24" placeholder="예: 수막구균, 인플루엔자" value="${esc(rec ? rec.name : '')}"></div>
+    <div class="xv-sug">${['수막구균', '인플루엔자', 'RSV 항체주사', '로타바이러스'].map(n => `<button type="button" data-n="${n}">${n}</button>`).join('')}</div>
+    <div class="frow"><label>차수</label><input id="xv-dose" maxlength="8" placeholder="1차" value="${esc(rec ? rec.dose || '' : '')}" style="width:120px"></div>
+    <div class="seg" id="xv-kind" style="margin:12px 0 0"><button type="button" data-v="done" class="${done ? 'on' : ''}">맞았어요</button><button type="button" data-v="due" class="${done ? '' : 'on'}">예정이에요</button></div>
+    <div class="frow"><label id="xv-dl">${done ? '맞은 날' : '예정일'}</label><input type="date" id="xv-day" value="${rec ? rec.done_on || rec.due_on : dstr(new Date())}" min="${baby.birth_date}" ${done ? `max="${dstr(new Date())}"` : ''} style="width:170px"></div>
+    <div class="frow col"><label>메모</label><input class="wide" id="xv-note" maxlength="60" placeholder="병원 이름, 비용 등" value="${esc(rec ? rec.note || '' : '')}"></div>
+    <div class="acts">${rec ? '<button type="button" class="del" id="xv-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="xv-save">${rec ? '저장' : '추가'}</button></div>`;
+  $('sheet').dataset.kind = 'vax';
+  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  $('sheet').querySelector('.xv-sug').onclick = e => { const b = e.target.closest('button'); if (b) { $('xv-name').value = b.dataset.n; $('xv-dose').focus(); } };
+  $('xv-kind').onclick = e => { const b = e.target.closest('button'); if (!b) return; for (const x of $('xv-kind').children) x.classList.toggle('on', x === b);
+    const d = b.dataset.v === 'done'; $('xv-dl').textContent = d ? '맞은 날' : '예정일'; if (d) $('xv-day').max = dstr(new Date()); else $('xv-day').removeAttribute('max'); };
+  if ($('xv-del')) $('xv-del').onclick = async () => { if (!confirm('이 항목을 지울까요?')) return; try { await db.delExtra(rec.id); closeSheet(); renderVax(); render(); toast('지웠어요'); } catch (e) { alert('삭제 실패: ' + e.message); } };
+  $('xv-save').onclick = async () => {
+    const name = $('xv-name').value.trim(), day = $('xv-day').value, isDone = $('xv-kind').querySelector('.on').dataset.v === 'done';
+    if (!name) { toast('이름을 적어주세요'); return; } if (!day) { toast('날짜를 골라주세요'); return; }
+    if (isDone && day > dstr(new Date())) { toast('맞은 날은 오늘까지만 돼요'); return; }
+    const row = { name, dose: $('xv-dose').value.trim(), done_on: isDone ? day : null, due_on: isDone ? null : day, note: $('xv-note').value.trim() };
+    try { if (rec) await db.updExtra(rec.id, row); else await db.addExtra(row); closeSheet(); renderVax(); render(); toast(rec ? '고쳤어요' : `${name} 추가했어요`); }
+    catch (e) { alert('저장 실패: ' + e.message); }
+  };
+}
+function homeVaxLine() {
+  const it = upcomingVax(1)[0]; if (!it) return '';
+  const st = vaxState(it); if (st === 'later') return '';
+  const t0 = new Date(dstr(new Date()) + 'T00:00'); if (st === 'soon' && (A(it) - t0) / 86400000 > 7) return '';
+  return `<button type="button" class="chip vx" id="st-vax"><b>${it.cat === 'chk' ? '검진' : '접종'}</b><span>${esc(it.name.length > 10 ? it.name.replace(/\(.*\)/, '') : it.name)} ${it.dose}<small>${vaxDday(it) || vaxWhen(it)}</small></span></button>`;
+}
+function setGSub(v) { gSub = v; localStorage.setItem('bb-gsub', v); for (const b of $('g-sub').children) b.classList.toggle('on', b.dataset.v === v);
+  $('growth').classList.toggle('hidden', v !== 'grow'); $('g-vax').classList.toggle('hidden', v !== 'vax'); if (v === 'vax') renderVax(); else renderGrowth(); }
+
+$('g-sub').onclick = e => { const b = e.target.closest('button'); if (b) setGSub(b.dataset.v); };
 $('stat-range').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; statRange = +b.dataset.v; localStorage.setItem('bb-stat', statRange); renderStats(); });
 // 탭·설정은 관성 스크롤 중에도 먹게: iOS는 스크롤 중 첫 탭의 click을 삼키므로 touchend에서 직접 처리 (뒤따르는 click은 무시)
 let _tabHandled = 0;
 function goTab(id) {
   if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
   else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
-  else if (id === 's-growth') { show(id); renderGrowth(); }
+  else if (id === 's-growth') { show(id); renderGrowth(); setGSub(gSub); }
   else { show(id); renderStats(); }
 }
 $('tabs').addEventListener('touchend', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); _tabHandled = Date.now(); goTab(b.dataset.tab); }, { passive: false });
@@ -975,7 +1213,7 @@ $('tabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return; const id = b.dataset.tab;
   if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
   else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
-  else if (id === 's-growth') { show(id); renderGrowth(); }
+  else if (id === 's-growth') { show(id); renderGrowth(); setGSub(gSub); }
   else { show(id); renderStats(); }
 });
 
@@ -1033,6 +1271,7 @@ function render() {
   const sorted = [...logs].sort((a, b) => new Date(a.at) - new Date(b.at));
   const dayLogs = sorted.filter(l => localDay(l.at) === day);
   const lastFeed = [...sorted].reverse().find(l => l.kind === 'feed');
+  { const h = homeVaxLine(); $('st-vax-wrap').innerHTML = h; $('st-vax-wrap').classList.toggle('hidden', !h); } if ($('st-vax')) $('st-vax').onclick = () => { goTab('s-growth'); setGSub('vax'); };
   $('st-feed').innerHTML = lastFeed ? `${hhmm(lastFeed.at)}<small>${ago(lastFeed.at)}</small>` : '아직 없음';
   const open = sorted.find(l => l.kind === 'sleep' && !l.ended_at);
   $('st-sleep').innerHTML = open ? `자는 중<small>${dur(open.at)}</small>` : (() => { const s = [...sorted].reverse().find(l => l.kind === 'sleep' && l.ended_at); return s ? `${hhmm(s.ended_at)} 깸<small>${ago(s.ended_at)}</small>` : '아직 없음'; })();
@@ -1266,7 +1505,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.18 · 09-28';
+const VER = 'v0.19 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -1443,6 +1682,7 @@ function mock() {
     logs.push({ id: `p${off}-${h}`, kind: k, at: T(h, 0, -off), detail: d, note: '', user_id: off % 2 ? 'u-dad' : 'u-mom' });
   for (let off = 1; off <= 9; off++) logs.push({ id: `s${off}`, kind: 'sleep', at: T(22, 0, -off - 1), ended_at: T(3, 30, -off), detail: {}, note: '', user_id: 'u-mom' });
   const gd = off => { const d = new Date(); d.setDate(d.getDate() - off); return dstr(d); };
+  checks = { hepb1: { item: 'hepb1', done_on: '2026-09-15', note: '출산 병원', user_id: 'u-mom' } };
   growth = [
     { id: 'g1', day: '2026-09-15', weight_kg: 3.28, length_cm: 50.2, head_cm: 34.1, note: '출생 (병원)', user_id: 'u-dad' },
     { id: 'g2', day: '2026-09-18', weight_kg: 3.12, length_cm: null, head_cm: null, note: '조리원', user_id: 'u-mom' },
