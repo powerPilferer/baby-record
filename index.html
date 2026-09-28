@@ -102,7 +102,15 @@
   .status .chip b { display: inline-flex; align-items: center; font-size: 13px; color: var(--c); font-weight: 500; flex: none; padding: 4px 9px; border-radius: 7px; background: color-mix(in srgb, var(--c) 14%, var(--bg1)); }
   .status .chip span { font-size: 15px; font-weight: 500; color: var(--fg2); font-variant-numeric: tabular-nums; }
   .status .chip span small { color: var(--fg3); font-weight: 400; font-size: 13px; margin-left: 5px; }
-  .status .chip.feed { --c: var(--feed); } .status .chip.sleep { --c: var(--sleep); }
+  .status .chip.feed { --c: var(--feed); } .status .chip.sleep { --c: var(--sleep); } .status .chip.diaper { --c: var(--diaper); }
+  :root[data-theme="light"] .status .chip.diaper b { color: #9a7400; }
+  .sheet-title h2 { flex: none; }
+  .sum-pill { display: flex; gap: 16px; margin: 0 0 10px; padding: 11px 15px; border-radius: 12px; background: var(--card); white-space: nowrap; overflow: hidden; }   /* 오늘의 표 제목 아래 한 줄 (v0.20, 사장님 "오늘의 표 아래로 한줄로") */
+  .sum-pill::-webkit-scrollbar { display: none; }
+  .sum-pill i { font-style: normal; font-size: 13px; color: var(--fg3); font-variant-numeric: tabular-nums; flex: none; }
+  .sum-pill b { color: var(--fg2); font-weight: 600; }
+  .sum-pill .feed b { color: var(--feed); } .sum-pill .diaper b { color: var(--diaper); } .sum-pill .sleep b { color: var(--sleep); }   /* 굵은 숫자만 항목 색 (사장님) */
+  :root[data-theme="light"] .sum-pill .diaper b { color: #9a7400; }
 
   /* 카테고리 버튼 2×2 */
   .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
@@ -467,6 +475,7 @@
     <button type="button" class="temp" data-kind="temp"><span class="ic"><img src="img/ic-temp.png" alt=""></span><span class="tx"><span class="k">체온</span><span class="s">℃</span></span></button>
   </div>
   <div class="sheet-title"><h2>오늘의 표</h2><span class="vt" id="view-seg"><button type="button" data-v="list" aria-label="목록"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><button type="button" data-v="clock" aria-label="24시간"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></button></span></div>
+  <div class="sum-pill hidden" id="day-sum"></div>
   <div class="rows" id="rows"></div>
   <div class="rows clock hidden" id="clock"></div>
   <div class="notes">
@@ -1283,7 +1292,12 @@ function render() {
   const feedsAll = dayLogs.filter(l => l.kind === 'feed'); const mlAll = feedsAll.reduce((s, l) => s + (+(l.detail || {}).ml || 0), 0);
   const dpAll = dayLogs.filter(l => l.kind === 'diaper'); const peeAll = dpAll.filter(l => l.detail?.pee).length, pooAll = dpAll.filter(l => l.detail?.poo).length;
   const slpAll = dayLogs.filter(l => l.kind === 'sleep' && l.ended_at).reduce((s, l) => s + (new Date(l.ended_at) - new Date(l.at)), 0);
-  const sumHtml = dayLogs.length ? `<div class="sum"><span>수유 <b>${feedsAll.length}회</b>${mlAll ? ` · <b>${mlAll}ml</b>` : ''}</span><span>소변 <b>${peeAll}</b> 대변 <b>${pooAll}</b></span>${slpAll ? `<span>잠 <b>${dur(0, slpAll)}</b></span>` : ''}</div>` : '';
+  // 하루 합계 = 오늘의 표 제목 아래 상자 (v0.20, 사장님 "접종 상자 디자인처럼 합계를") — 표 맨 아래 합계 줄은 없앰
+  $('day-sum').classList.toggle('hidden', !dayLogs.length);
+  // 원래 표 아래 합계 글을 박스로 감싸 제목 옆에 (사장님 "원래 아래에 있던 합계의 글을 박스로 감싸서 오늘의 표 옆으로")
+  const slpTxt = m => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}시간${mm ? ' ' + mm + '분' : ''}` : `${mm}분`; };
+  $('day-sum').innerHTML = `<i class="feed">수유 <b>${feedsAll.length}회</b>${mlAll ? ` · <b>${mlAll}ml</b>` : ''}</i><i class="diaper">소변 <b>${peeAll}</b> 대변 <b>${pooAll}</b></i>${slpAll ? `<i class="sleep">잠 <b>${slpTxt(Math.round(slpAll / 60000))}</b></i>` : ''}`;
+  const sumHtml = '';
   for (const b of $('view-seg').children) b.classList.toggle('on', b.dataset.v === view);
   rows.classList.toggle('hidden', view !== 'list'); $('clock').classList.toggle('hidden', view !== 'clock');
   if (view === 'clock') { $('clock').innerHTML = renderClock(sorted, dayLogs, today) + sumHtml; }
@@ -1505,7 +1519,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.19 · 09-28';
+const VER = 'v0.20 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
