@@ -89,6 +89,10 @@
   .daynav button:active { background: var(--card); }
   .daynav button:disabled { color: var(--fg3); opacity: .35; }
   .daynav .date { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .date-pick { position: relative; display: flex; align-items: center; gap: 3px; padding: 8px 10px; margin: -8px -10px; border-radius: 10px; }
+  .date-pick:active { background: var(--card); }
+  .date-pick .dd { width: 16px; height: 16px; fill: none; stroke: var(--fg3); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .date-pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; border: 0; padding: 0; -webkit-appearance: none; appearance: none; }
   .daynav .date small { color: var(--fg3); font-weight: 400; margin-left: 5px; font-size: 14px; }
 
   /* 간편 상태 두 칸 */
@@ -260,7 +264,7 @@
   .dim { position: fixed; inset: 0; background: var(--dim); z-index: 40; }
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; background: var(--card); border-radius: 22px 22px 0 0;
     padding: 14px 20px calc(20px + var(--sab)); max-width: 480px; margin: 0 auto; }
-  .sheet::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--card2); margin: 0 auto 14px; }
+  .sheet::before { content: ""; display: block; width: 40px; height: 5px; border-radius: 3px; background: var(--fg3); opacity: .45; margin: 0 auto 14px; }
   .sheet h3 { margin: 0 0 14px; font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
   .sheet h3 { display: flex; align-items: center; gap: 8px; }
   .sheet h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
@@ -277,6 +281,12 @@
   .ml { display: flex; gap: 6px; margin: 6px 0 4px; }
   .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
   .ml button.on { background: var(--card2); color: var(--fg); }
+  /* 시트 안 선택 표시 = 그 항목 색으로 채움 (v0.16, 사장님 "선택된건지 잘 모르겠음") */
+  .sheet { --c: var(--ok); --on-fg: #0b0b0d; }
+  :root[data-theme="light"] .sheet { --on-fg: #fff; }
+  .sheet[data-kind="feed"] { --c: var(--feed); } .sheet[data-kind="diaper"] { --c: var(--diaper); } .sheet[data-kind="sleep"] { --c: var(--sleep); } .sheet[data-kind="temp"] { --c: var(--temp); }
+  .sheet .seg button, .sheet .ml button { transition: background .12s, color .12s; }
+  .sheet .seg button.on, .sheet .ml button.on { background: var(--c); color: var(--on-fg); font-weight: 700; box-shadow: 0 3px 10px color-mix(in srgb, var(--c) 30%, transparent); }
   .acts { display: flex; gap: 8px; margin-top: 16px; }
   .acts button { flex: 1; padding: 15px; border-radius: 999px; font-weight: 700; font-size: 18px; }
   .acts .save { background: var(--fg); color: var(--bg); flex: 2; }
@@ -392,7 +402,7 @@
   </header>
   <div class="daynav">
     <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <div class="date" id="h-date"></div>
+    <div class="date-pick"><div class="date" id="h-date"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="date" id="h-pick" aria-label="날짜 고르기"></div>
     <button type="button" id="day-next" aria-label="다음 날"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <div class="status">
@@ -990,6 +1000,7 @@ function render() {
   $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
   $('h-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
+  $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
   $('day-next').disabled = day >= today;
 
@@ -1072,7 +1083,30 @@ function openSheet(kind, log) {
   $('sh-save').onclick = saveSheet;
   if ($('sh-del')) $('sh-del').onclick = async () => { if (!confirm('이 기록을 지울까요?')) return; await db.delLog(editing.id); closeSheet(); render(); toast('지웠어요'); };
 }
-function closeSheet() { $('dim').classList.add('hidden'); $('sheet').classList.add('hidden'); editing = null; }
+function closeSheet() { $('dim').classList.add('hidden'); $('sheet').classList.add('hidden'); $('sheet').style.transform = ''; $('sheet').style.transition = ''; $('dim').style.opacity = ''; editing = null; }
+// ── 시트 끌어내려 닫기 (v0.16, 사장님 "드래그로 닫히진 않아"): 손잡이·빈 곳에서 아래로 끌면 따라오고,
+//    100px 넘게 내리거나 빠르게 튕기면 닫힘, 아니면 제자리로. 입력칸·버튼에서 시작한 터치는 건드리지 않는다
+(() => {
+  const sh = $('sheet'); let y0 = 0, t0 = 0, dy = 0, drag = false, vy = 0, lastY = 0, lastT = 0;
+  sh.addEventListener('touchstart', e => {
+    if (e.target.closest('input, textarea, select, button, label, .seg, .ml, .photo-pick')) { drag = false; return; }
+    drag = true; y0 = lastY = e.touches[0].clientY; t0 = lastT = e.timeStamp; dy = 0; vy = 0; sh.style.transition = 'none';
+  }, { passive: true });
+  sh.addEventListener('touchmove', e => {
+    if (!drag) return; const cy = e.touches[0].clientY, dt = e.timeStamp - lastT;
+    if (dt > 0) vy = .7 * ((cy - lastY) / dt) + .3 * vy; lastY = cy; lastT = e.timeStamp;   // 마지막 움직임 속도(px/ms)
+    dy = Math.max(0, cy - y0);
+    if (dy > 0) { e.preventDefault(); sh.style.transform = `translateY(${dy}px)`; $('dim').style.opacity = String(Math.max(.2, 1 - dy / 400)); }
+  }, { passive: false });
+  const end = () => {
+    if (!drag) return; drag = false;
+    const fast = dy > 30 && vy > .5;   // 짧게 튕겨 내려도 닫힘
+    sh.style.transition = 'transform .2s ease-out'; $('dim').style.transition = 'opacity .2s';
+    if (dy > 100 || fast) { sh.style.transform = 'translateY(110%)'; $('dim').style.opacity = '0'; setTimeout(() => { $('dim').style.transition = ''; closeSheet(); }, 200); }
+    else { sh.style.transform = ''; $('dim').style.opacity = ''; setTimeout(() => { sh.style.transition = ''; $('dim').style.transition = ''; }, 200); }
+  };
+  sh.addEventListener('touchend', end); sh.addEventListener('touchcancel', end);
+})();
 function atFromTime(hm, baseDay) { const [h, m] = hm.split(':').map(Number); const d = new Date(baseDay + 'T00:00'); d.setHours(h, m, 0, 0); return d; }
 async function saveSheet() {
   const kind = $('sheet').dataset.kind;
@@ -1109,7 +1143,11 @@ document.querySelector('.quick').addEventListener('click', async e => {
 $('rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = logs.find(x => x.id === r.dataset.id); if (l) openSheet(l.kind, l); });
 $('view-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; view = b.dataset.v; localStorage.setItem('bb-view', view); render(); });
 $('clock').addEventListener('click', e => { const p = e.target.closest('.ck'); if (!p) return; const l = logs.find(x => x.id === p.dataset.id); if (l) openSheet(l.kind, l); });
-$('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); day = dstr(d); render(); };
+// 날짜 이동: 30일 넘은 날은 그 달 기록을 더 불러온다 (달력으로 멀리 뛸 수 있어서)
+async function goDay(ds) { day = ds; render(); if (!MOCK) { await db.loadMonth(ds.slice(0, 7)); render(); } }
+$('h-pick').addEventListener('change', e => { const v = e.target.value; if (!v) { e.target.value = day; return; }
+  const today = dstr(new Date()); goDay(v > today ? today : v < baby.birth_date ? baby.birth_date : v); });
+$('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); goDay(dstr(d)); };
 $('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
 $('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
 $('notes').addEventListener('click', async e => {
@@ -1199,7 +1237,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.15 · 09-28';
+const VER = 'v0.16 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
