@@ -148,7 +148,7 @@
   .av { width: 31px; height: 31px; border-radius: 50%; background: var(--card2); color: var(--fg2); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
   .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .empty { padding: 26px 14px; text-align: center; color: var(--fg3); font-size: 16px; }
-  .sum { display: flex; gap: 14px; padding: 11px 16px; border-top: 1px solid var(--line); margin-top: 2px; font-size: 13px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+  .sum { display: flex; gap: 14px; padding: 15px 16px; border-top: 1px solid var(--line); margin-top: 2px; font-size: 14px; color: var(--fg3); font-variant-numeric: tabular-nums; }
   .sum b { color: var(--fg2); font-weight: 500; }
 
   /* 서로에게 한마디 */
@@ -1003,7 +1003,8 @@ function render() {
   if (!dayLogs.length) rows.innerHTML = `<div class="empty">${day === today ? '위 버튼으로 첫 기록을 남겨보세요' : '기록이 없어요'}</div>`;
   else {
     const title = l => (l.kind === 'sleep' || l.kind === 'temp') ? `${KIND[l.kind]} ${detailOf(l)}` : detailOf(l);
-    rows.innerHTML = dayLogs.map((l, i) => `<button type="button" class="row ${l.kind} ${i === dayLogs.length - 1 ? 'last' : ''}" data-id="${l.id}">
+    const listLogs = [...dayLogs].reverse();   // 최신순 (v0.14, 사장님 "최신순으로") — 원형 보기·합계는 그대로
+    rows.innerHTML = listLogs.map((l, i) => `<button type="button" class="row ${l.kind} ${i === listLogs.length - 1 ? 'last' : ''}" data-id="${l.id}">
       <span class="t">${hhmm(l.at)}</span><span class="rl"></span>
       <span class="d"><b>${esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
       <span class="w">${avatar(l.user_id)}</span></button>`).join('');
@@ -1187,7 +1188,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.13 · 09-28';
+const VER = 'v0.14 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
