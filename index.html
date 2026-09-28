@@ -15,7 +15,7 @@
   :root {
     --bg: #0b0b0d; --card: #151518; --card2: #1d1d22; --line: #222228;
     --line2: #19191d; --fg: #f1f1f4; --fg2: #8f8f99; --fg3: #55555e;
-    --feed: #6f9ee0; --diaper: #cfae63; --sleep: #9d93d6; --temp: #d98079; --ok: #7fc39c;
+    --feed: #6f9ee0; --diaper: #f2c94c; --sleep: #9d93d6; --temp: #d98079; --ok: #7fc39c;
     --kakao: #fee500;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
   }
@@ -23,7 +23,7 @@
   :root[data-theme="light"] {
     --bg: #f4f4f6; --bg1: #ececef; --card: #ffffff; --card2: #eeeef1; --line: #e4e4e9; --line2: #ededf1;
     --fg: #1b1b1f; --fg2: #6b6b75; --fg3: #9a9aa3;
-    --feed: #3b7bd4; --diaper: #b3841f; --sleep: #7565cf; --temp: #d4554d; --ok: #2f9e63;
+    --feed: #3b7bd4; --diaper: #e8b10e; --sleep: #7565cf; --temp: #d4554d; --ok: #2f9e63;
     --dim: rgba(0,0,0,.35); color-scheme: light;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -84,6 +84,7 @@
   header .gear svg { width: 25px; height: 25px; fill: currentColor; }
   header .gear:active { background: var(--card); }
   .daynav { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 21px; }
+  #s-home .daynav { margin-top: 24px; }   /* 고정 알약과 날짜 줄 사이 10→24px (v0.17, 사장님 "여백이 너무 좁아") */
   .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
   .daynav button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .daynav button:active { background: var(--card); }
@@ -140,6 +141,9 @@
   .row.feed { --c: var(--feed); } .row.diaper { --c: var(--diaper); } .row.sleep { --c: var(--sleep); } .row.temp { --c: var(--temp); }
   .row .t { align-self: center; justify-self: start; padding: 4px 8px; border-radius: 7px; background: var(--card2); color: var(--fg2); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
   .row.feed .t, .row.diaper .t, .row.sleep .t { background: color-mix(in srgb, var(--c) 14%, var(--card)); color: var(--c); }
+  /* 기저귀 = 버터 옐로 (v0.17, 사장님 "너무 똥색" → 추천 A). 라이트에선 노란 글자가 흐려서 글자만 한 단계 진하게, 노란 채움 위 글자는 검정 */
+  :root[data-theme="light"] .row.diaper .t { color: #9a7400; background: color-mix(in srgb, var(--diaper) 20%, var(--card)); }
+  .sheet[data-kind="diaper"] { --on-fg: #1c1a14 !important; }
   .row .rl { position: relative; }
   .row .rl::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; margin-left: -.5px; background: var(--line); }
   .row:first-child .rl::before { top: 50%; } .row.last .rl::before { bottom: 50%; }
@@ -1000,7 +1004,7 @@ function render() {
   $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
   $('h-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
-  $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
+  $('h-pick').defaultValue = today; $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
   $('day-next').disabled = day >= today;
 
@@ -1145,8 +1149,10 @@ $('view-seg').addEventListener('click', e => { const b = e.target.closest('butto
 $('clock').addEventListener('click', e => { const p = e.target.closest('.ck'); if (!p) return; const l = logs.find(x => x.id === p.dataset.id); if (l) openSheet(l.kind, l); });
 // 날짜 이동: 30일 넘은 날은 그 달 기록을 더 불러온다 (달력으로 멀리 뛸 수 있어서)
 async function goDay(ds) { day = ds; render(); if (!MOCK) { await db.loadMonth(ds.slice(0, 7)); render(); } }
-$('h-pick').addEventListener('change', e => { const v = e.target.value; if (!v) { e.target.value = day; return; }
-  const today = dstr(new Date()); goDay(v > today ? today : v < baby.birth_date ? baby.birth_date : v); });
+// iOS 날짜 고르기의 '재설정' = 오늘로 (v0.17, 사장님 "재설정이 '오늘'인건가?" → "응"). 재설정은 값을 비우거나 기본값(오늘)으로 되돌린다
+const onPick = e => { const today = dstr(new Date()); const v = e.target.value || today;
+  const to = v > today ? today : v < baby.birth_date ? baby.birth_date : v; if (to !== day) goDay(to); else e.target.value = day; };
+$('h-pick').addEventListener('change', onPick); $('h-pick').addEventListener('input', onPick);
 $('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); goDay(dstr(d)); };
 $('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
 $('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
@@ -1237,7 +1243,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.16 · 09-28';
+const VER = 'v0.17 · 09-28 버터';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
