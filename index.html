@@ -74,7 +74,7 @@
   /* ── 홈 ── */
   header { display: flex; align-items: center; justify-content: space-between; height: 46px; margin: 12px 0 10px; padding: 0; }
   header .who { display: flex; align-items: center; }
-  #s-home header .who { height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  #s-home header .who { position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 94px); height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
   :root[data-theme="light"] #s-home header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   #s-home header .bf { width: 34px; height: 34px; margin-right: 9px; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
@@ -1153,13 +1153,20 @@ $('setup-file').addEventListener('change', async e => {
   e.target.value = '';
 });
 $('setup-photo-clear').onclick = () => { setupPhoto = null; $('setup-file').value = ''; $('setup-photo').src = BABY_FACE; $('setup-photo-clear').classList.add('hidden'); };
-document.querySelector('header .who').onclick = () => openBabySheet();
+// 아기 알약도 고정 (v0.12): 스크롤 중 첫 탭을 iOS가 삼키지 않게 설정 버튼과 같은 touchend 처리
+const _who = document.querySelector('#s-home header .who');
+let _whoT = null;
+_who.addEventListener('touchstart', e => { const t = e.touches[0]; _whoT = { x: t.clientX, y: t.clientY, at: Date.now() }; }, { passive: true });
+_who.addEventListener('touchend', e => { const t = e.changedTouches[0];
+  if (!_whoT || Math.hypot(t.clientX - _whoT.x, t.clientY - _whoT.y) > 10 || Date.now() - _whoT.at > 500) { _tabHandled = Date.now(); return; }   // 끌거나 오래 누른 건 탭 아님
+  e.preventDefault(); _tabHandled = Date.now(); openBabySheet(); }, { passive: false });
+_who.onclick = () => { if (Date.now() - _tabHandled < 500) return; openBabySheet(); };
 function fillSettings() {
   $('set-baby').textContent = `${baby.name} · ${baby.birth_date.replace(/-/g, '.')} ›`; $('set-code').textContent = baby.invite_code;
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.11 · 09-28 새싹';
+const VER = 'v0.12 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
