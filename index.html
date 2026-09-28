@@ -234,6 +234,15 @@
   .g-sex .gs-btns { display: flex; gap: 8px; margin-top: 10px; }
   .g-sex button { flex: 1; padding: 10px 0; border-radius: 999px; background: var(--card2); font-weight: 600; font-size: 14px; color: var(--fg); }
   .g-cnt { font-size: 12px; color: var(--fg3); }
+  .g-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .g-quick button { position: relative; min-height: 78px; border-radius: 16px; background: var(--card); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; padding: 12px 13px; text-align: left; }
+  .g-quick button:active { background: var(--card2); }
+  .g-quick .k { font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+  .g-quick .v { font-size: 13px; color: var(--fg2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .g-quick .v.none { color: var(--fg3); }
+  .g-quick .p { font-size: 11px; color: var(--ok); font-weight: 600; }
+  .g-quick .plus { position: absolute; top: 9px; right: 11px; width: 20px; height: 20px; border-radius: 50%; background: var(--card2); color: var(--fg2); font-size: 15px; line-height: 20px; text-align: center; font-weight: 500; }
+  .frow.focus label { color: var(--ok); font-weight: 600; }
   .g-src { font-size: 11px; color: var(--fg3); margin-top: 6px; }
   .g-list { margin-top: 10px; border-top: 1px solid var(--line); }
   .g-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; width: 100%; text-align: left; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: center; }
@@ -849,32 +858,37 @@ function renderGrowth() {
       <span class="v">${['w', 'l', 'h'].filter(k => r[GM[k].key] != null).map(k => fmtV(k, r[GM[k].key])).join(' · ')}</span>
       ${r.note ? `<span class="nt">${esc(r.note)}</span>` : ''}${avatar(r.user_id)}</button>`).join('')}</div>
       ${rows.length > 3 && !gShowAll ? `<button type="button" class="g-more" id="g-more">이전 기록 ${rows.length - 3}개 더 보기</button>` : ''}` : '';
-  el.innerHTML = `<div class="stat-card grow">
-    <div class="g-head"><h3>성장곡선</h3><button type="button" class="g-add" id="g-add">+ 측정 기록</button></div>
+  const quick = Object.entries(GM).map(([k, g]) => { const lp = growth.filter(r => r[g.key] != null).sort((a, b) => a.day < b.day ? -1 : 1).pop();
+    const pc = lp ? pctOf(k, lp.day, +lp[g.key]) : null;
+    return `<button type="button" data-gq="${k}"><span class="plus">+</span><span class="k">${g.label}</span><span class="v ${lp ? '' : 'none'}">${lp ? fmtV(k, lp[g.key]) : '기록 없음'}</span>${pc != null ? `<span class="p">백분위 ${fmtPct(pc)}</span>` : ''}</button>`; }).join('');
+  el.innerHTML = `<div class="g-quick" id="g-quick">${quick}</div><div class="stat-card grow">
+    <div class="g-head"><h3>성장곡선</h3></div>
     <div class="seg mini g-metric" id="g-metric">${Object.entries(GM).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === m ? 'on' : ''}">${v.label}</button>`).join('')}</div>
     ${now}${sexAsk}${growthChart(m, pts)}
     ${baby.sex ? `<div class="g-src">점선 = 50백분위 · 띠 = 3~97 / 15~85 · WHO 성장기준(0~24개월)</div>` : ''}</div>
     <div class="stat-card grow"><div class="g-head" style="margin-bottom:4px"><h3>측정 기록</h3><span class="g-cnt">${rows.length ? rows.length + '회' : ''}</span></div>
-    ${list || '<div class="g-empty">아직 측정 기록이 없어요. 위 "+ 측정 기록"으로 시작해요</div>'}</div>`;
-  $('g-add').onclick = () => openGrowthSheet();
+    ${list || '<div class="g-empty">아직 측정 기록이 없어요. 맨 위 버튼으로 시작해요</div>'}</div>`;
+  el.querySelectorAll('[data-gq]').forEach(b => b.onclick = () => { const today = growth.find(r => r.day === dstr(new Date())); openGrowthSheet(today, b.dataset.gq); });
   $('g-metric').onclick = e => { const b = e.target.closest('button'); if (!b) return; gMetric = b.dataset.v; localStorage.setItem('bb-gm', gMetric); renderGrowth(); };
   el.querySelectorAll('.g-row').forEach(b => b.onclick = () => openGrowthSheet(growth.find(r => r.id === b.dataset.id)));
   el.querySelectorAll('[data-sex]').forEach(b => b.onclick = async () => { try { await db.updBaby({ sex: b.dataset.sex }); renderGrowth(); toast('기준 곡선을 켰어요'); } catch (e) { alert('저장 실패: ' + e.message); } });
   if ($('g-more')) $('g-more').onclick = () => { gShowAll = true; renderGrowth(); };
 }
 
-function openGrowthSheet(rec) {
+function openGrowthSheet(rec, focus) {
   const v = k => rec && rec[GM[k].key] != null ? +rec[GM[k].key] : '';
-  $('sheet').innerHTML = `<h3 class="grow">성장 측정 ${rec ? '고치기' : ''}</h3>
+  const title = focus ? (rec ? '오늘 측정 이어 적기' : '성장 측정') : '성장 측정 고치기';
+  $('sheet').innerHTML = `<h3 class="grow">${title}</h3>
     <div class="frow"><label>날짜</label><input type="date" id="g-day" value="${rec ? rec.day : dstr(new Date())}" max="${dstr(new Date())}" style="width:170px"></div>
-    <div class="frow"><label>몸무게 <small style="color:var(--fg3)">kg</small></label><input type="number" inputmode="decimal" step="0.01" id="g-w" placeholder="3.52" value="${v('w')}"></div>
-    <div class="frow"><label>키 <small style="color:var(--fg3)">cm</small></label><input type="number" inputmode="decimal" step="0.1" id="g-l" placeholder="51.5" value="${v('l')}"></div>
-    <div class="frow"><label>머리둘레 <small style="color:var(--fg3)">cm</small></label><input type="number" inputmode="decimal" step="0.1" id="g-h" placeholder="35.0" value="${v('h')}"></div>
+    <div class="frow${focus === 'w' ? ' focus' : ''}"><label>몸무게 <small style="color:var(--fg3)">kg</small></label><input type="number" inputmode="decimal" step="0.01" id="g-w" placeholder="3.52" value="${v('w')}"></div>
+    <div class="frow${focus === 'l' ? ' focus' : ''}"><label>키 <small style="color:var(--fg3)">cm</small></label><input type="number" inputmode="decimal" step="0.1" id="g-l" placeholder="51.5" value="${v('l')}"></div>
+    <div class="frow${focus === 'h' ? ' focus' : ''}"><label>머리둘레 <small style="color:var(--fg3)">cm</small></label><input type="number" inputmode="decimal" step="0.1" id="g-h" placeholder="35.0" value="${v('h')}"></div>
     <div class="frow col"><label>메모</label><input class="wide" id="g-note" maxlength="60" placeholder="1차 검진, 소아과, 집 체중계…" value="${esc(rec ? rec.note : '')}"></div>
     <div class="foot" style="margin:2px 0 0">재지 않은 칸은 비워두세요</div>
-    <div class="acts">${rec ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">${rec ? '저장' : '기록'}</button></div>`;
+    <div class="acts">${rec && !focus ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">${rec ? '저장' : '기록'}</button></div>`;
   $('sheet').dataset.kind = 'growth';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
+  if (focus) { const f = $('g-' + focus); f.focus(); if (f.value) f.select(); }   // 누른 항목 칸에 바로 커서 (같은 탭 제스처 안이라 iOS 키보드도 뜸)
   if ($('sh-del')) $('sh-del').onclick = async () => { if (!confirm('이 측정 기록을 지울까요?')) return; try { await db.delGrowth(rec.id); closeSheet(); renderGrowth(); toast('지웠어요'); } catch (e) { alert('삭제 실패: ' + e.message); } };
   $('sh-save').onclick = async () => {
     const num = id => { const x = $(id).value.trim().replace(',', '.'); return x === '' ? null : +x; };
@@ -883,7 +897,14 @@ function openGrowthSheet(rec) {
     if (w == null && l == null && h == null) { toast('하나는 적어주세요'); return; }
     if ((w != null && !(w >= 1 && w <= 30)) || (l != null && !(l >= 30 && l <= 130)) || (h != null && !(h >= 25 && h <= 60))) { toast('숫자를 확인해주세요 (몸무게는 kg)'); return; }
     const row = { baby_id: baby.id, user_id: rec ? rec.user_id : me.id, day: dayV, weight_kg: w, length_cm: l, head_cm: h, note: $('g-note').value.trim() };
-    try { if (rec) await db.updGrowth(rec.id, row); else await db.addGrowth(row); closeSheet(); renderGrowth(); toast(rec ? '고쳤어요' : '측정 기록했어요'); }
+    // 같은 날 기록이 이미 있으면 새 줄 대신 합친다 (병원에서 세 개를 따로 눌러 적어도 한 줄)
+    const same = !rec || rec.day !== dayV ? growth.find(r => r.day === dayV && (!rec || r.id !== rec.id)) : null;
+    try {
+      if (same && !rec) { const patch = { weight_kg: w ?? same.weight_kg, length_cm: l ?? same.length_cm, head_cm: h ?? same.head_cm, note: row.note || same.note };
+        await db.updGrowth(same.id, patch); }
+      else if (rec) await db.updGrowth(rec.id, row); else await db.addGrowth(row);
+      if (focus) { gMetric = focus; localStorage.setItem('bb-gm', gMetric); }
+      closeSheet(); renderGrowth(); toast(focus ? `${GM[focus].label} 기록했어요` : (same && !rec) ? '같은 날 기록에 합쳤어요' : rec ? '고쳤어요' : '측정 기록했어요'); }
     catch (e) { alert('저장 실패: ' + e.message); }
   };
 }
@@ -1166,7 +1187,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.12 · 09-28';
+const VER = 'v0.13 · 09-28';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
