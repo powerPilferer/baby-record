@@ -217,6 +217,8 @@
   .cal .d .m i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
   .cal .d .m i.feed { --c: var(--feed); } .cal .d .m i.diaper { --c: var(--diaper); } .cal .d .m i.sleep { --c: var(--sleep); } .cal .d .m i.nt { --c: var(--ok); }
   .cal .d .stk { position: absolute; right: -4px; top: -8px; font-size: 30px; line-height: 1; filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); pointer-events: none; }
+  .emo-hint { font-size: 12px; color: var(--fg3); margin: -4px 0 10px; }
+  .cal .d .stk.s2 { right: 20px; top: -3px; font-size: 26px; }   /* 두 번째 스티커: 첫째 왼쪽 살짝 아래, 뒤에 깔림 */
   .diary-in { width: 100%; background: var(--bg); border: 0; border-radius: 14px; padding: 13px 15px; font-size: 15px; line-height: 1.45; outline: none; resize: none; color: var(--fg); margin-top: 4px; }
   .diary-in:focus { box-shadow: 0 0 0 1.5px var(--fg3); }
   .emo { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
@@ -368,6 +370,8 @@
   .pick button.on img { opacity: 1; box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--fg); }
   .seg.mini button img { width: 20px; height: 20px; border-radius: 50%; margin-right: 6px; vertical-align: -5px; }
   :root[data-theme="light"] .seg.mini button.on { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  /* 시트 안 작은 세그먼트(성별 등)도 선택 = 항목 색 채움. 위 .seg.mini 규칙이 배경만 카드색으로 덮어 글자가 안 보이던 것 (v0.21, 사장님 "성별 고르는 탭이 이상해") */
+  .sheet .seg.mini button.on { background: var(--c); color: var(--on-fg); }
   .back { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg); }
   .back svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .back:active { background: var(--card); }
@@ -710,11 +714,12 @@ const db = {
     if (MOCK) return;
     const { error } = await sb.from('baby_notes').delete().eq('id', id); if (error) throw error;
   },
-  async setSticker(dayStr, emoji) {
-    const tilt = Math.random() < .5 ? -1 : 1;                       // 붙이는 순간 좌우 랜덤, 저장돼서 계속 같은 방향
-    if (emoji) { stickers[dayStr] = emoji; tilts[dayStr] = tilt; } else delete stickers[dayStr];
+  async setSticker(dayStr, list) {                                // list = 이모지 최대 2개 (v0.21, 사장님 "두개정도까지")
+    const v = list.join('|');
+    const tilt = stickers[dayStr] && tilts[dayStr] ? tilts[dayStr] : (Math.random() < .5 ? -1 : 1);   // 첫 스티커 붙일 때 좌우 랜덤, 두 번째는 반대로
+    if (v) { stickers[dayStr] = v; tilts[dayStr] = tilt; } else delete stickers[dayStr];
     if (MOCK) return;
-    const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, sticker: emoji || '', tilt, updated_by: me.id, updated_at: new Date().toISOString() });
+    const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, sticker: v, tilt, updated_by: me.id, updated_at: new Date().toISOString() });
     if (error) throw error;
   },
   async setDiary(dayStr, text) {
@@ -806,6 +811,7 @@ const dayNo = d => Math.floor((new Date(d + 'T00:00') - new Date(baby.birth_date
 const stampOf = d => MILESTONES[dayNo(d)] || '';
 const MILESTONE_EMOJI = { '50일': '🎂', '100일': '🎂', '200일': '🎈', '300일': '🎈', '첫돌': '🎉' };
 const EMOJIS = ['👶', '🥰', '😊', '😭', '😴', '🍼', '💩', '🤒', '🏥', '💉', '🙃', '👣', '🦷', '🛁', '📸', '🧸', '🎉', '❤️', '⭐'];   // 🙃 = 뒤집은 날(웃는 얼굴 180°). 👼는 뺌(다른 뜻 오해)   // 우선 이모지로 (사장님 09-27). 그림 스티커는 나중에
+const stkList = d => (stickers[d] || '').split('|').filter(Boolean);
 const stickerOf = d => stickers[d] || MILESTONE_EMOJI[stampOf(d)] || '';
 
 // ── 기록일지: 달력 (칸 = 그날 요약 점 + 도장, 누르면 홈에서 그날 표)
@@ -827,7 +833,9 @@ async function renderDiary() {
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
     h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${future || !born ? 'future' : ''}" data-d="${ds}" ${future ? 'disabled' : ''}>
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${stickerOf(ds) ? `<span class="stk" style="transform:rotate(${(stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1)) * 10}deg)">${stickerOf(ds)}</span>` : ''}${st ? `<span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${(() => { const L = stkList(ds), t = stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1);
+        if (!L.length) return stickerOf(ds) ? `<span class="stk" style="transform:rotate(${t * 10}deg)">${stickerOf(ds)}</span>` : '';
+        return (L[1] ? `<span class="stk s2" style="transform:rotate(${-t * 12}deg)">${L[1]}</span>` : '') + `<span class="stk" style="transform:rotate(${t * 10}deg)">${L[0]}</span>`; })()}${st ? `<span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -838,13 +846,16 @@ $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]
 function openDayNotes(ds) {
   const d = new Date(ds + 'T00:00');
   $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">D+${dayNo(ds)}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
-    <div class="emo" id="dn-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stickers[ds] === e ? 'on' : ''}">${e}</button>`).join('')}</div>
+    <div class="emo" id="dn-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stkList(ds).includes(e) ? 'on' : ''}">${e}</button>`).join('')}</div>
+    <div class="emo-hint">두 개까지 붙일 수 있어요 · 다시 누르면 떼요</div>
     <textarea id="dn-text" class="diary-in" maxlength="1000" rows="4" placeholder="이날의 일기 — 예: 많이 운 날 ㅜㅜ, 처음 뒤집은 날">${esc(diaries[ds] || '')}</textarea>
     <div class="acts"><button type="button" class="cancel" id="dn-go">이날 기록 보기</button><button type="button" class="save" id="dn-save">저장</button></div>`;
   $('sheet').dataset.kind = 'daynotes';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet;
-  $('dn-emo').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const next = stickers[ds] === b.dataset.e ? '' : b.dataset.e;   // 같은 걸 다시 누르면 뗌
-    try { await db.setSticker(ds, next); for (const x of $('dn-emo').children) x.classList.toggle('on', x.dataset.e === next); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
+  $('dn-emo').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const em = b.dataset.e, cur = stkList(ds);
+    let next; if (cur.includes(em)) next = cur.filter(x => x !== em);   // 같은 걸 다시 누르면 뗌
+    else if (cur.length >= 2) { toast('두 개까지예요. 하나를 먼저 떼주세요'); return; } else next = cur.concat(em);
+    try { await db.setSticker(ds, next); for (const x of $('dn-emo').children) x.classList.toggle('on', next.includes(x.dataset.e)); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
   $('dn-save').onclick = async () => { const t = $('dn-text').value.trim();
     try { await db.setDiary(ds, t); closeSheet(); renderDiary(); toast(t ? '일기를 남겼어요' : '일기를 지웠어요'); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
@@ -1519,7 +1530,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.20 · 09-28';
+const VER = 'v0.21 · 09-29';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
