@@ -784,9 +784,32 @@ const db = {
 function upsertLocal(arr, row) { const i = arr.findIndex(x => x.id === row.id); if (i < 0) arr.push(row); else arr[i] = row; }
 
 // ── 실시간: 다른 폰이 적으면 바로 반영
+// ── 자동 동기화 (v0.23, 사장님 "누군가 작성하면 바로 보여야 하는데 새로고침 안 하면 안 보임")
+// 아이폰은 화면이 꺼지거나 다른 앱으로 가면 실시간 연결을 끊고, 끊긴 사이 기록은 다시 보내주지 않는다.
+// 그래서 ① 앱이 다시 보일 때 ② 하단 탭을 옮길 때(10초 간격) ③ 연결이 끊겼다 알려올 때 기록을 통째로 다시 받고 연결을 새로 잇는다.
+let lastSync = 0, syncing = false, chanDropped = false, chanClosing = false;
+async function resync(minGap) {
+  if (MOCK && !window.__syncTest) return; if (!baby || !me || syncing) return;
+  if (minGap && Date.now() - lastSync < minGap) return;
+  syncing = true;
+  try {
+    await db.loadAll(); db.loaded = new Set();
+    const need = new Set([day.slice(0, 7)]); if (!$('s-diary').classList.contains('hidden')) need.add(ym);
+    for (const m of need) if (new Date(m + '-01T00:00') < new Date(Date.now() - 30 * 86400000)) await db.loadMonth(m);   // 30일 넘은 달을 보고 있었으면 그 달도
+    if (!MOCK && (!channel || channel.state !== 'joined')) { chanClosing = true; if (channel) await sb.removeChannel(channel); channel = null; chanClosing = false; subscribe(); }
+    lastSync = Date.now(); redrawCurrent();
+  } catch (e) { console.warn('동기화 실패', e); }
+  finally { syncing = false; }
+}
+function redrawCurrent() {
+  if (!$('s-home').classList.contains('hidden')) render();
+  else if (!$('s-diary').classList.contains('hidden')) renderDiary();
+  else if (!$('s-growth').classList.contains('hidden')) { renderGrowth(); if (!$('g-vax').classList.contains('hidden')) renderVax(); }
+  else if (!$('s-stats').classList.contains('hidden')) renderStats();
+}
 function subscribe() {
   if (MOCK || channel) return;
-  channel = sb.channel('baby-' + baby.id)
+  const ch = channel = sb.channel('baby-' + baby.id)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_logs', filter: 'baby_id=eq.' + baby.id }, p => {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
@@ -796,7 +819,9 @@ function subscribe() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_checks', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') delete checks[p.old.item]; else checks[p.new.item] = p.new; render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_growth', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') growth = growth.filter(x => x.id !== p.old.id); else upsertLocal(growth, p.new); if (!$('s-growth').classList.contains('hidden')) renderGrowth(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_notes', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') notes = notes.filter(x => x.id !== p.old.id); else upsertLocal(notes, p.new); render(); })
-    .subscribe();
+    .subscribe(st => { if (ch !== channel) return;   // 새로 이으면서 닫힌 옛 연결의 신호는 무시
+      if (st === 'SUBSCRIBED') { if (chanDropped) { chanDropped = false; resync(0); } }   // 끊겼다 다시 붙으면 그 사이 빠진 기록을 채움
+      else if ((st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED') && !chanClosing) { chanDropped = true; setTimeout(() => resync(0), 2000); } });
 }
 
 // ── 렌더
@@ -1232,6 +1257,7 @@ function goTab(id) {
   else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
   else if (id === 's-growth') { show(id); renderGrowth(); setGSub(gSub); }
   else { show(id); renderStats(); }
+  resync(10000);
 }
 $('tabs').addEventListener('touchend', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); _tabHandled = Date.now(); goTab(b.dataset.tab); }, { passive: false });
 $('tabs').addEventListener('pointerup', e => { if (e.pointerType !== 'touch' || Date.now() - _tabHandled < 500) return; const b = e.target.closest('button'); if (!b) return; _tabHandled = Date.now(); goTab(b.dataset.tab); });
@@ -1240,11 +1266,7 @@ $('open-settings').addEventListener('touchend', e => { e.preventDefault(); _tabH
 $('open-settings').addEventListener('pointerup', e => { if (e.pointerType !== 'touch' || Date.now() - _tabHandled < 500) return; _tabHandled = Date.now(); fillSettings(); show('s-settings'); });
 $('tabs').addEventListener('click', e => {
   if (Date.now() - _tabHandled < 500) return;
-  const b = e.target.closest('button'); if (!b) return; const id = b.dataset.tab;
-  if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
-  else if (id === 's-diary') { ym = day.slice(0, 7); show(id); renderDiary(); }
-  else if (id === 's-growth') { show(id); renderGrowth(); setGSub(gSub); }
-  else { show(id); renderStats(); }
+  const b = e.target.closest('button'); if (!b) return; goTab(b.dataset.tab);
 });
 
 // ── 24시간 원형 생활계획표: 0시가 위, 시계 방향. 잠은 실제 길이 띠, 수유·기저귀·체온은 짧은 조각
@@ -1540,7 +1562,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.22 · 09-29';
+const VER = 'v0.23 · 09-30';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -1552,7 +1574,8 @@ async function checkUpdate() {
     if (m && m[1] !== VER) { toast('새 버전으로 바꿔요'); setTimeout(() => location.reload(), 600); }
   } catch (_) {}
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkUpdate(); resync(0); } });
+window.addEventListener('pageshow', e => { if (e.persisted) resync(0); });   // 사파리가 페이지를 얼려뒀다 되살릴 때
 setTimeout(checkUpdate, 4000); setInterval(checkUpdate, 30 * 60000);
 $('open-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
@@ -1677,7 +1700,7 @@ $('join-go').onclick = async () => {
   const { data: b } = await sb.from('babies').select('*').eq('id', data).single();
   baby = b; await enterHome();
 };
-async function enterHome() { await db.loadAll(); subscribe(); day = dstr(new Date()); show('s-home'); render(); }
+async function enterHome() { await db.loadAll(); lastSync = Date.now(); subscribe(); day = dstr(new Date()); show('s-home'); render(); }
 
 async function boot() {
   if (MOCK) { mock(); show('s-home'); render(); return; }
