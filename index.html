@@ -282,9 +282,14 @@
   .if-months button.now::after { content: ""; position: absolute; top: 4px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
   #g-info .stat-card { padding: 26px 22px 24px; margin-bottom: 18px; }
   .if-lab { font-size: 13px; font-weight: 600; color: var(--ok); }
-  .if-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
-  .if-tx { flex: 1; min-width: 0; }
-  .if-baby { flex: none; width: 76px; height: 76px; border-radius: 50%; }   /* 사람 피규어 아기 A (10-01 사장님 "애기 캐릭터를 이 시기엔쪽에") */
+  /* 요약 카드 = 아기 A 배경 분홍으로, 제목 → 아기 전신 → 평균 (10-01 사장님) — 라이트·다크 같은 색 */
+  #g-info .stat-card.if-hero { background: linear-gradient(180deg, #e5b3b6 0%, #e7bcbe 55%, #e8c2c3 100%); box-shadow: none; }
+  .if-hero .if-lab { color: #9b4a57; }
+  .if-hero .if-head { color: #2e1d21; }
+  .if-baby { display: block; width: 230px; height: 230px; margin: 4px auto 10px; }
+  .if-hero .if-avg div { border-color: rgba(90,35,45,.16); background: rgba(255,255,255,.18); }
+  .if-hero .if-avg span { color: rgba(60,25,32,.55); }
+  .if-hero .if-avg b { color: #2e1d21; }
   .if-head { margin: 8px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.45; word-break: keep-all; }
   .if-avg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .if-avg div { padding: 15px 16px 14px; border: 1px solid var(--line); border-radius: 14px; }   /* 바탕은 카드와 같고 선만 (사장님) */
@@ -567,7 +572,7 @@
 
 <!-- 하단 탭 -->
 <nav class="tabs hidden" id="tabs">
-  <button type="button" data-tab="s-home"><img class="tab-face" src="img/아기-얼굴-4e.png" alt=""><span>홈</span></button>
+  <button type="button" data-tab="s-home"><img class="tab-face" src="img/아기-2g-원형.png" alt=""><span>홈</span></button>
   <button type="button" data-tab="s-diary"><img src="img/ic-diary.png" alt=""><span>일지</span></button>
   <button type="button" data-tab="s-growth"><img src="img/ic-growth.png" alt=""><span>성장</span></button>
   <button type="button" data-tab="s-stats"><img src="img/ic-stats.png" alt="" style="transform:scale(.9)"><span>통계</span></button>
@@ -1306,7 +1311,7 @@ function renderInfo() {
   const block = (cls, ic, title, items) => { const it = items.filter(x => x[1]); if (!it.length) return '';
     return `<div class="if-blk ${cls}"><span class="if-ic"><img src="img/${ic}.png" alt=""></span><div class="if-bd"><b>${title}</b>${it.map(([k, v]) => `<div class="if-li"><span>${k}</span><em>${esc(v)}</em></div>`).join('')}</div></div>`; };
   el.innerHTML = `<div class="if-months" id="if-months">${MONTHLY.map((_, i) => `<button type="button" data-m="${i}" class="${i === infoM ? 'on' : ''} ${i === now ? 'now' : ''}">${i}개월</button>`).join('')}</div>
-    <div class="stat-card if-hero"><div class="if-top"><div class="if-tx"><div class="if-lab">생후 ${infoM}개월${infoM === now ? ' · 지금' : ''}</div><div class="if-head">${esc(d.headline || '')}</div></div><img class="if-baby" src="img/아기-2g-원형.png" alt=""></div>
+    <div class="stat-card if-hero"><div class="if-lab">생후 ${infoM}개월${infoM === now ? ' · 지금' : ''}</div><div class="if-head">${esc(d.headline || '')}</div><img class="if-baby" src="img/아기-2g-전신.png" alt="">
       <div class="if-avg"><div><span>평균 키</span><b>${hl}</b></div><div><span>평균 몸무게</span><b>${hw}</b></div></div></div>
     ${(f.count || f.interval || f.amount || sl.total || sl.nap) ? `<div class="status if-rhythm">
       ${block('feed', 'ic-feed', '수유', [['횟수', f.count], ['간격', f.interval], ['양', f.amount]])}
@@ -1637,7 +1642,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.28 · 10-01';
+const VER = 'v0.29 · 10-01';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
