@@ -445,7 +445,7 @@
 <!-- 로그인 -->
 <section id="s-login" class="screen hidden">
   <div class="onb">
-    <div class="family"><img src="img/아빠.png" alt=""><img class="baby" src="img/아기-얼굴-4e.png" alt=""><img src="img/엄마.png" alt=""></div>
+    <div class="family"><img src="img/아빠-2g.png" alt=""><img class="baby" src="img/아기-얼굴-4e.png" alt=""><img src="img/엄마-2g.png" alt=""></div>
     <h1>기특일기</h1>
     <p>부부가 같은 표를 보며 적어요</p>
     <button type="button" id="kakao-login">
@@ -582,7 +582,7 @@
   <div class="menu-title">나</div>
   <div class="menu">
     <div><span class="lab">내 이름</span><span class="v inl" id="nick-row"><span id="set-nick"></span><button type="button" class="pen" id="edit-nick" aria-label="이름 고치기"><svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M13.5 6.5l3 3"/></svg></button></span></div>
-    <div class="pick-row"><span class="lab">내 캐릭터</span><div class="pick" id="char-seg"><button type="button" data-v="dad"><img src="img/아빠.png" alt=""><span>아빠</span></button><button type="button" data-v="mom"><img src="img/엄마.png" alt=""><span>엄마</span></button></div></div>
+    <div class="pick-row"><span class="lab">내 캐릭터</span><div class="pick" id="char-seg"><button type="button" data-v="dad"><img src="img/아빠-2g.png" alt=""><span>아빠</span></button><button type="button" data-v="mom"><img src="img/엄마-2g.png" alt=""><span>엄마</span></button></div></div>
     <div><span class="lab">함께 적는 사람</span><span class="v" id="set-members"></span></div>
   </div>
   <div class="menu-title">화면</div>
@@ -858,7 +858,7 @@ function subscribe() {
 const KIND = { feed: '수유', diaper: '기저귀', sleep: '잠', temp: '체온' };
 const FEED = { formula: '분유', breast: '모유', pumped: '유축' };
 let avatarById = {};   // user_id → 이미지 URL (profiles.avatar_url, 없으면 첫 글자)
-const CHAR = { dad: 'img/아빠.png', mom: 'img/엄마.png' };   // 프로필은 카카오 사진이 아니라 캐릭터 (09-27 사장님)
+const CHAR = { dad: 'img/아빠-2g.png', mom: 'img/엄마-2g.png' };   // 프로필은 카카오 사진이 아니라 캐릭터 (09-27 사장님)
 const charOf = id => { const v = avatarById[id] || ''; return v === 'char:mom' ? 'mom' : v === 'char:dad' ? 'dad' : (id === baby.created_by ? 'dad' : 'mom'); };   // 기본: 만든 사람=아빠, 합류=엄마
 const avatarSrc = id => CHAR[charOf(id)];
 const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
@@ -1634,7 +1634,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.26 · 10-01';
+const VER = 'v0.27 · 10-01';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
