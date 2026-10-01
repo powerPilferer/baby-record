@@ -1323,8 +1323,9 @@ const MONTHLY = /*MONTHLY*/[{"m":0,"headline":"엄마 배 속을 떠나 세상�
 let infoM = null;
 // 개월별 아기 캐릭터 단계 (10-01~, 미지 사람 피규어). 카드 바탕 = 그림 배경색 세로 그라데이션. 단계 추가는 여기 한 줄
 const BABY_STAGES = [
-  { from: 0, to: 1, img: 'img/아기-2g-전신.png', bg: ['#e5b3b6', '#e7bcbe', '#e8c2c3'], lab: '#9b4a57' },      // 크림 속싸개 + 분홍
-  { from: 2, to: 3, img: 'img/아기-2g-전신-23.png', bg: ['#c7bbde', '#ccc0de', '#d3c7e1'], lab: '#5e3b91', size: 300 },   // 누운 자세라 크게   // 노랑 우주복 + 라벤더, 첫 웃음
+  { from: 0, to: 1, img: 'img/아기-단계-01.webp', bg: ['#e5b3b6', '#e7bcbe', '#e8c2c3'], lab: '#9b4a57', size: 260 },      // 크림 속싸개 + 분홍
+  { from: 2, to: 3, img: 'img/아기-단계-23.webp', bg: ['#c7bbde', '#ccc0de', '#d3c7e1'], lab: '#5e3b91', size: 300 },   // 노랑 우주복 + 라벤더, 첫 웃음 (누운 자세라 크게)
+  { from: 4, to: 5, img: 'img/아기-단계-45.webp', bg: ['#ecc8ae', '#ebc9b4', '#eacbb6'], lab: '#a3532a', size: 270 },   // 세이지 우주복 + 피치, 발끝 잡기 (10-01 사장님 A130)   // 노랑 우주복 + 라벤더, 첫 웃음
 ];
 const curMonth = () => Math.max(0, Math.min(MONTHLY.length - 1, Math.floor(ageMon(dstr(new Date())))));
 function avgHW(m) {                                  // 성별 있으면 그 성별, 없으면 남녀 평균
@@ -1678,7 +1679,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.32 · 10-01';
+const VER = 'v0.33 · 10-01';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
