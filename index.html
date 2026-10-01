@@ -74,7 +74,7 @@
   /* ── 홈 ── */
   header { display: flex; align-items: center; justify-content: space-between; height: 46px; margin: 12px 0 10px; padding: 0; }
   header .who { display: flex; align-items: center; }
-  #s-home header .who, #s-stats header .who { position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 94px); height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  #s-home header .who, #s-stats header .who { position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 150px); height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
   :root[data-theme="light"] #s-home header .who, :root[data-theme="light"] #s-stats header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   #s-home header .bf, #s-stats header .bf { width: 34px; height: 34px; margin-right: 9px; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
@@ -190,6 +190,32 @@
   .back-fab svg.chev { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   #s-settings header.sub { display: flex; justify-content: center; align-items: center; height: 46px; margin: 12px 0 10px; padding: 0; }
   .gear-fab:active { background: var(--card2); }
+  .ai-fab { right: 70px; padding: 3px; }   /* 설정 버튼 왼쪽, 같은 유리 원형 */
+  .ai-fab img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  /* 자온 채팅 시트 */
+  .ai-head { display: flex; align-items: center; justify-content: space-between; }
+  .ai-head h3 img { width: 28px; height: 28px; border-radius: 50%; }
+  .sheet h3.grow:has(img)::before { display: none; }
+  .ai-new { padding: 6px 12px; border-radius: 999px; background: var(--card2); font-size: 13px; font-weight: 600; color: var(--fg2); }
+  .ai-log { height: min(52vh, 440px); overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 10px; margin: 0 -2px; overscroll-behavior: contain; }
+  .ai-hello { margin: auto 0; text-align: center; color: var(--fg2); font-size: 15px; line-height: 1.6; }
+  .ai-hello img { width: 64px; height: 64px; border-radius: 50%; display: block; margin: 0 auto 10px; }
+  .ai-hello small { color: var(--fg3); font-size: 13px; }
+  .ai-msg { display: flex; gap: 8px; align-items: flex-end; }
+  .ai-msg img { width: 28px; height: 28px; border-radius: 50%; flex: none; }
+  .ai-msg.user { justify-content: flex-end; }
+  .ai-bub { max-width: 78%; padding: 10px 13px; border-radius: 18px; font-size: 15px; line-height: 1.6; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+  .ai-msg.assistant .ai-bub { background: var(--card2); color: var(--fg); border-bottom-left-radius: 6px; }
+  .ai-msg.user .ai-bub { background: var(--ok); color: #fff; border-bottom-right-radius: 6px; }
+  :root:not([data-theme="light"]) .ai-msg.user .ai-bub { color: #0b0b0d; }
+  .ai-dots { display: flex; gap: 4px; padding: 14px 16px; } .ai-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--fg3); animation: aiDot 1s infinite ease-in-out; }
+  .ai-dots i:nth-child(2) { animation-delay: .15s; } .ai-dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes aiDot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+  .ai-form { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; }
+  .ai-form textarea { flex: 1; resize: none; border: 0; outline: none; background: var(--bg); color: var(--fg); border-radius: 20px; padding: 11px 15px; font-size: 16px; line-height: 1.4; max-height: 120px; }
+  .ai-form button { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--ok); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .ai-form button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .ai-note { margin: 10px 2px 0; font-size: 11.5px; color: var(--fg3); line-height: 1.5; }
   :root[data-theme="light"] .gear-fab { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   .tabbed header { padding-right: 56px; }
   .tabbed { padding-bottom: calc(112px + var(--sab)) !important; }
@@ -570,6 +596,8 @@
 <button type="button" class="gear-fab back-fab hidden" id="close-settings" aria-label="뒤로"><svg viewBox="0 0 24 24" class="chev"><path d="M15 5l-7 7 7 7"/></svg></button>
 
 <!-- 우상단 고정 설정 -->
+<!-- 우상단: 자온 AI 비서 (v0.32 버튼만, 기능은 준비 중) -->
+<button type="button" class="gear-fab ai-fab hidden" id="open-ai" aria-label="자온에게 물어보기"><img src="img/자온.png" alt=""></button>
 <button type="button" class="gear-fab hidden" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
 
 <!-- 하단 탭 -->
@@ -684,7 +712,7 @@ const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add
 const TABBED = ['s-home', 's-diary', 's-growth', 's-stats'];
 const show = id => {
   for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id);
-  $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id));
+  $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id)); $('open-ai').classList.toggle('hidden', !TABBED.includes(id));
   $('close-settings').classList.toggle('hidden', id !== 's-settings');
   for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === id);
   window.scrollTo(0, 0);
@@ -1495,7 +1523,7 @@ function closeSheet() { $('dim').classList.add('hidden'); $('sheet').classList.a
 (() => {
   const sh = $('sheet'); let y0 = 0, t0 = 0, dy = 0, drag = false, vy = 0, lastY = 0, lastT = 0;
   sh.addEventListener('touchstart', e => {
-    if (e.target.closest('input, textarea, select, button, label, .seg, .ml, .photo-pick')) { drag = false; return; }
+    if (e.target.closest('input, textarea, select, button, label, .seg, .ml, .photo-pick, .ai-log, form')) { drag = false; return; }
     drag = true; y0 = lastY = e.touches[0].clientY; t0 = lastT = e.timeStamp; dy = 0; vy = 0; sh.style.transition = 'none';
   }, { passive: true });
   sh.addEventListener('touchmove', e => {
@@ -1650,7 +1678,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.31 · 10-01';
+const VER = 'v0.32 · 10-01';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -1720,6 +1748,50 @@ function openBabySheet() {
     } catch (e) { alert('저장 실패: ' + e.message); }
   };
 }
+// ── 자온 AI 비서 (v0.32) — 채팅만. 기록은 안 보냄(사장님 10-01), 보내는 건 질문·최근 대화·생후 일수·이름
+// 서버: supabase/functions/baby-ask (Claude Opus 5.5, 키는 서버 비밀값). 대화는 이 폰에만 저장(bb-ai-chat)
+const AI_URL = SB_URL + '/functions/v1/baby-ask';
+let aiLog = (() => { try { return JSON.parse(localStorage.getItem('bb-ai-chat') || '[]'); } catch (_) { return []; } })();
+let aiBusy = false;
+const aiSave = () => { try { localStorage.setItem('bb-ai-chat', JSON.stringify(aiLog.slice(-60))); } catch (_) {} };
+function aiRender() {
+  const box = $('ai-log'); if (!box) return;
+  box.innerHTML = (aiLog.length ? '' : `<div class="ai-hello"><img src="img/자온.png" alt=""><p>${esc(baby.name)}에 대해 궁금한 걸 물어보세요.<br><small>예: 트림을 잘 안 해요 · 분유 텀이 짧아요 · 딸꾹질이 잦아요</small></p></div>`)
+    + aiLog.map(m => `<div class="ai-msg ${m.role}">${m.role === 'assistant' ? '<img src="img/자온.png" alt="">' : ''}<div class="ai-bub">${esc(m.text)}</div></div>`).join('')
+    + (aiBusy ? '<div class="ai-msg assistant"><img src="img/자온.png" alt=""><div class="ai-bub ai-dots"><i></i><i></i><i></i></div></div>' : '');
+  box.scrollTop = box.scrollHeight;
+}
+async function aiSend() {
+  const inp = $('ai-in'); const q = inp.value.trim(); if (!q || aiBusy) return;
+  const history = aiLog.slice(-20).map(m => ({ role: m.role, text: m.text }));
+  aiLog.push({ role: 'user', text: q, at: Date.now() }); inp.value = ''; aiBusy = true; aiSave(); aiRender();
+  let answer;
+  try {
+    if (MOCK) { await new Promise(r => setTimeout(r, 700)); answer = '(목업 답변) 실제 앱에서는 자온이 답해요. 트림은 수유 중간과 끝에 아기를 세워 안고 등을 쓸어 주면 도움이 돼요.'; }
+    else {
+      const { data: { session } } = await sb.auth.getSession();
+      const r = await fetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + (session?.access_token || '') },
+        body: JSON.stringify({ question: q, history, ageDays: dayNo(dstr(new Date())) - 1, babyName: baby.name }) });
+      const j = await r.json().catch(() => ({}));
+      answer = j.answer || ('⚠ ' + (j.error || `연결 실패 (${r.status})`));
+    }
+  } catch (e) { answer = '⚠ 연결에 실패했어요. 잠시 뒤 다시 물어봐 주세요.'; }
+  aiBusy = false; aiLog.push({ role: 'assistant', text: answer, at: Date.now() }); aiSave(); aiRender();
+}
+function openAi() {
+  $('sheet').innerHTML = `<div class="ai-head"><h3 class="grow"><img src="img/자온.png" alt="">자온에게 물어보기</h3>${aiLog.length ? '<button type="button" class="ai-new" id="ai-new">새 대화</button>' : ''}</div>
+    <div class="ai-log" id="ai-log"></div>
+    <form class="ai-form" id="ai-form"><textarea id="ai-in" rows="1" maxlength="1000" placeholder="궁금한 걸 적어 주세요"></textarea><button type="submit" aria-label="보내기"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
+    <p class="ai-note">자온은 진단을 하지 않아요. 열·호흡·처짐 같은 걱정되는 증상은 바로 소아과나 119에 물어보세요.</p>`;
+  $('sheet').dataset.kind = 'ai'; $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet;
+  aiRender();
+  $('ai-form').onsubmit = e => { e.preventDefault(); aiSend(); };
+  $('ai-in').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); aiSend(); } });
+  $('ai-in').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px'; });
+  if ($('ai-new')) $('ai-new').onclick = () => { if (!confirm('지금 대화를 지우고 새로 시작할까요?')) return; aiLog = []; aiSave(); openAi(); };
+}
+$('open-ai').addEventListener('touchend', e => { e.preventDefault(); _tabHandled = Date.now(); openAi(); }, { passive: false });
+$('open-ai').onclick = () => { if (Date.now() - _tabHandled < 500) return; openAi(); };
 $('close-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; show('s-home'); };
 $('char-seg').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
