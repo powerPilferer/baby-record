@@ -268,12 +268,13 @@
   :root[data-theme="light"] .g-panel { background: #fafafc; border-top-color: rgba(0,0,0,.03); box-shadow: 0 -8px 28px rgba(0,0,0,.06); }
   :root[data-theme="light"] .g-panel .stat-card, :root[data-theme="light"] .g-panel .g-quick button { box-shadow: 0 1px 4px rgba(0,0,0,.05); }   /* 판 안 카드는 원래 흰색 그대로 (사장님 "화이트 박스들이 회색이 되니 이상") */
   .g-sub button:active { background: var(--card2); }
-  .g-sub { display: flex; align-items: center; margin: 0 0 18px; }
-  .g-sub button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 0; border-radius: 12px; font-size: 15.5px; white-space: nowrap; font-weight: 500; color: var(--fg3); }
+  .g-sub { display: flex; align-items: center; gap: 0; margin: 6px 0 22px; }   /* 간격 0 = 선택 상자가 예전 세로선 자리까지 */   /* 위아래 여백 더 (10-01 사장님) */
+  .g-sub button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 0; border-radius: 999px; font-size: 15.5px; white-space: nowrap; font-weight: 500; color: var(--fg3); }
   .g-sub .g-ic { width: 26px; height: 26px; flex: none; }   /* 플랫 아이콘 (사장님 "아이콘은 플랫하게") */
   .g-sub button:not(.on) .g-ic { display: none; }   /* 선택된 탭만 아이콘, 나머지는 글자만 (사장님) */
-  .g-sub button.on { color: var(--fg); font-weight: 600; }
-  .g-sub-div { flex: none; width: 1px; height: 26px; background: var(--line); }
+  .g-sub button.on { color: var(--fg); font-weight: 600; background: var(--card2); }   /* 선택 = 둥근 상자 (10-01 사장님) */
+  :root[data-theme="light"] .g-sub button.on { background: rgba(0,0,0,.07); }   /* 라이트 = 하단 메뉴 선택과 같은 회색 (10-01 사장님) */
+  .g-sub-div { display: none; }   /* 세로선 삭제 (10-01 사장님) */
   /* 이 시기엔 (v0.26, 사장님 "상하 여백을 충분히, 회색 네모 박스가 별로") — 회색 칸 없이 여백과 가는 선으로 나눔 */
   .if-months { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 4px -16px 22px; padding: 2px 16px 4px; scroll-behavior: smooth; }
   .if-months::-webkit-scrollbar { display: none; }
@@ -1649,7 +1650,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.30 · 10-01';
+const VER = 'v0.31 · 10-01';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
