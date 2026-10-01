@@ -274,26 +274,35 @@
   .g-sub button:not(.on) .g-ic { display: none; }   /* 선택된 탭만 아이콘, 나머지는 글자만 (사장님) */
   .g-sub button.on { color: var(--fg); font-weight: 600; }
   .g-sub-div { flex: none; width: 1px; height: 26px; background: var(--line); }
-  /* 월별정보 (v0.24) — 앱 문법: 개월 알약 줄 + 요약 카드 + 항목색 줄 + 이야기 카드 */
-  .if-months { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 12px; padding: 2px 16px 4px; scroll-behavior: smooth; }
+  /* 이 시기엔 (v0.26, 사장님 "상하 여백을 충분히, 회색 네모 박스가 별로") — 회색 칸 없이 여백과 가는 선으로 나눔 */
+  .if-months { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 4px -16px 22px; padding: 2px 16px 4px; scroll-behavior: smooth; }
   .if-months::-webkit-scrollbar { display: none; }
-  .if-months button { flex: none; position: relative; padding: 8px 13px; border-radius: 999px; background: var(--card2); color: var(--fg2); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .if-months button.on { background: var(--fg); color: var(--bg); }
+  .if-months button { flex: none; position: relative; padding: 8px 14px; border-radius: 999px; background: none; border: 1px solid var(--line); color: var(--fg2); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .if-months button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
   .if-months button.now::after { content: ""; position: absolute; top: 4px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
-  .stat-card.if-hero { padding: 16px 16px 14px; }
+  #g-info .stat-card { padding: 26px 22px 24px; margin-bottom: 18px; }
   .if-lab { font-size: 13px; font-weight: 600; color: var(--ok); }
-  .if-head { margin: 4px 0 14px; font-size: 19px; font-weight: 700; letter-spacing: -.03em; line-height: 1.4; word-break: keep-all; }
-  .if-avg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .if-avg div { padding: 11px 13px; border-radius: 12px; background: var(--card2); }
-  .if-avg span { display: block; font-size: 12px; color: var(--fg3); margin-bottom: 2px; }
-  .if-avg b { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .status.if-rhythm { margin-bottom: 12px; background: var(--card); }   /* 판 안에서는 다른 카드처럼 흰 카드 */
+  .if-head { margin: 8px 0 24px; font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.45; word-break: keep-all; }
+  .if-avg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .if-avg div { padding: 15px 16px 14px; border: 1px solid var(--line); border-radius: 14px; }   /* 바탕은 카드와 같고 선만 (사장님) */
+  .if-avg span { display: block; font-size: 13px; color: var(--fg3); margin-bottom: 6px; }
+  .if-avg b { font-size: 22px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .status.if-rhythm { margin-bottom: 18px; padding: 22px 22px 20px; gap: 16px; background: var(--card); border-radius: 16px; }
   :root[data-theme="light"] .status.if-rhythm { box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-  .status.if-rhythm .chip span { font-size: 14px; color: var(--fg); white-space: normal; line-height: 1.45; }
-  .status.if-rhythm .chip { align-items: flex-start; }
-  .if-note { margin: 2px 0 0; font-size: 13px; color: var(--fg2); line-height: 1.6; word-break: keep-all; }
-  .if-p { margin: 0 0 10px; font-size: 15px; line-height: 1.75; color: var(--fg); opacity: .88; word-break: keep-all; }
-  .if-src { margin-top: 12px; font-size: 12px; color: var(--fg3); line-height: 1.6; } .if-src a { color: var(--fg3); }
+  .if-blk { display: flex; align-items: flex-start; gap: 14px; }
+  .if-blk + .if-blk { padding-top: 16px; border-top: 1px solid var(--line); }
+  .if-ic { flex: none; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
+  .if-ic img { width: 28px; height: 28px; object-fit: contain; }
+  .if-bd { flex: 1; min-width: 0; padding-top: 1px; }
+  .if-bd > b { display: block; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .if-blk.feed .if-bd > b { color: var(--feed); } .if-blk.sleep .if-bd > b { color: var(--sleep); }
+  .if-li { display: grid; grid-template-columns: 36px 1fr; gap: 8px; font-size: 15px; line-height: 1.6; }
+  .if-li span { color: var(--fg3); font-size: 13.5px; padding-top: 1px; }
+  .if-li em { font-style: normal; color: var(--fg); word-break: keep-all; }
+  .if-note { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--fg2); line-height: 1.7; word-break: keep-all; }
+  #g-info .g-head { margin-bottom: 14px !important; }
+  .if-p { margin: 0 0 16px; font-size: 15px; line-height: 1.85; color: var(--fg); opacity: .88; word-break: keep-all; }
+  .if-src { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--fg3); line-height: 1.6; } .if-src a { color: var(--fg3); }
   .vx-row, .vx-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 11px 0; border-top: 1px solid var(--line); }
   .vx-next .vx-row:first-of-type { border-top: 0; }
   .stat-card.vx-next { background: color-mix(in srgb, var(--ok) 9%, var(--card)); }
@@ -1290,13 +1299,15 @@ function renderInfo() {
   const hosts = {}; for (const u of d.sources || []) { let h = u; try { h = new URL(u).hostname.replace('www.', ''); } catch (_) {} if (!hosts[h]) hosts[h] = u; }
   const src = Object.entries(hosts).map(([h, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(NAMES[h] || h)}</a>`).join(' · ');
   const [hl, hw] = avgHW(infoM).split(' / ');
-  const row = (cls, lab, v) => v ? `<div class="chip ${cls}"><b>${lab}</b><span>${esc(v)}</span></div>` : '';
+  // 수유·잠 = 아이콘 + 제목 + 항목을 한 줄씩 (v0.26, 사장님 "2줄부턴 정렬이 이상, 수유·잠 아이콘 넣어서")
+  const block = (cls, ic, title, items) => { const it = items.filter(x => x[1]); if (!it.length) return '';
+    return `<div class="if-blk ${cls}"><span class="if-ic"><img src="img/${ic}.png" alt=""></span><div class="if-bd"><b>${title}</b>${it.map(([k, v]) => `<div class="if-li"><span>${k}</span><em>${esc(v)}</em></div>`).join('')}</div></div>`; };
   el.innerHTML = `<div class="if-months" id="if-months">${MONTHLY.map((_, i) => `<button type="button" data-m="${i}" class="${i === infoM ? 'on' : ''} ${i === now ? 'now' : ''}">${i}개월</button>`).join('')}</div>
     <div class="stat-card if-hero"><div class="if-lab">생후 ${infoM}개월${infoM === now ? ' · 지금' : ''}</div><div class="if-head">${esc(d.headline || '')}</div>
       <div class="if-avg"><div><span>평균 키</span><b>${hl}</b></div><div><span>평균 몸무게</span><b>${hw}</b></div></div></div>
     ${(f.count || f.interval || f.amount || sl.total || sl.nap) ? `<div class="status if-rhythm">
-      ${row('feed', '수유', [f.count, f.interval && `${f.interval}마다`, f.amount].filter(Boolean).join(' · '))}
-      ${row('sleep', '잠', [sl.total && `하루 ${sl.total}`, sl.nap && `낮잠 ${sl.nap}`].filter(Boolean).join(' · '))}
+      ${block('feed', 'ic-feed', '수유', [['횟수', f.count], ['간격', f.interval], ['양', f.amount]])}
+      ${block('sleep', 'ic-sleep', '잠', [['하루', sl.total], ['낮잠', sl.nap]])}
       ${f.note ? `<p class="if-note">${esc(f.note)}</p>` : ''}</div>` : ''}
     <div class="stat-card grow"><div class="g-head" style="margin-bottom:8px"><h3>이 시기의 아기</h3></div>
       ${(d.baby || []).map(p => `<p class="if-p">${esc(p)}</p>`).join('')}
@@ -1623,7 +1634,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.25 · 10-01';
+const VER = 'v0.26 · 10-01';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
