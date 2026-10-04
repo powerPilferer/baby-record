@@ -414,7 +414,7 @@
   .ml { display: flex; gap: 6px; margin: 6px 0 4px; }
   .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
   .ml button.on { background: var(--card2); color: var(--fg); }
-  .ml button.clr { flex: .7; color: var(--fg3); }
+  .ml button.clr { flex: 1.1; color: var(--fg2); font-size: 14px; }
   /* 시트 안 선택 표시 = 그 항목 색으로 채움 (v0.16, 사장님 "선택된건지 잘 모르겠음") */
   .sheet { --c: var(--ok); --on-fg: #0b0b0d; }
   :root[data-theme="light"] .sheet { --on-fg: #fff; }
@@ -1487,7 +1487,7 @@ function openSheet(kind, log) {
     const type = d.type || localStorage.getItem('bb-feedtype') || 'formula';
     const lastMl = +(localStorage.getItem('bb-ml') || 60);
     body = `<div class="seg" id="feed-type">${Object.entries(FEED).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === type ? 'on' : ''}">${v}</button>`).join('')}</div>
-      <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml"><button type="button" data-add="0" class="clr">0</button>${[5, 10, 20, 50].map(v => `<button type="button" data-add="${v}">+${v}</button>`).join('')}</div>
+      <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml"><button type="button" data-add="0" class="clr">지우기</button>${[5, 10, 20, 50].map(v => `<button type="button" data-add="${v}">+${v}</button>`).join('')}</div>
       <div class="frow"><label>양 (ml)</label><input type="number" inputmode="numeric" id="f-ml" value="${d.ml || lastMl}"></div></div>
       <div id="feed-min" class="${type === 'breast' ? '' : 'hidden'}"><div class="frow"><label>시간 (분)</label><input type="number" inputmode="numeric" id="f-min" value="${d.min || 15}"></div></div>`;
   } else if (kind === 'diaper') {
@@ -1683,7 +1683,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.35 · 10-04';
+const VER = 'v0.35a · 10-04';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
