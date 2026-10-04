@@ -75,8 +75,24 @@
   header { display: flex; align-items: center; justify-content: space-between; height: 46px; margin: 12px 0 10px; padding: 0; }
   header .who { display: flex; align-items: center; }
   #s-home header .who, #s-stats header .who { position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 150px); height: 46px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
-  :root[data-theme="light"] #s-home header .who, :root[data-theme="light"] #s-stats header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
-  #s-home header .bf, #s-stats header .bf { width: 34px; height: 34px; margin-right: 9px; }
+  :root[data-theme="light"] #s-stats header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  :root[data-theme="light"] #s-home header .who { background: none; border: 0; box-shadow: none; }   /* 홈은 상자 자체엔 배경 없음 — 알약 배경은 .bg가 맡음 */
+  #s-stats header .bf { width: 34px; height: 34px; margin-right: 9px; }
+  /* ── 홈 히어로 → 알약 (10-04 시안 2): --p 0=가운데 큰 프로필, 1=좌상단 알약. 스크롤 0~130px 보간. --tw = 알약 글자 폭 */
+  #s-home { --p: 0; --pa: 0; --pb: 0; --pc: 0; --tw: 120px; }   /* pa: 제자리 축소(0~55%), pb: 아바타 왼쪽으로(55~78%), pc: 글자 옆으로+유리(78~100%) */
+  #s-home header { height: 232px; margin-bottom: 0; }   /* 흐름 안 높이 고정 */
+  #s-home header .who { position: fixed; top: calc(var(--sat) + 12px + 22px * (1 - var(--p))); left: 16px; right: 16px; height: calc(190px - 144px * var(--p)); max-width: none; padding: 0; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; display: block; pointer-events: none; }
+  #s-home header .who > * { pointer-events: auto; }
+  #s-home header .who .bg { position: absolute; left: 0; top: 0; height: 46px; width: calc(var(--tw) + 63px); border-radius: 999px; opacity: var(--pc);
+    background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  :root[data-theme="light"] #s-home header .who .bg { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  #s-home header .bf { position: absolute; margin: 0; width: calc(112px - 78px * var(--pa)); height: calc(112px - 78px * var(--pa)); left: calc((50% - (56px - 39px * var(--pa))) * (1 - var(--pb)) + 6px * var(--pb)); top: calc(6px * var(--pa)); border-radius: 50%; z-index: 2;
+    box-shadow: 0 0 0 calc(3px * (1 - var(--pa))) rgba(255,255,255,.9), 0 6px 18px rgba(0,0,0, calc(.35 * (1 - var(--pa)))); }
+  :root[data-theme="light"] #s-home header .bf { box-shadow: 0 0 0 calc(3px * (1 - var(--pa))) #fff, 0 6px 18px rgba(0,0,0, calc(.14 * (1 - var(--pa)))); }
+  #s-home header .wt { position: absolute; top: calc((128px - 72px * var(--pa)) * (1 - var(--pc)) + 6px * var(--pc)); left: calc(49px * var(--pc)); width: calc(100% * (1 - var(--pc)) + var(--tw) * var(--pc)); display: flex; flex-direction: column; align-items: center; gap: calc(6px * (1 - var(--pa))); }
+  #s-home header .wl { display: flex; align-items: center; gap: 8px; height: 34px; white-space: nowrap; }
+  #s-home header .name { font-size: calc(27px - 8px * var(--pc)); font-weight: 600; letter-spacing: -.03em; }
+  #s-home header .sub { font-size: 13px; color: var(--fg2); white-space: nowrap; opacity: calc(1 - var(--pa) * 1.6); height: calc(18px * (1 - var(--pa))); line-height: 18px; overflow: hidden; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
   header .name { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
   header .dday { color: var(--ok); font-size: 13px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); font-variant-numeric: tabular-nums; }
@@ -533,7 +549,7 @@
 <!-- 홈: 오늘의 표 -->
 <section id="s-home" class="screen tabbed hidden">
   <header>
-    <div class="who"><img class="bf" src="img/아기-2g-원형.png" alt=""><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div>
+    <div class="who"><span class="bg"></span><img class="bf" src="img/아기-2g-원형.png" alt=""><div class="wt"><div class="wl"><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div><div class="sub" id="h-sub"></div></div></div>
     
   </header>
   <div class="daynav">
@@ -1430,6 +1446,7 @@ function render() {
   $('h-name').textContent = baby.name; document.querySelector('header .bf').src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
   $('h-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
+  $('h-sub').textContent = babyInfoLine(); measurePill(); updHero();
   $('h-pick').defaultValue = today; $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
   $('day-next').disabled = day >= today;
@@ -1672,6 +1689,22 @@ $('setup-photo-clear').onclick = () => { setupPhoto = null; $('setup-file').valu
 // 아기 알약도 고정 (v0.12): 스크롤 중 첫 탭을 iOS가 삼키지 않게 설정 버튼과 같은 touchend 처리
 $('st-who').onclick = () => openBabySheet();
 const _who = document.querySelector('#s-home header .who');
+// 히어로 → 알약 보간: 스크롤 0~110px
+const _home = $('s-home'); let _pRaf = 0;
+function updHero() { _pRaf = 0; const p = Math.min(1, Math.max(0, window.scrollY / 140)); const seg = (a, b) => Math.min(1, Math.max(0, (p - a) / (b - a)));
+  const st = _home.style; st.setProperty('--p', p.toFixed(3)); st.setProperty('--pa', seg(0, .55).toFixed(3)); st.setProperty('--pb', seg(.55, .78).toFixed(3)); st.setProperty('--pc', seg(.78, 1).toFixed(3)); }
+const _mc = document.createElement('canvas').getContext('2d');
+function measurePill() {   // 알약 상태(p=1)의 글자 폭: 이름 19px + 간격 8 + D+n 칩(12px 글자 + 좌우 10)
+  _mc.font = '600 19px "Pretendard Variable", Pretendard, -apple-system, sans-serif'; const nw = _mc.measureText($('h-name').textContent).width;
+  _mc.font = '500 12px "Pretendard Variable", Pretendard, -apple-system, sans-serif'; const dw = _mc.measureText($('h-dday').textContent).width + 20;
+  _home.style.setProperty('--tw', Math.ceil(nw + 8 + dw) + 'px');
+}
+window.addEventListener('scroll', () => { if (!_pRaf) _pRaf = requestAnimationFrame(updHero); }, { passive: true });
+function babyInfoLine() {   // 정보 줄: 9월 15일생 · 생후 2주 6일 · 남아
+  const d = new Date(baby.birth_date + 'T00:00'), n = dayNo(dstr(new Date())), w = Math.floor((n - 1) / 7), r = (n - 1) % 7;
+  const age = n <= 1 ? '태어난 날' : w ? `${w}주 ${r}일` : `${n - 1}일째`;
+  return `${d.getMonth() + 1}월 ${d.getDate()}일생 · ${age}${baby.sex ? ' · ' + (baby.sex === 'm' ? '남아' : '여아') : ''}`;   // 좁으면 두 줄로 접힘
+}
 let _whoT = null;
 _who.addEventListener('touchstart', e => { const t = e.touches[0]; _whoT = { x: t.clientX, y: t.clientY, at: Date.now() }; }, { passive: true });
 _who.addEventListener('touchend', e => { const t = e.changedTouches[0];
@@ -1683,7 +1716,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.35a · 10-04';
+const VER = 'v0.36 · 10-04';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
