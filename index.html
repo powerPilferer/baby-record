@@ -163,6 +163,8 @@
   .row { --c: var(--fg2); display: grid; grid-template-columns: 52px 22px 1fr auto; gap: 0 8px; align-items: stretch; padding: 0 15px 0 13px; width: 100%; text-align: left; }
   .row:active { background: var(--card2); }
   .row.feed { --c: var(--feed); } .row.diaper { --c: var(--diaper); } .row.sleep { --c: var(--sleep); } .row.temp { --c: var(--temp); }
+  .row .tc { align-self: center; justify-self: start; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .row .gap { font-size: 10.5px; line-height: 1; color: var(--fg3); white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }   /* 직전 수유 뒤 텀 (10-07) */
   .row .t { align-self: center; justify-self: start; padding: 4px 8px; border-radius: 7px; background: var(--card2); color: var(--fg2); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
   .row.feed .t, .row.diaper .t, .row.sleep .t { background: color-mix(in srgb, var(--c) 14%, var(--card)); color: var(--c); }
   /* 기저귀 = 버터 옐로 (v0.17, 사장님 "너무 똥색" → 추천 A). 라이트에선 노란 글자가 흐려서 글자만 한 단계 진하게, 노란 채움 위 글자는 검정 */
@@ -1343,7 +1345,8 @@ let infoM = null;
 const BABY_STAGES = [
   { from: 0, to: 1, img: 'img/아기-단계-01.webp', bg: ['#e5b3b6', '#e7bcbe', '#e8c2c3'], lab: '#9b4a57', size: 260 },      // 크림 속싸개 + 분홍
   { from: 2, to: 3, img: 'img/아기-단계-23.webp', bg: ['#c7bbde', '#ccc0de', '#d3c7e1'], lab: '#5e3b91', size: 300 },   // 노랑 우주복 + 라벤더, 첫 웃음 (누운 자세라 크게)
-  { from: 4, to: 5, img: 'img/아기-단계-45.webp', bg: ['#ecc8ae', '#ebc9b4', '#eacbb6'], lab: '#a3532a', size: 270 },   // 세이지 우주복 + 피치, 발끝 잡기 (10-01 사장님 A130)   // 노랑 우주복 + 라벤더, 첫 웃음
+  { from: 4, to: 5, img: 'img/아기-단계-45.webp', bg: ['#ecc8ae', '#ebc9b4', '#eacbb6'], lab: '#a3532a', size: 270 },   // 세이지 우주복 + 피치, 발끝 잡기 (10-01 사장님 A130)
+  { from: 6, to: 7, img: 'img/아기-단계-67.webp', bg: ['#b6ded7', '#c2e5df', '#c6e3df'], lab: '#2f9381', size: 270 },   // 테라코타 우주복 + 민트, 혼자 앉아 딸랑이 (10-07 사장님 67-1R A)
 ];
 const curMonth = () => Math.max(0, Math.min(MONTHLY.length - 1, Math.floor(ageMon(dstr(new Date())))));
 function avgHW(m) {                                  // 성별 있으면 그 성별, 없으면 남녀 평균
@@ -1479,9 +1482,13 @@ function render() {
   if (!dayLogs.length) rows.innerHTML = `<div class="empty">${day === today ? '위 버튼으로 첫 기록을 남겨보세요' : '기록이 없어요'}</div>`;
   else {
     const title = l => (l.kind === 'sleep' || l.kind === 'temp') ? `${KIND[l.kind]} ${detailOf(l)}` : detailOf(l);
+    const feedAts = logs.filter(x => x.kind === 'feed').map(x => +new Date(x.at)).sort((a, b) => a - b);
+    const gapOf = l => {   // 직전 수유 뒤 몇 시간 텀인지 (10-07 사장님) — 전날 수유도 이어서 셈
+      const t = +new Date(l.at), prev = feedAts.filter(x => x < t).pop(); if (prev == null) return '';
+      const m = Math.round((t - prev) / 60000), h = Math.floor(m / 60), mm = m % 60; return h ? `${h}시간${mm ? ' ' + mm + '분' : ''}` : `${mm}분`; };
     const listLogs = [...dayLogs].reverse();   // 최신순 (v0.14, 사장님 "최신순으로") — 원형 보기·합계는 그대로
     rows.innerHTML = listLogs.map((l, i) => `<button type="button" class="row ${l.kind} ${i === listLogs.length - 1 ? 'last' : ''}" data-id="${l.id}">
-      <span class="t">${hhmm(l.at)}</span><span class="rl"></span>
+      <span class="tc"><span class="t">${hhmm(l.at)}</span>${l.kind === 'feed' && gapOf(l) ? `<span class="gap">${gapOf(l)}</span>` : ''}</span><span class="rl"></span>
       <span class="d"><b>${esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
       <span class="w">${avatar(l.user_id)}</span></button>`).join('');
     rows.insertAdjacentHTML('beforeend', sumHtml);
@@ -1711,7 +1718,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.41 · 10-07';
+const VER = 'v0.42 · 10-07';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
