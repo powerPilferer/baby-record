@@ -81,10 +81,10 @@
   /* ── 홈 상단 (10-07): 큰 프로필은 흐름 안에 그대로, 위로 사라지면 좌상단 알약이 나타남 */
   #s-home header { display: block; height: auto; margin: 0 0 6px; padding: 64px 0 0; }   /* .tabbed header의 오른쪽 56px 여백 무효 — 가운데 정렬 */
   #s-home header .hero { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 22px; }
-  /* 프로필 위 왕관 (10-07 시안, 이모지 임시) */
+  /* 프로필 위 왕관 (10-07, 미지 클레이 — 남아 A·여아 B) */
   #s-home header .hav { position: relative; }
   #s-home header .hav .bf { position: relative; z-index: 1; }
-  #s-home header .hav .crown { position: absolute; z-index: 2; left: 50%; top: -36px; transform: translateX(-50%) rotate(-12deg); font-size: 40px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,.25)); pointer-events: none; }
+  #s-home header .hav .crown { position: absolute; z-index: 2; left: 50%; top: -30px; width: 44px; height: auto; transform: translateX(-50%) rotate(-12deg); filter: drop-shadow(0 3px 6px rgba(0,0,0,.25)); pointer-events: none; }
   #s-home header .hero .bf { width: 112px; height: 112px; margin: 0 0 10px; box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 6px 18px rgba(0,0,0,.35); }
   :root[data-theme="light"] #s-home header .hero .bf { box-shadow: 0 0 0 3px #fff, 0 6px 18px rgba(0,0,0,.14); }
   #s-home header .hero .wl { display: flex; align-items: center; gap: 8px; height: 34px; white-space: nowrap; }
@@ -549,7 +549,7 @@
 <!-- 홈: 오늘의 표 -->
 <section id="s-home" class="screen tabbed hidden">
   <header>
-    <div class="hero" id="h-hero"><div class="hav"><img class="bf" src="img/아기-2g-원형.png" alt=""></div><div class="wl"><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div><div class="sub" id="h-sub"></div></div>
+    <div class="hero" id="h-hero"><div class="hav"><img class="crown" id="h-crown" src="img/왕관-남.png" alt=""><img class="bf" src="img/아기-2g-원형.png" alt=""></div><div class="wl"><span class="name" id="h-name">아기</span><span class="dday" id="h-dday"></span></div><div class="sub" id="h-sub"></div></div>
     <div class="who" id="h-pill"><img class="bf" src="img/아기-2g-원형.png" alt=""><span class="name" id="hp-name">아기</span><span class="dday" id="hp-dday"></span></div>
     
   </header>
@@ -1447,7 +1447,7 @@ function render() {
   $('h-name').textContent = $('hp-name').textContent = baby.name; for (const im of document.querySelectorAll('#s-home header .bf')) im.src = babyFace();
   const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
   $('h-dday').textContent = $('hp-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
-  $('h-sub').textContent = babyInfoLine(); updPill();
+  $('h-sub').textContent = babyInfoLine(); $('h-crown').src = baby.sex === 'f' ? 'img/왕관-여.png' : 'img/왕관-남.png'; updPill();   // 왕관: 남아·미정 = 노랑 단색, 여아 = 코랄 공 (10-07)
   $('h-pick').defaultValue = today; $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
   $('day-next').disabled = day >= today;
@@ -1711,7 +1711,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.38b · 10-07';
+const VER = 'v0.39 · 10-07';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
