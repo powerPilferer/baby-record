@@ -319,6 +319,17 @@
   .gp-name .dday { color: var(--ok); font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); }
   .gp-bio { margin-top: 4px; font-size: 14px; color: var(--fg2); line-height: 1.5; }
   .gp-bio em { font-style: normal; color: var(--ok); font-weight: 600; }
+  /* 성장 개편 (10-08 사장님 "좌상단 프로필쪽 박스 영역을 좀더 여유있게… 카테고리부분도 아래 내용과 좀더 구분… 스크롤 내릴때 상단 프로필은 가만히 있고 덮이는 형식") */
+  .gp { padding: 14px 4px 30px; }
+  .gp-top { gap: 16px; }
+  .gp-av { width: 84px; height: 84px; }
+  .gp-name { font-size: 18px; }
+  .gp-bio { margin-top: 6px; }
+  #s-growth > header { position: sticky; top: calc(var(--sat) + 12px); z-index: 0; }
+  #g-prof { position: sticky; top: calc(var(--sat) + 68px); z-index: 0; }
+  #s-growth .g-panel { position: relative; z-index: 2; }
+  #s-growth .g-sub { margin: 4px 0 0; padding-bottom: 18px; border-bottom: 1px solid var(--line2); }
+  #growth, #g-vax, #g-info { padding-top: 24px; }
   /* 성장 하위 탭 (인스타 프로필 탭처럼 밑줄) + 접종·검진 (v0.19) */
   /* 성장: 프로필 아래 화면 폭 전체 흰 판이 둥근 윗모서리로 올라오고, 그 위에 탭 (v0.22, 사장님 레퍼런스 "상단의 탭 디자인을 요런형태로") */
   .g-panel { margin: 6px -16px 0; padding: 20px 16px 24px; background: #111114; border-radius: 30px 30px 0 0; min-height: 70vh; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
@@ -1759,7 +1770,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.46 · 10-08';
+const VER = 'v0.47 · 10-08';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
