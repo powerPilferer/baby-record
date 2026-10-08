@@ -771,7 +771,7 @@ const show = id => {
   $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id)); $('open-ai').classList.toggle('hidden', !TABBED.includes(id));
   $('close-settings').classList.toggle('hidden', id !== 's-settings');
   for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === id);
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); requestAnimationFrame(() => updPill());   // 이미 맨 위면 scroll 이벤트가 안 와서 알약이 남던 것
 };
 
 // ── 상태
@@ -1764,7 +1764,8 @@ $('st-who').onclick = () => openBabySheet();
 const _who = document.querySelector('#s-home header .who');
 // 큰 프로필이 위로 사라지면 좌상단 알약 (10-07)
 const _hero = $('h-hero'); let _pRaf = 0;
-function updPill() { _pRaf = 0; _who.classList.toggle('on', _hero.getBoundingClientRect().bottom < 64); }
+function updPill() { _pRaf = 0; const r = $('h-hero').getBoundingClientRect();   // 홈이 숨어 있으면 높이 0 → 알약 켜지던 오류 (10-09 사장님)
+  document.querySelector('#s-home header .who').classList.toggle('on', r.height > 0 && r.bottom < 64); }
 window.addEventListener('scroll', () => { if (!_pRaf) _pRaf = requestAnimationFrame(updPill); }, { passive: true });
 _hero.onclick = () => openBabySheet();
 function babyInfoLine() {   // 정보 줄: 9월 15일생 · 생후 2주 6일 · 남아
@@ -1783,7 +1784,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.55 · 10-09';
+const VER = 'v0.56 · 10-09';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
