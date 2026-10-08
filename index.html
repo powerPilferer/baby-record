@@ -274,6 +274,7 @@
   .cal .d .n small { font-size: 12px; color: var(--fg3); font-weight: 500; }
   .cal .d .n small.sun { color: var(--temp); }
   .cal .d.today .n { color: var(--ok); }
+  .cal .d.today { background: color-mix(in srgb, var(--ok) 9%, var(--card)); box-shadow: inset 0 0 0 1.5px var(--ok); }   /* 오늘 칸 강조 (10-09 사장님) */
   .cal .d.sel { outline: 1.5px solid var(--fg2); }
   .cal .d .tx { font-size: 12px; color: var(--fg2); line-height: 1.35; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   :root:not([data-theme="light"]) .cal .d .tx { color: color-mix(in srgb, var(--fg) 82%, var(--card)); }   /* 다크만 메모 글씨 밝게 (10-09 사장님) */
@@ -1782,7 +1783,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.54 · 10-09';
+const VER = 'v0.55 · 10-09';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
