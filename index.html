@@ -126,8 +126,8 @@
   #s-home .date-pick { padding: 12px 14px; margin: -12px -14px; border-radius: 14px; }
   #s-home .date-pick .dd { width: 18px; height: 18px; }
   .dn-mid { display: flex; align-items: center; gap: 10px; }
-  #s-home .daynav .today-chip { width: auto; height: 30px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 16%, var(--card)); color: var(--ok); font-size: 14px; font-weight: 600; }   /* 지난 날일 때만 */
-  #s-home .daynav .today-chip.hidden { display: none; }
+  #s-home .daynav .today-chip, #s-diary .daynav .today-chip { width: auto; height: 30px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 16%, var(--card)); color: var(--ok); font-size: 14px; font-weight: 600; }   /* 지난 날일 때만 */
+  #s-home .daynav .today-chip.hidden, #s-diary .daynav .today-chip.hidden { display: none; }
 
   /* 간편 상태 두 칸 */
   .status { background: var(--bg1); border-radius: 14px; padding: 13px 15px; margin-bottom: 19px; display: flex; flex-direction: column; gap: 8px; }
@@ -623,7 +623,7 @@
 <!-- 기록일지: 달력 -->
 <section id="s-diary" class="screen tabbed hidden">
   <header><div class="who"><span class="name">다이어리</span></div></header>
-  <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="date" id="mon-label"></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+  <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="dn-mid"><div class="date" id="mon-label"></div><button type="button" class="today-chip hidden" id="mon-today">오늘</button></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
   <div class="cal" id="cal"></div>
   <div class="cal-legend"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span></div>
 </section>
@@ -978,7 +978,7 @@ async function renderDiary() {
   await db.loadMonth(ym);
   const today = dstr(new Date());
   const first = new Date(ym + '-01T00:00'), y = first.getFullYear(), mo = first.getMonth();
-  $('mon-label').innerHTML = `${y}년 ${mo + 1}월`;
+  $('mon-label').innerHTML = `${y}년 ${mo + 1}월`; $('mon-today').classList.toggle('hidden', ym === today.slice(0, 7));   // 다른 달 보다가 이번 달로 (10-09 사장님 "메인처럼")
   const days = new Date(y, mo + 1, 0).getDate();
   const byDay = {};
   for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0, byDay[d].slp += (l.kind === 'sleep' && l.ended_at) ? (new Date(l.ended_at) - new Date(l.at)) : 0; }
@@ -999,6 +999,7 @@ async function renderDiary() {
   $('cal').innerHTML = h;
 }
 $('mon-prev').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() - 1); ym = dstr(d).slice(0, 7); renderDiary(); };
+$('mon-today').onclick = () => { ym = dstr(new Date()).slice(0, 7); renderDiary(); };
 $('mon-next').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() + 1); ym = dstr(d).slice(0, 7); renderDiary(); };
 $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]'); if (!b || b.disabled) return; openDayNotes(b.dataset.d); });
 // ── 일지에서 날짜를 누르면: 그날 한마디 보기 + 쓰기 (지난 날에도 남길 수 있음) + 그날 표로 가기
@@ -1404,6 +1405,7 @@ const BABY_STAGES = [
   { from: 6, to: 7, img: 'img/아기-단계-67.webp', bg: ['#b6ded7', '#c2e5df', '#c6e3df'], lab: '#2f9381', size: 270 },   // 테라코타 우주복 + 민트, 혼자 앉아 딸랑이 (10-07 사장님 67-1R A)
   { from: 8, to: 9, img: 'img/아기-단계-89.webp', bg: ['#f1e1bd', '#f4e6c1', '#f3e9c6'], lab: '#93700a', size: 290 },   // 데님 우주복 + 바닐라, 옆에서 본 기기 (10-08 사장님 89-1R A) — 카드색은 몸에 걸려 원본 가장자리에서 수동
   { from: 10, to: 11, img: 'img/아기-단계-1011.webp', bg: ['#c0d5ee', '#d2e6f8', '#d7e9fa'], lab: '#0159c1', size: 290 },   // 라즈베리 로즈 우주복 + 파우더 스카이, 스툴 잡고 서기 (10-09 사장님 1011-1R A) — 아래 띠는 몸에 걸려 원본 바닥색으로 수동
+  { from: 12, to: 99, img: 'img/아기-단계-12.webp', bg: ['#ebc1e2', '#f3d2e6', '#fadfed'], lab: '#a91872', size: 290 },   // 맑은 틸 우주복 + 오키드 핑크, 케이크 향해 첫걸음 (10-09 사장님 12-2R B) — 위·아래 띠는 원본 가장자리에서 수동
 ];
 const curMonth = () => Math.max(0, Math.min(MONTHLY.length - 1, Math.floor(ageMon(dstr(new Date())))));
 function avgHW(m) {                                  // 성별 있으면 그 성별, 없으면 남녀 평균
@@ -1780,7 +1782,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.53 · 10-09';
+const VER = 'v0.54 · 10-09';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
