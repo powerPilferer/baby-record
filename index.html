@@ -268,6 +268,8 @@
   .cal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .cal .d { aspect-ratio: 1 / 1.1; border-radius: 16px; background: var(--card); padding: 12px 11px 11px; display: flex; flex-direction: column; text-align: left; position: relative; }
   .cal .d.future { opacity: .35; }
+  .cal .d.ahead .n { opacity: .55; }   /* 앞날: 열려 있되 숫자만 살짝 흐리게 (10-09 사장님) */
+  .cal .d .rv { font-size: 11.5px; font-weight: 600; color: var(--sleep); line-height: 1.3; margin-top: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }   /* 예약한 접종·검진 */
   .cal .d .n { font-size: 19px; font-weight: 600; color: var(--fg); line-height: 1; display: flex; align-items: baseline; gap: 5px; }
   .cal .d .n small { font-size: 12px; color: var(--fg3); font-weight: 500; }
   .cal .d .n small.sun { color: var(--temp); }
@@ -620,7 +622,7 @@
 
 <!-- 기록일지: 달력 -->
 <section id="s-diary" class="screen tabbed hidden">
-  <header><div class="who"><span class="name">기록일지</span></div></header>
+  <header><div class="who"><span class="name">다이어리</span></div></header>
   <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="date" id="mon-label"></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
   <div class="cal" id="cal"></div>
   <div class="cal-legend"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span></div>
@@ -656,7 +658,7 @@
 <!-- 하단 탭 -->
 <nav class="tabs hidden" id="tabs">
   <button type="button" data-tab="s-home"><img class="tab-face" src="img/아기-2g-원형.png" alt=""><span>홈</span></button>
-  <button type="button" data-tab="s-diary"><img src="img/ic-diary.png" alt=""><span>일지</span></button>
+  <button type="button" data-tab="s-diary"><img src="img/ic-diary.png" alt=""><span>다이어리</span></button>
   <button type="button" data-tab="s-growth"><img src="img/ic-growth.png" alt=""><span>성장</span></button>
   <button type="button" data-tab="s-stats"><img src="img/ic-stats.png" alt="" style="transform:scale(.9)"><span>통계</span></button>
 </nav>
@@ -977,21 +979,22 @@ async function renderDiary() {
   const today = dstr(new Date());
   const first = new Date(ym + '-01T00:00'), y = first.getFullYear(), mo = first.getMonth();
   $('mon-label').innerHTML = `${y}년 ${mo + 1}월`;
-  $('mon-next').disabled = ym >= today.slice(0, 7);
   const days = new Date(y, mo + 1, 0).getDate();
   const byDay = {};
   for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0, byDay[d].slp += (l.kind === 'sleep' && l.ended_at) ? (new Date(l.ended_at) - new Date(l.at)) : 0; }
   for (const n of notes) if (n.day.startsWith(ym)) (byDay[n.day] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 }).note += 1;
+  const rv = {};   // 예약해 둔 접종·검진 → 그날 칸에 (10-09 사장님 "미리 예약해논거")
+  for (const it of allVax()) { const c = it.rec || checks[it.id], on = it.rec ? (!it.rec.done_on && it.rec.due_on) : (c && !c.done_on && c.plan_on); if (on && on.startsWith(ym)) (rv[on] ||= []).push(it.name.replace(/\(.*\)/, '') + (it.dose ? ' ' + it.dose : '')); }
   let h = '';
   for (let d = 1; d <= days; d++) {
     const ds = `${ym}-${pad(d)}`, v = byDay[ds], st = stampOf(ds), future = ds > today, born = ds >= baby.birth_date;
     const dots = v ? ['feed', 'diaper', 'sleep'].map(k => `<i class="${k}"></i>`.repeat(Math.min(v[k], 3))).join('') : '';
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
-    h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${future || !born ? 'future' : ''}" data-d="${ds}" ${future ? 'disabled' : ''}>
+    h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
       <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${(() => { const L = stkList(ds), t = stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1);
         if (!L.length) return stickerOf(ds) ? `<span class="stk" style="transform:rotate(${t * 10}deg)">${stickerOf(ds)}</span>` : '';
-        return (L[1] ? `<span class="stk s2" style="transform:rotate(${-t * 12}deg)">${L[1]}</span>` : '') + `<span class="stk" style="transform:rotate(${t * 10}deg)">${L[0]}</span>`; })()}${st ? `<span class="stl">${st}</span>` : ''}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
+        return (L[1] ? `<span class="stk s2" style="transform:rotate(${-t * 12}deg)">${L[1]}</span>` : '') + `<span class="stk" style="transform:rotate(${t * 10}deg)">${L[0]}</span>`; })()}${st ? `<span class="stl">${st}</span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -1000,12 +1003,12 @@ $('mon-next').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth
 $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]'); if (!b || b.disabled) return; openDayNotes(b.dataset.d); });
 // ── 일지에서 날짜를 누르면: 그날 한마디 보기 + 쓰기 (지난 날에도 남길 수 있음) + 그날 표로 가기
 function openDayNotes(ds) {
-  const d = new Date(ds + 'T00:00');
-  $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">D+${dayNo(ds)}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
+  const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date());   // 앞날 = 일정 적기 (10-09 사장님 "캘린더처럼")
+  $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
     <div class="emo" id="dn-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stkList(ds).includes(e) ? 'on' : ''}">${e}</button>`).join('')}</div>
     <div class="emo-hint">두 개까지 붙일 수 있어요 · 다시 누르면 떼요</div>
-    <textarea id="dn-text" class="diary-in" maxlength="1000" rows="4" placeholder="이날의 일기 — 예: 많이 운 날 ㅜㅜ, 처음 뒤집은 날">${esc(diaries[ds] || '')}</textarea>
-    <div class="acts"><button type="button" class="cancel" id="dn-go">이날 기록 보기</button><button type="button" class="save" id="dn-save">저장</button></div>`;
+    <textarea id="dn-text" class="diary-in" maxlength="1000" rows="4" placeholder="${ahead ? '이날 일정 — 예: 오후 2시 소아과 예방접종' : '이날의 일기 — 예: 많이 운 날 ㅜㅜ, 처음 뒤집은 날'}">${esc(diaries[ds] || '')}</textarea>
+    <div class="acts">${ahead ? '' : '<button type="button" class="cancel" id="dn-go">이날 기록 보기</button>'}<button type="button" class="save" id="dn-save">저장</button></div>`;
   $('sheet').dataset.kind = 'daynotes';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet;
   $('dn-emo').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const em = b.dataset.e, cur = stkList(ds);
@@ -1013,8 +1016,8 @@ function openDayNotes(ds) {
     else if (cur.length >= 2) { toast('두 개까지예요. 하나를 먼저 떼주세요'); return; } else next = cur.concat(em);
     try { await db.setSticker(ds, next); for (const x of $('dn-emo').children) x.classList.toggle('on', next.includes(x.dataset.e)); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
   $('dn-save').onclick = async () => { const t = $('dn-text').value.trim();
-    try { await db.setDiary(ds, t); closeSheet(); renderDiary(); toast(t ? '일기를 남겼어요' : '일기를 지웠어요'); } catch (err) { alert('저장 실패: ' + err.message); } };
-  $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
+    try { await db.setDiary(ds, t); closeSheet(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
+  if (!ahead) $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
 }
 
 // ── 통계: 최근 7/30일 막대 (인라인 SVG)
@@ -1400,6 +1403,7 @@ const BABY_STAGES = [
   { from: 4, to: 5, img: 'img/아기-단계-45.webp', bg: ['#ecc8ae', '#ebc9b4', '#eacbb6'], lab: '#a3532a', size: 270 },   // 세이지 우주복 + 피치, 발끝 잡기 (10-01 사장님 A130)
   { from: 6, to: 7, img: 'img/아기-단계-67.webp', bg: ['#b6ded7', '#c2e5df', '#c6e3df'], lab: '#2f9381', size: 270 },   // 테라코타 우주복 + 민트, 혼자 앉아 딸랑이 (10-07 사장님 67-1R A)
   { from: 8, to: 9, img: 'img/아기-단계-89.webp', bg: ['#f1e1bd', '#f4e6c1', '#f3e9c6'], lab: '#93700a', size: 290 },   // 데님 우주복 + 바닐라, 옆에서 본 기기 (10-08 사장님 89-1R A) — 카드색은 몸에 걸려 원본 가장자리에서 수동
+  { from: 10, to: 11, img: 'img/아기-단계-1011.webp', bg: ['#c0d5ee', '#d2e6f8', '#d7e9fa'], lab: '#0159c1', size: 290 },   // 라즈베리 로즈 우주복 + 파우더 스카이, 스툴 잡고 서기 (10-09 사장님 1011-1R A) — 아래 띠는 몸에 걸려 원본 바닥색으로 수동
 ];
 const curMonth = () => Math.max(0, Math.min(MONTHLY.length - 1, Math.floor(ageMon(dstr(new Date())))));
 function avgHW(m) {                                  // 성별 있으면 그 성별, 없으면 남녀 평균
@@ -1776,7 +1780,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.52 · 10-09';
+const VER = 'v0.53 · 10-09';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
