@@ -111,6 +111,19 @@
   .date-pick .dd { width: 16px; height: 16px; fill: none; stroke: var(--fg3); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .date-pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; border: 0; padding: 0; -webkit-appearance: none; appearance: none; }
   .daynav .date small { color: var(--fg3); font-weight: 400; margin-left: 5px; font-size: 14px; }
+  /* 홈 날짜 줄 키움 (10-08 사장님 "조금더 크게… 상하 여백 좀더 주고 컨트롤하는 부분이라") */
+  #s-home .daynav { margin: 34px 0 30px; }
+  #s-home .daynav button { width: 52px; height: 52px; border-radius: 50%; background: var(--card); }   /* 화살표 = 둥근 버튼으로 눌리는 곳임을 보이게 */
+  #s-home .daynav button:active { background: var(--card2); }
+  #s-home .daynav button:disabled { background: none; }
+  #s-home .daynav button svg { width: 27px; height: 27px; }
+  #s-home .daynav .date { font-size: 19px; font-weight: 600; }
+  #s-home .daynav .date small { font-size: 15.5px; margin-left: 6px; }
+  #s-home .date-pick { padding: 12px 14px; margin: -12px -14px; border-radius: 14px; }
+  #s-home .date-pick .dd { width: 18px; height: 18px; }
+  .dn-mid { display: flex; align-items: center; gap: 10px; }
+  #s-home .daynav .today-chip { width: auto; height: 30px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 16%, var(--card)); color: var(--ok); font-size: 14px; font-weight: 600; }   /* 지난 날일 때만 */
+  #s-home .daynav .today-chip.hidden { display: none; }
 
   /* 간편 상태 두 칸 */
   .status { background: var(--bg1); border-radius: 14px; padding: 13px 15px; margin-bottom: 19px; display: flex; flex-direction: column; gap: 8px; }
@@ -559,7 +572,7 @@
   </header>
   <div class="daynav">
     <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <div class="date-pick"><div class="date" id="h-date"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="date" id="h-pick" aria-label="날짜 고르기"></div>
+    <div class="dn-mid"><div class="date-pick"><div class="date" id="h-date"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="date" id="h-pick" aria-label="날짜 고르기"></div><button type="button" class="today-chip hidden" id="day-today">오늘</button></div>
     <button type="button" id="day-next" aria-label="다음 날"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <div class="status">
@@ -1353,6 +1366,7 @@ const BABY_STAGES = [
   { from: 2, to: 3, img: 'img/아기-단계-23.webp', bg: ['#c7bbde', '#ccc0de', '#d3c7e1'], lab: '#5e3b91', size: 300 },   // 노랑 우주복 + 라벤더, 첫 웃음 (누운 자세라 크게)
   { from: 4, to: 5, img: 'img/아기-단계-45.webp', bg: ['#ecc8ae', '#ebc9b4', '#eacbb6'], lab: '#a3532a', size: 270 },   // 세이지 우주복 + 피치, 발끝 잡기 (10-01 사장님 A130)
   { from: 6, to: 7, img: 'img/아기-단계-67.webp', bg: ['#b6ded7', '#c2e5df', '#c6e3df'], lab: '#2f9381', size: 270 },   // 테라코타 우주복 + 민트, 혼자 앉아 딸랑이 (10-07 사장님 67-1R A)
+  { from: 8, to: 9, img: 'img/아기-단계-89.webp', bg: ['#f1e1bd', '#f4e6c1', '#f3e9c6'], lab: '#93700a', size: 290 },   // 데님 우주복 + 바닐라, 옆에서 본 기기 (10-08 사장님 89-1R A) — 카드색은 몸에 걸려 원본 가장자리에서 수동
 ];
 const curMonth = () => Math.max(0, Math.min(MONTHLY.length - 1, Math.floor(ageMon(dstr(new Date())))));
 function avgHW(m) {                                  // 성별 있으면 그 성별, 없으면 남녀 평균
@@ -1459,7 +1473,7 @@ function render() {
   $('h-sub').textContent = babyInfoLine(); $('h-crown').src = baby.sex === 'f' ? 'img/왕관-여.png' : 'img/왕관-남.png'; updPill();   // 왕관: 남아·미정 = 노랑 단색, 여아 = 코랄 공 (10-07)
   $('h-pick').defaultValue = today; $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
-  $('day-next').disabled = day >= today;
+  $('day-next').disabled = day >= today; $('day-today').classList.toggle('hidden', day === today);
 
   const sorted = [...logs].sort((a, b) => new Date(a.at) - new Date(b.at));
   const dayLogs = sorted.filter(l => localDay(l.at) === day);
@@ -1624,6 +1638,7 @@ const onPick = e => { const today = dstr(new Date()); const v = e.target.value |
   const to = v > today ? today : v < baby.birth_date ? baby.birth_date : v; if (to !== day) goDay(to); else e.target.value = day; };
 $('h-pick').addEventListener('change', onPick); $('h-pick').addEventListener('input', onPick);
 $('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); goDay(dstr(d)); };
+$('day-today').onclick = () => { day = dstr(new Date()); render(); };   // 지난 날 보다가 한 번에 오늘로 (10-08 사장님)
 $('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
 $('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
 $('notes').addEventListener('click', async e => {
@@ -1724,7 +1739,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.44 · 10-08';
+const VER = 'v0.45 · 10-08';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
