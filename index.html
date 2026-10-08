@@ -78,6 +78,9 @@
   :root[data-theme="light"] #s-stats header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   :root[data-theme="light"] #s-home header .who { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   #s-stats header .bf, #s-home header .who .bf { width: 34px; height: 34px; margin-right: 9px; }
+  #s-home header .who, #s-stats header .who { padding: 0 6px; }   /* 좌상단 알약: 얼굴·D+n 칩 둘레 상하좌우 6px 균일 (10-08 사장님) */
+  #s-stats header .bf, #s-home header .who .bf { width: 32px; height: 32px; margin-right: 10px; }
+  #s-home header .who .dday, #s-stats header .who .dday { margin-left: 8px; }
   /* ── 홈 상단 (10-07): 큰 프로필은 흐름 안에 그대로, 위로 사라지면 좌상단 알약이 나타남 */
   #s-home header { display: block; height: auto; margin: 0 0 6px; padding: 64px 0 0; }   /* .tabbed header의 오른쪽 56px 여백 무효 — 가운데 정렬 */
   #s-home header .hero { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 22px; }
@@ -1770,7 +1773,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.47 · 10-08';
+const VER = 'v0.48 · 10-08';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
