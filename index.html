@@ -332,7 +332,7 @@
   #s-growth > header { position: sticky; top: calc(var(--sat) + 12px); z-index: 0; }
   #g-prof { position: sticky; top: calc(var(--sat) + 68px); z-index: 0; }
   #s-growth .g-panel { position: relative; z-index: 2; }
-  #s-growth .g-sub { margin: 4px 0 0; padding-bottom: 18px; border-bottom: 1px solid var(--line2); }
+  #s-growth .g-sub { margin: 4px 0 0; padding-bottom: 0; border-bottom: 1px solid var(--line2); }
   #growth, #g-vax, #g-info { padding-top: 24px; }
   /* 성장 하위 탭 (인스타 프로필 탭처럼 밑줄) + 접종·검진 (v0.19) */
   /* 성장: 프로필 아래 화면 폭 전체 흰 판이 둥근 윗모서리로 올라오고, 그 위에 탭 (v0.22, 사장님 레퍼런스 "상단의 탭 디자인을 요런형태로") */
@@ -343,9 +343,10 @@
   .g-sub { display: flex; align-items: center; gap: 0; margin: 6px 0 22px; }   /* 간격 0 = 선택 상자가 예전 세로선 자리까지 */   /* 위아래 여백 더 (10-01 사장님) */
   .g-sub button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 0; border-radius: 999px; font-size: 15.5px; white-space: nowrap; font-weight: 500; color: var(--fg3); }
   .g-sub .g-ic { width: 26px; height: 26px; flex: none; }   /* 플랫 아이콘 (사장님 "아이콘은 플랫하게") */
-  .g-sub button:not(.on) .g-ic { display: none; }   /* 선택된 탭만 아이콘, 나머지는 글자만 (사장님) */
-  .g-sub button.on { color: var(--fg); font-weight: 600; background: var(--card2); }   /* 선택 = 둥근 상자 (10-01 사장님) */
-  :root[data-theme="light"] .g-sub button.on { background: rgba(0,0,0,.07); }   /* 라이트 = 하단 메뉴 선택과 같은 회색 (10-01 사장님) */
+  .g-sub button:not(.on) .g-ic { filter: grayscale(1); opacity: .5; }   /* 안 고른 탭도 아이콘, 흑백 (10-08 사장님) */
+  #s-growth .g-sub button { border-radius: 0; padding: 12px 0 17px; margin-bottom: -1px; border-bottom: 2px solid transparent; }   /* 선택 = 밑줄: 바닥선 위에 겹쳐 1px 더 굵고 밝게 (10-08 사장님) */
+  #s-growth .g-sub button:active { background: none; }
+  .g-sub button.on, #s-growth .g-sub button.on { color: var(--fg); font-weight: 600; border-bottom-color: var(--fg); }
   .g-sub-div { display: none; }   /* 세로선 삭제 (10-01 사장님) */
   /* 이 시기엔 (v0.26, 사장님 "상하 여백을 충분히, 회색 네모 박스가 별로") — 회색 칸 없이 여백과 가는 선으로 나눔 */
   .if-months { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 4px -16px 22px; padding: 2px 16px 4px; scroll-behavior: smooth; }
@@ -1774,7 +1775,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.49 · 10-08';
+const VER = 'v0.50 · 10-08';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
