@@ -1500,8 +1500,8 @@ function renderClock(sorted, dayLogs, today) {
 function render() {
   const today = dstr(new Date());
   $('h-name').textContent = $('hp-name').textContent = baby.name; for (const im of document.querySelectorAll('#s-home header .bf')) im.src = babyFace();
-  const dd = Math.floor((new Date(day + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로)
-  $('h-dday').textContent = $('hp-dday').textContent = `D+${dd}` + (stampOf(day) ? ` · ${stampOf(day)} 🎉` : '');
+  const dd = Math.floor((new Date(today + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로). 날짜를 넘겨도 프로필 D+n은 오늘 기준 (10-08 사장님)
+  $('h-dday').textContent = $('hp-dday').textContent = `D+${dd}` + (stampOf(today) ? ` · ${stampOf(today)} 🎉` : '');
   $('h-sub').textContent = babyInfoLine(); $('h-crown').src = baby.sex === 'f' ? 'img/왕관-여.png' : 'img/왕관-남.png'; updPill();   // 왕관: 남아·미정 = 노랑 단색, 여아 = 코랄 공 (10-07)
   $('h-pick').defaultValue = today; $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
@@ -1775,7 +1775,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.50 · 10-08';
+const VER = 'v0.51 · 10-08';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
