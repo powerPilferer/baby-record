@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0b0b0d">
 <title>기특일기</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="img/icon-180-baby2.png">
+<link rel="apple-touch-icon" href="img/icon-180-baby3.png">
 <script>(function(){var p=localStorage.getItem("bb-theme")||"system";document.documentElement.dataset.theme=(p==="light"||(p==="system"&&matchMedia("(prefers-color-scheme: light)").matches))?"light":"dark";})();</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
@@ -442,6 +442,8 @@
   .acts { display: flex; gap: 8px; margin-top: 16px; }
   .acts button { flex: 1; padding: 15px; border-radius: 999px; font-weight: 700; font-size: 18px; }
   .acts .save { background: var(--fg); color: var(--bg); flex: 2; }
+  .sheet[data-kind="vax"] .acts button { padding: 15px 6px; font-size: 16px; white-space: nowrap; }   /* 버튼 3개(닫기·메모·완료로 표시)가 한 줄에 (10-08) */
+  .sheet[data-kind="vax"] .acts .save { flex: 1.4; }   /* 완료로 표시 폭 줄임 (10-08 사장님) */
   .acts .cancel { background: var(--bg); color: var(--fg2); white-space: nowrap; }
   .acts .del { background: none; color: var(--temp); flex: 0 0 auto; padding: 14px 12px; }
 
@@ -1225,7 +1227,7 @@ const xItem = r => { const d = new Date((r.done_on || r.due_on) + 'T00:00'), e =
   return { id: 'x:' + r.id, cat: 'own', name: r.name, dose: r.dose || '', memo: '', a: d, b: e, rec: r }; };
 const allVax = () => VAX.concat(extras.map(xItem));
 const A = it => it.a || ageDate(it.from), B = it => it.b || ageDate(it.to);
-const doneOf = it => it.rec ? (it.rec.done_on ? it.rec : null) : checks[it.id];
+const doneOf = it => it.rec ? (it.rec.done_on ? it.rec : null) : (checks[it.id]?.done_on ? checks[it.id] : null);   // 메모만 적은 건 완료 아님 (10-08)
 let gSub = localStorage.getItem('bb-gsub') || 'grow';
 function ageDate(spec) {                          // 생일 + '14d' / '2m' / '4y'
   const n = parseInt(spec), u = spec.slice(-1), d = new Date(baby.birth_date + 'T00:00');
@@ -1280,7 +1282,7 @@ function renderVax() {
   const list = Object.keys(groups).sort((a, b) => a - b).map(k => {
     const its = groups[k], allDone = its.every(i => doneOf(i)), far = its.every(i => vaxState(i) === 'later') && +k > 6;
     return `<div class="vx-group ${far ? 'far' : ''}"><div class="vx-gh"><span>${vaxGroupLabel(k)}</span><small>${allDone ? '완료' : md(A(its[0])) + (A(its[0]).getFullYear() !== new Date().getFullYear() ? ' (' + A(its[0]).getFullYear() + ')' : '') + '부터'}</small></div>
-      ${its.map(it => { const st = vaxState(it), c = doneOf(it); return `<button type="button" class="vx-item ${st}" data-vx="${it.id}"><span class="vx-ck">${st === 'done' ? '✓' : ''}</span><span class="vx-t"><b>${esc(it.name)} <em>${esc(it.dose)}</em>${it.rec ? '<i class="vx-own">직접</i>' : ''}</b><small>${st === 'done' ? `${fmtDate(c.done_on).replace(/<[^>]+>/g, ' ')} 완료${c.note ? ' · ' + esc(c.note) : ''}` : vaxWhen(it) + (it.memo ? ' · ' + esc(it.memo) : '')}</small></span>${st === 'done' ? avatar(c.user_id) : `<span class="vx-d">${vaxDday(it)}</span>`}</button>`; }).join('')}</div>`;
+      ${its.map(it => { const st = vaxState(it), c = doneOf(it); return `<button type="button" class="vx-item ${st}" data-vx="${it.id}"><span class="vx-ck">${st === 'done' ? '✓' : ''}</span><span class="vx-t"><b>${esc(it.name)} <em>${esc(it.dose)}</em>${it.rec ? '<i class="vx-own">직접</i>' : ''}</b><small>${st === 'done' ? `${fmtDate(c.done_on).replace(/<[^>]+>/g, ' ')} 완료${c.note ? ' · ' + esc(c.note) : ''}` : vaxWhen(it) + (it.memo ? ' · ' + esc(it.memo) : '') + (!it.rec && checks[it.id]?.note ? ' · 📝 ' + esc(checks[it.id].note) : '')}</small></span>${st === 'done' ? avatar(c.user_id) : `<span class="vx-d">${vaxDday(it)}</span>`}</button>`; }).join('')}</div>`;
   }).join('');
   el.innerHTML = hero + `<div class="stat-card grow"><div class="g-head" style="margin-bottom:2px"><h3>전체 일정</h3><button type="button" class="g-add" id="vx-add">+ 직접 추가</button></div>${list}
     <div class="g-src">질병관리청 표준예방접종일정표(2026) · 영유아 건강검진 기준. 병원 안내가 우선이에요. 인플루엔자는 생후 6개월부터 매년 가을</div></div>`;
@@ -1288,17 +1290,21 @@ function renderVax() {
   $('vx-add').onclick = () => openExtraSheet(null);
 }
 function openVaxSheet(it) {
-  const c = checks[it.id];
+  const c = checks[it.id], done = !!c?.done_on;   // c는 있는데 done_on 없음 = 미리 적은 메모만 (10-08 사장님 "미리 메모하려고")
   $('sheet').innerHTML = `<h3 class="grow">${esc(it.name)} ${it.dose}</h3>
     <div class="vx-info">${it.cat === 'vax' ? '예방접종' : '건강검진'} · 권장 ${vaxWhen(it)}${it.memo ? '<br>' + esc(it.memo) : ''}</div>
-    <div class="frow"><label>${it.cat === 'vax' ? '맞은 날' : '받은 날'}</label><input type="date" id="vx-day" value="${c ? c.done_on : dstr(new Date())}" min="${baby.birth_date}" max="${dstr(new Date())}" style="width:170px"></div>
-    <div class="frow col"><label>메모</label><input class="wide" id="vx-note" maxlength="60" placeholder="병원 이름, 반응 등" value="${esc(c ? c.note || '' : '')}"></div>
-    <div class="acts">${c ? '<button type="button" class="del" id="vx-undo">완료 취소</button>' : ''}<button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="vx-save">${c ? '저장' : '완료로 표시'}</button></div>`;
+    <div class="frow"><label>${it.cat === 'vax' ? '맞은 날' : '받은 날'}</label><input type="date" id="vx-day" value="${done ? c.done_on : dstr(new Date())}" min="${baby.birth_date}" max="${dstr(new Date())}" style="width:170px"></div>
+    <div class="frow col"><label>메모</label><input class="wide" id="vx-note" maxlength="60" placeholder="병원 이름, 예약, 반응 등" value="${esc(c ? c.note || '' : '')}"></div>
+    <div class="acts">${done ? '<button type="button" class="del" id="vx-undo">완료 취소</button><button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="vx-save">저장</button>'
+      : '<button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="cancel" id="vx-memo">메모</button><button type="button" class="save" id="vx-save">완료로 표시</button>'}</div>`;
   $('sheet').dataset.kind = 'vax';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
   $('vx-save').onclick = async () => { const d = $('vx-day').value; if (!d) { toast('날짜를 골라주세요'); return; }
-    try { await db.setCheck(it.id, { done_on: d, note: $('vx-note').value.trim() }); closeSheet(); renderVax(); render(); toast(`${it.name} ${it.dose} 완료`); } catch (e) { alert('저장 실패: ' + e.message); } };
-  if ($('vx-undo')) $('vx-undo').onclick = async () => { if (!confirm('완료 표시를 지울까요?')) return; try { await db.setCheck(it.id, null); closeSheet(); renderVax(); render(); toast('완료를 취소했어요'); } catch (e) { alert('실패: ' + e.message); } };
+    try { await db.setCheck(it.id, { done_on: d, note: $('vx-note').value.trim() }); closeSheet(); renderVax(); render(); toast(done ? '저장했어요' : `${it.name} ${it.dose} 완료`); } catch (e) { alert('저장 실패: ' + e.message); } };
+  if ($('vx-memo')) $('vx-memo').onclick = async () => { const n = $('vx-note').value.trim();   // 완료 전 메모: 비우면 지움
+    try { await db.setCheck(it.id, n ? { done_on: null, note: n } : null); closeSheet(); renderVax(); render(); toast(n ? '메모를 저장했어요' : '메모를 지웠어요'); } catch (e) { alert('저장 실패: ' + e.message); } };
+  if ($('vx-undo')) $('vx-undo').onclick = async () => { if (!confirm('완료 표시를 지울까요?')) return; const n = $('vx-note').value.trim();   // 메모는 남김
+    try { await db.setCheck(it.id, n ? { done_on: null, note: n } : null); closeSheet(); renderVax(); render(); toast('완료를 취소했어요'); } catch (e) { alert('실패: ' + e.message); } };
 }
 // 홈 안내 상자: 7일 안에 시작하거나 지금 기간이거나 지난 것 중 가장 급한 하나
 // 직접 추가: 필수 말고 선택접종(유료) 등. 맞은 날 또는 예정일 하나만 적는다 (v0.19, 사장님 "돈 더내고 맞는 주사도 직접 기입")
@@ -1718,7 +1724,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.42 · 10-07';
+const VER = 'v0.44 · 10-08';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
