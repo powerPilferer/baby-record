@@ -759,6 +759,10 @@ const pad = n => String(n).padStart(2, '0');
 // DB timestamptz 는 UTC 로 온다 — 반드시 현지 날짜로 환산 (점빵이 09-29 교훈)
 const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const localDay = ts => dstr(new Date(ts));
+// 잠 시간을 날짜별로 잘라 셈 — 자정 넘긴 잠은 잠든 날·깬 날에 나눠 들어감 (10-10 사장님 "전날 잠듦에서 다음날 깸 누르면 당일 기록은 안 적혀")
+const slpIn = (l, d) => { if (l.kind !== 'sleep' || !l.ended_at) return 0; const a = new Date(d + 'T00:00'), b = new Date(a); b.setDate(b.getDate() + 1);
+  return Math.max(0, Math.min(+new Date(l.ended_at), +b) - Math.max(+new Date(l.at), +a)); };
+const slpDays = l => { const out = []; if (l.kind !== 'sleep' || !l.ended_at) return out; for (let d = localDay(l.at), e = localDay(l.ended_at); d <= e; ) { out.push(d); const n = new Date(d + 'T00:00'); n.setDate(n.getDate() + 1); d = dstr(n); } return out; };
 const hhmm = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const WD = ['일', '월', '화', '수', '목', '금', '토'];
 const fmtDate = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() + 1}월 ${d.getDate()}일 <small>${WD[d.getDay()]}</small>`; };
@@ -982,7 +986,7 @@ async function renderDiary() {
   $('mon-label').innerHTML = `${y}년 ${mo + 1}월`; $('mon-today').classList.toggle('hidden', ym === today.slice(0, 7));   // 다른 달 보다가 이번 달로 (10-09 사장님 "메인처럼")
   const days = new Date(y, mo + 1, 0).getDate();
   const byDay = {};
-  for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0, byDay[d].slp += (l.kind === 'sleep' && l.ended_at) ? (new Date(l.ended_at) - new Date(l.at)) : 0; }
+  for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0; for (const d of slpDays(l)) if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 }).slp += slpIn(l, d); }
   for (const n of notes) if (n.day.startsWith(ym)) (byDay[n.day] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 }).note += 1;
   const rv = {};   // 예약해 둔 접종·검진 → 그날 칸에 (10-09 사장님 "미리 예약해논거")
   for (const it of allVax()) { const c = it.rec || checks[it.id], on = it.rec ? (!it.rec.done_on && it.rec.due_on) : (c && !c.done_on && c.plan_on); if (on && on.startsWith(ym)) (rv[on] ||= []).push(it.name.replace(/\(.*\)/, '') + (it.dose ? ' ' + it.dose : '')); }
@@ -1045,7 +1049,8 @@ function renderStats() {
   for (const l of logs) { const d = localDay(l.at); const p = per[d]; if (!p) continue;
     if (l.kind === 'feed') { p.feed++; p.ml += +(l.detail || {}).ml || 0; }
     if (l.kind === 'diaper') { if (l.detail?.pee) p.pee++; if (l.detail?.poo) p.poo++; }
-    if (l.kind === 'sleep' && l.ended_at) p.slp += new Date(l.ended_at) - new Date(l.at); }
+  }
+  for (const l of logs) for (const d of slpDays(l)) if (per[d]) per[d].slp += slpIn(l, d);   // 자정 넘긴 잠은 날짜별로 나눠 (10-10)
   const lab = d => statRange <= 7 ? WD[new Date(d + 'T00:00').getDay()] : String(+d.slice(8));
   const tot = k => daysArr.reduce((s, d) => s + per[d][k], 0), has = daysArr.some(d => per[d].feed || per[d].pee || per[d].slp);
   if (!has) { $('stats').innerHTML = '<div class="stat-empty">아직 기록이 쌓이지 않았어요</div>'; return; }
@@ -1529,9 +1534,9 @@ function render() {
   const rows = $('rows');
   const feedsAll = dayLogs.filter(l => l.kind === 'feed'); const mlAll = feedsAll.reduce((s, l) => s + (+(l.detail || {}).ml || 0), 0);
   const dpAll = dayLogs.filter(l => l.kind === 'diaper'); const peeAll = dpAll.filter(l => l.detail?.pee).length, pooAll = dpAll.filter(l => l.detail?.poo).length;
-  const slpAll = dayLogs.filter(l => l.kind === 'sleep' && l.ended_at).reduce((s, l) => s + (new Date(l.ended_at) - new Date(l.at)), 0);
+  const slpAll = sorted.reduce((s, l) => s + slpIn(l, day), 0);
   // 하루 합계 = 오늘의 표 제목 아래 상자 (v0.20, 사장님 "접종 상자 디자인처럼 합계를") — 표 맨 아래 합계 줄은 없앰
-  $('day-sum').classList.toggle('hidden', !dayLogs.length);
+  $('day-sum').classList.toggle('hidden', !dayLogs.length && !slpAll);
   // 원래 표 아래 합계 글을 박스로 감싸 제목 옆에 (사장님 "원래 아래에 있던 합계의 글을 박스로 감싸서 오늘의 표 옆으로")
   const slpTxt = m => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}시간${mm ? ' ' + mm + '분' : ''}` : `${mm}분`; };
   $('day-sum').innerHTML = `<i class="feed">수유 <b>${feedsAll.length}회</b>${mlAll ? ` · <b>${mlAll}ml</b>` : ''}</i><i class="diaper">소변 <b>${peeAll}</b> 대변 <b>${pooAll}</b></i>${slpAll ? `<i class="sleep">잠 <b>${slpTxt(Math.round(slpAll / 60000))}</b></i>` : ''}`;
@@ -1784,7 +1789,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.56 · 10-09';
+const VER = 'v0.57 · 10-11';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
