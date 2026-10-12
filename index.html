@@ -14,7 +14,7 @@
 <style>
   :root {
     --bg: #0b0b0d; --card: #1f1f24; --card2: #2b2b32; --line: #303038;   /* 다크 박스 더 잘 보이게 (10-08 사장님) */
-    --line2: #26262c; --fg: #f1f1f4; --fg2: #8f8f99; --fg3: #55555e;
+    --line2: #26262c; --fg: #f1f1f4; --fg2: #9a9aa4; --fg3: #6b6b75;   /* 다크 회색 글 살짝 밝게 (10-12 사장님, 전 #8f8f99·#55555e) */
     --feed: #6f9ee0; --diaper: #f2c94c; --sleep: #9d93d6; --temp: #d98079; --ok: #7fc39c;
     --kakao: #fee500;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
@@ -95,6 +95,14 @@
   #s-home header .hero .name { font-size: 27px; }
   #s-home header .hero .dday { margin-left: 0; }
   #s-home header .sub { font-size: 13px; color: var(--fg2); white-space: nowrap; line-height: 18px; }
+  /* 홈 판 (10-12 사장님 "메인도 성장처럼 밑에 내용을 탭형식으로 스크롤 내리면 프로필 위로 덮어지게… 프로필 상단 부분의 배경컬러만 살짝 더 회색") — 판 = 원래 바탕색 그대로(카드색 안 바뀜), 프로필 뒤만 회색 */
+  :root { --htop: #18181c; } :root[data-theme="light"] { --htop: #e6e6ea; }
+  html:has(#s-home:not(.hidden)), html:has(#s-home:not(.hidden)) body { background: var(--htop); }
+  #s-home.tabbed { padding-bottom: 0 !important; }
+  #s-home header { display: contents; }   /* 헤더 상자를 없애야 프로필이 화면 전체에서 고정됨(헤더 안에선 헤더 끝에서 같이 올라감). 알약은 헤더 안 그대로 */
+  #s-home .hero { position: sticky; top: calc(var(--sat) + 64px); z-index: 0; margin-top: 64px; padding-bottom: 28px !important; }
+  #s-home .h-panel { position: relative; z-index: 2; margin: 0 -16px; padding: 2px 16px calc(112px + var(--sab)); min-height: 100dvh; background: var(--bg); border-radius: 30px 30px 0 0; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
+  :root[data-theme="light"] #s-home .h-panel { border-top-color: rgba(0,0,0,.03); box-shadow: 0 -8px 28px rgba(0,0,0,.06); }
   #s-home header .who { opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .22s ease, transform .22s ease; }
   #s-home header .who.on { opacity: 1; transform: none; pointer-events: auto; }
   header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
@@ -600,6 +608,7 @@
     <div class="who" id="h-pill"><img class="bf" src="img/아기-2g-원형.png" alt=""><span class="name" id="hp-name">아기</span><span class="dday" id="hp-dday"></span></div>
     
   </header>
+  <div class="h-panel">
   <div class="daynav">
     <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="dn-mid"><div class="date-pick"><div class="date" id="h-date"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="date" id="h-pick" aria-label="날짜 고르기"></div><button type="button" class="today-chip hidden" id="day-today">오늘</button></div>
@@ -627,6 +636,7 @@
       <input id="note-in" maxlength="300" placeholder="한 줄 남기기" autocomplete="off">
       <button type="submit" id="note-btn" disabled>남기기</button>
     </form>
+  </div>
   </div>
 </section>
 
@@ -1785,8 +1795,8 @@ $('st-who').onclick = () => openBabySheet();
 const _who = document.querySelector('#s-home header .who');
 // 큰 프로필이 위로 사라지면 좌상단 알약 (10-07)
 const _hero = $('h-hero'); let _pRaf = 0;
-function updPill() { _pRaf = 0; const r = $('h-hero').getBoundingClientRect();   // 홈이 숨어 있으면 높이 0 → 알약 켜지던 오류 (10-09 사장님)
-  document.querySelector('#s-home header .who').classList.toggle('on', r.height > 0 && r.bottom < 64); }
+function updPill() { _pRaf = 0; const r = $('h-hero').getBoundingClientRect(), pt = document.querySelector('#s-home .h-panel').getBoundingClientRect().top;   // 홈이 숨어 있으면 높이 0 → 알약 켜지던 오류 (10-09 사장님)
+  document.querySelector('#s-home header .who').classList.toggle('on', r.height > 0 && pt < r.top + r.height * .45); }   // 판이 프로필을 반쯤 덮으면 (10-12 프로필은 고정)
 window.addEventListener('scroll', () => { if (!_pRaf) _pRaf = requestAnimationFrame(updPill); }, { passive: true });
 _hero.onclick = () => openBabySheet();
 function babyInfoLine() {   // 정보 줄: 9월 15일생 · 생후 2주 6일 · 남아
@@ -1805,7 +1815,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.58 · 10-12';
+const VER = 'v0.59 · 10-12';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
