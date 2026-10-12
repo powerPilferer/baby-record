@@ -1811,7 +1811,7 @@ const _hero = $('h-hero'); let _pRaf = 0;
 function updPill() { _pRaf = 0; const r = $('h-hero').getBoundingClientRect(), pt = document.querySelector('#s-home .h-panel').getBoundingClientRect().top;   // 홈이 숨어 있으면 높이 0 → 알약 켜지던 오류 (10-09 사장님)
   document.querySelector('#s-home header .who').classList.toggle('on', r.height > 0 && pt < r.top + r.height * .45); }   // 판이 프로필을 반쯤 덮으면 (10-12 프로필은 고정)
 window.addEventListener('scroll', () => { if (!_pRaf) _pRaf = requestAnimationFrame(updPill); }, { passive: true });
-_hero.onclick = () => openBabySheet();
+_hero.onclick = e => { if (e.target.closest('.hav, .wl, .sub')) openBabySheet(); };   // 사진·이름·정보 줄만 (10-12 사장님 "상단 영역 어디든 터치하면 바로 뜨는데… 사진이랑 텍스트 쪽")
 function babyInfoLine() {   // 정보 줄: 9월 15일생 · 생후 2주 6일 · 남아
   const d = new Date(baby.birth_date + 'T00:00'), n = dayNo(dstr(new Date())), w = Math.floor((n - 1) / 7), r = (n - 1) % 7;
   const age = n <= 1 ? '태어난 날' : w ? `${w}주 ${r}일` : `${n - 1}일째`;
@@ -1828,7 +1828,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.60 · 10-12';
+const VER = 'v0.61 · 10-12';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
