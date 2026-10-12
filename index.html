@@ -125,14 +125,14 @@
   .daynav .date small { color: var(--fg3); font-weight: 400; margin-left: 5px; font-size: 14px; }
   /* 홈 날짜 줄 키움 (10-08 사장님 "조금더 크게… 상하 여백 좀더 주고 컨트롤하는 부분이라") */
   #s-home .daynav { margin: 34px 0 30px; }
-  #s-home .daynav button { width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--card) 50%, transparent); }   /* 바탕 흐리게 (10-08 사장님) */   /* 화살표 = 둥근 버튼으로 눌리는 곳임을 보이게 */
-  #s-home .daynav button:active { background: var(--card2); }
-  #s-home .daynav button:disabled { background: none; }
-  #s-home .daynav button svg { width: 21px; height: 21px; }   /* 52→42 (10-08 사장님 "화살표가 좀 크다") */
-  #s-home .daynav .date { font-size: 19px; font-weight: 600; }
+  #s-home .daynav button, #s-diary .daynav button { width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--card) 50%, transparent); }   /* 바탕 흐리게 (10-08 사장님) */   /* 화살표 = 둥근 버튼으로 눌리는 곳임을 보이게 */
+  #s-home .daynav button:active, #s-diary .daynav button:active { background: var(--card2); }
+  #s-home .daynav button:disabled, #s-diary .daynav button:disabled { background: none; }
+  #s-home .daynav button svg, #s-diary .daynav button svg { width: 21px; height: 21px; }   /* 52→42 (10-08 사장님 "화살표가 좀 크다") */
+  #s-home .daynav .date, #s-diary .daynav .date { font-size: 19px; font-weight: 600; }
   #s-home .daynav .date small { font-size: 15.5px; margin-left: 6px; }
-  #s-home .date-pick { padding: 12px 14px; margin: -12px -14px; border-radius: 14px; }
-  #s-home .date-pick .dd { width: 18px; height: 18px; }
+  #s-home .date-pick, #s-diary .date-pick { padding: 12px 14px; margin: -12px -14px; border-radius: 14px; }
+  #s-home .date-pick .dd, #s-diary .date-pick .dd { width: 18px; height: 18px; }
   .dn-mid { display: flex; align-items: center; gap: 10px; }
   #s-home .daynav .today-chip, #s-diary .daynav .today-chip { width: auto; height: 30px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 16%, var(--card)); color: var(--ok); font-size: 14px; font-weight: 600; }   /* 지난 날일 때만 */
   #s-home .daynav .today-chip.hidden, #s-diary .daynav .today-chip.hidden { display: none; }
@@ -272,6 +272,13 @@
   :root[data-theme="light"] .tabs button.on { background: rgba(0,0,0,.07); }
   .tabs button.on img { opacity: 1; transform: translateY(-1px); }
   :root[data-theme="light"] .tabs { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+  /* 하단 메뉴 더 또렷하게 (10-12 사장님 "기본 배경과 활성화 됐을때를 조금 더 강조") — 바탕 덜 비치게, 꺼진 글·아이콘 한 단계 진하게, 켜진 칸은 초록 바탕 */
+  .tabs { background: rgba(34,34,40,.82); border-color: rgba(255,255,255,.12); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  :root[data-theme="light"] .tabs { background: rgba(255,255,255,.86); border-color: rgba(0,0,0,.08); box-shadow: 0 10px 30px rgba(0,0,0,.14); }
+  .tabs button { color: var(--fg2); }
+  .tabs button img { opacity: .72; }
+  .tabs button.on, :root[data-theme="light"] .tabs button.on { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+  :root[data-theme="light"] .tabs button.on { background: color-mix(in srgb, var(--ok) 14%, transparent); }
   /* ── 일지 달력 ── */
   .cal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .cal .d { aspect-ratio: 1 / 1.1; border-radius: 16px; background: var(--card); padding: 12px 11px 11px; display: flex; flex-direction: column; text-align: left; position: relative; }
@@ -350,6 +357,11 @@
   /* 성장: 프로필 아래 화면 폭 전체 흰 판이 둥근 윗모서리로 올라오고, 그 위에 탭 (v0.22, 사장님 레퍼런스 "상단의 탭 디자인을 요런형태로") */
   .g-panel { margin: 6px -16px 0; padding: 20px 16px 24px; background: #111114; border-radius: 30px 30px 0 0; min-height: 70vh; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
   :root[data-theme="light"] .g-panel { background: #fafafc; border-top-color: rgba(0,0,0,.03); box-shadow: 0 -8px 28px rgba(0,0,0,.06); }
+  /* 성장도 홈과 같은 색 (10-12 사장님 "성장쪽도 메인과 동일하게 바꿔줘. 컬러") — 판 = 원래 바탕색, 프로필 뒤만 회색 */
+  .g-panel, :root[data-theme="light"] .g-panel { background: var(--bg); }
+  html:has(#s-growth:not(.hidden)), html:has(#s-growth:not(.hidden)) body { background: var(--htop); }
+  #s-growth.tabbed { padding-bottom: 0 !important; }
+  #s-growth .g-panel { min-height: 100dvh; padding-bottom: calc(112px + var(--sab)); }
   :root[data-theme="light"] .g-panel .stat-card, :root[data-theme="light"] .g-panel .g-quick button { box-shadow: 0 1px 4px rgba(0,0,0,.05); }   /* 판 안 카드는 원래 흰색 그대로 (사장님 "화이트 박스들이 회색이 되니 이상") */
   .g-sub button:active { background: var(--card2); }
   .g-sub { display: flex; align-items: center; gap: 0; margin: 6px 0 22px; }   /* 간격 0 = 선택 상자가 예전 세로선 자리까지 */   /* 위아래 여백 더 (10-01 사장님) */
@@ -643,7 +655,7 @@
 <!-- 기록일지: 달력 -->
 <section id="s-diary" class="screen tabbed hidden">
   <header><div class="who"><span class="name">다이어리</span></div></header>
-  <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="dn-mid"><div class="date" id="mon-label"></div><button type="button" class="today-chip hidden" id="mon-today">오늘</button></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+  <div class="daynav"><button type="button" id="mon-prev" aria-label="지난달"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="dn-mid"><div class="date-pick"><div class="date" id="mon-label"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="month" id="mon-pick" aria-label="달 고르기"></div><button type="button" class="today-chip hidden" id="mon-today">오늘</button></div><button type="button" id="mon-next" aria-label="다음달"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
   <div class="cal" id="cal"></div>
   <div class="cal-legend"><span class="feed">수유</span><span class="diaper">기저귀</span><span class="sleep">잠</span></div>
 </section>
@@ -1002,7 +1014,7 @@ async function renderDiary() {
   await db.loadMonth(ym);
   const today = dstr(new Date());
   const first = new Date(ym + '-01T00:00'), y = first.getFullYear(), mo = first.getMonth();
-  $('mon-label').innerHTML = `${y}년 ${mo + 1}월`; $('mon-today').classList.toggle('hidden', ym === today.slice(0, 7));   // 다른 달 보다가 이번 달로 (10-09 사장님 "메인처럼")
+  $('mon-label').innerHTML = `${y}년 ${mo + 1}월`; $('mon-today').classList.toggle('hidden', ym === today.slice(0, 7)); $('mon-pick').value = ym; $('mon-pick').min = baby.birth_date.slice(0, 7);   // 다른 달 보다가 이번 달로 (10-09 사장님 "메인처럼")
   const days = new Date(y, mo + 1, 0).getDate();
   const byDay = {};
   for (const l of logs) { const d = localDay(l.at); if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 })[l.kind] += 1, byDay[d].ml += l.kind === 'feed' ? (+(l.detail || {}).ml || 0) : 0; for (const d of slpDays(l)) if (d.startsWith(ym)) (byDay[d] ||= { feed: 0, diaper: 0, sleep: 0, ml: 0, slp: 0, note: 0 }).slp += slpIn(l, d); }
@@ -1023,6 +1035,7 @@ async function renderDiary() {
   $('cal').innerHTML = h;
 }
 $('mon-prev').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() - 1); ym = dstr(d).slice(0, 7); renderDiary(); };
+$('mon-pick').addEventListener('change', e => { const v = e.target.value; if (v && v !== ym) { ym = v; renderDiary(); } });   // 달 바로 고르기 (10-12 사장님 "다이어리쪽도 날짜 변경할수 있게 홈과 동일하게")
 $('mon-today').onclick = () => { ym = dstr(new Date()).slice(0, 7); renderDiary(); };
 $('mon-next').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() + 1); ym = dstr(d).slice(0, 7); renderDiary(); };
 $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]'); if (!b || b.disabled) return; openDayNotes(b.dataset.d); });
@@ -1815,7 +1828,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.59 · 10-12';
+const VER = 'v0.60 · 10-12';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
