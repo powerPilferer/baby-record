@@ -717,7 +717,7 @@
 
 <!-- 우상단 고정 설정 -->
 <!-- 우상단: 자온 AI 비서 (v0.32 버튼만, 기능은 준비 중) -->
-<button type="button" class="gear-fab ai-fab hidden" id="open-ai" aria-label="자온에게 물어보기"><img src="img/자온.png" alt=""></button>
+<button type="button" class="gear-fab ai-fab hidden" id="open-ai" aria-label="자온에게 물어보기"><img src="img/자온-b.png" alt=""></button>
 <button type="button" class="gear-fab hidden" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
 
 <!-- 하단 탭 -->
@@ -1874,7 +1874,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.67 · 10-13';
+const VER = 'v0.68 · 10-13';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -1952,9 +1952,9 @@ let aiBusy = false;
 const aiSave = () => { try { localStorage.setItem('bb-ai-chat', JSON.stringify(aiLog.slice(-60))); } catch (_) {} };
 function aiRender() {
   const box = $('ai-log'); if (!box) return;
-  box.innerHTML = (aiLog.length ? '' : `<div class="ai-hello"><img src="img/자온.png" alt=""><p>${esc(baby.name)}에 대해 궁금한 걸 물어보세요.<br><small>예: 트림을 잘 안 해요 · 분유 텀이 짧아요 · 딸꾹질이 잦아요</small></p></div>`)
-    + aiLog.map(m => `<div class="ai-msg ${m.role}">${m.role === 'assistant' ? '<img src="img/자온.png" alt="">' : ''}<div class="ai-bub">${esc(m.text)}</div></div>`).join('')
-    + (aiBusy ? '<div class="ai-msg assistant"><img src="img/자온.png" alt=""><div class="ai-bub ai-dots"><i></i><i></i><i></i></div></div>' : '');
+  box.innerHTML = (aiLog.length ? '' : `<div class="ai-hello"><img src="img/자온-b.png" alt=""><p>${esc(baby.name)}에 대해 궁금한 걸 물어보세요.<br><small>예: 트림을 잘 안 해요 · 분유 텀이 짧아요 · 딸꾹질이 잦아요</small></p></div>`)
+    + aiLog.map(m => `<div class="ai-msg ${m.role}">${m.role === 'assistant' ? '<img src="img/자온-b.png" alt="">' : ''}<div class="ai-bub">${esc(m.text)}</div></div>`).join('')
+    + (aiBusy ? '<div class="ai-msg assistant"><img src="img/자온-b.png" alt=""><div class="ai-bub ai-dots"><i></i><i></i><i></i></div></div>' : '');
   box.scrollTop = box.scrollHeight;
 }
 async function aiSend() {
@@ -1975,7 +1975,7 @@ async function aiSend() {
   aiBusy = false; aiLog.push({ role: 'assistant', text: answer, at: Date.now() }); aiSave(); aiRender();
 }
 function openAi() {
-  $('sheet').innerHTML = `<div class="ai-head"><h3 class="grow"><img src="img/자온.png" alt="">자온에게 물어보기</h3>${aiLog.length ? '<button type="button" class="ai-new" id="ai-new">새 대화</button>' : ''}</div>
+  $('sheet').innerHTML = `<div class="ai-head"><h3 class="grow"><img src="img/자온-b.png" alt="">자온에게 물어보기</h3>${aiLog.length ? '<button type="button" class="ai-new" id="ai-new">새 대화</button>' : ''}</div>
     <div class="ai-log" id="ai-log"></div>
     <form class="ai-form" id="ai-form"><textarea id="ai-in" rows="1" maxlength="1000" placeholder="궁금한 걸 적어 주세요"></textarea><button type="submit" aria-label="보내기"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
     <p class="ai-note">자온은 진단을 하지 않아요. 열·호흡·처짐 같은 걱정되는 증상은 바로 소아과나 119에 물어보세요.</p>`;
