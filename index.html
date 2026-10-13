@@ -125,9 +125,8 @@
   header .gear svg { width: 25px; height: 25px; fill: currentColor; }
   header .gear:active { background: var(--card); }
   .daynav { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 21px; }
-  #s-diary .daynav { position: sticky; top: calc(var(--sat) + 58px); z-index: 5; margin: 4px -16px 13px; padding: 8px 16px; background: var(--bg); box-shadow: 0 12px 10px -8px var(--bg); }   /* 위 버튼(자온·더보기) 밑에 붙고, 그 위 띠도 배경으로 덮음 */
-  #s-diary .daynav::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: calc(var(--sat) + 60px); background: var(--bg); z-index: -1; }
-  #s-diary header { position: relative; z-index: 6; }   /* 달 바꾸기 줄 고정 (10-14 사장님 "맨위로 올라가는게 불편") */
+  #s-diary .daynav { position: sticky; top: calc(var(--sat) + 68px); z-index: 5; margin: 4px -16px 13px; padding: 8px 16px; background: var(--bg); box-shadow: 0 12px 10px -8px var(--bg); }   /* 위 버튼(자온·더보기) 밑에 붙고, 그 위 띠도 배경으로 덮음 */
+  #s-diary header { position: sticky; top: 0; z-index: 6; box-sizing: content-box; margin: 0 -16px; padding: calc(12px + var(--sat)) 16px 10px; background: var(--bg); }   /* "다이어리" 제목도 고정 (10-14 사장님 "갈거면 고정으로 둬") */   /* 달 바꾸기 줄 고정 (10-14 사장님 "맨위로 올라가는게 불편") */
   #s-home .daynav { margin-top: 24px; }   /* 고정 알약과 날짜 줄 사이 10→24px (v0.17, 사장님 "여백이 너무 좁아") */
   .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
   .daynav button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -1925,7 +1924,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.75 · 10-14';
+const VER = 'v0.76 · 10-14';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
