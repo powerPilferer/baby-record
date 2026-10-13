@@ -8,6 +8,8 @@
 <meta name="theme-color" content="#0b0b0d">
 <title>기특일기</title>
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poor+Story&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="img/icon-180-baby5.png">
 <script>(function(){var p=localStorage.getItem("bb-theme")||"system";document.documentElement.dataset.theme=(p==="light"||(p==="system"&&matchMedia("(prefers-color-scheme: light)").matches))?"light":"dark";})();</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -297,6 +299,32 @@
   .cal .d .m i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
   .cal .d .m i.feed { --c: var(--feed); } .cal .d .m i.diaper { --c: var(--diaper); } .cal .d .m i.sleep { --c: var(--sleep); } .cal .d .m i.nt { --c: var(--ok); }
   .cal .d .stk { position: absolute; right: -4px; top: -8px; font-size: 30px; line-height: 1; filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.35)); pointer-events: none; }
+  /* 다이어리 하루 = 꽉 찬 공책 한 장 (10-13 사장님 "화면이 꽉차서 일기처럼… 옅은 공책의 라인… 펜 느낌의 감성적인 폰트… 중간중간 이모지") */
+  .dpage { position: fixed; left: 0; right: 0; top: 0; height: 100dvh; z-index: 60; display: flex; flex-direction: column; --paper: #fffdf6; --rule: rgba(70, 110, 190, .16); --ink: #45444d; --hand: "Poor Story";   /* 10-13 사장님 "푸어스토리로 하자" (펜 → 연필 느낌) */ background: var(--paper); padding-top: var(--sat); animation: dpIn .26s ease-out; }
+  :root:not([data-theme="light"]) .dpage { --paper: #19181d; --rule: rgba(255, 255, 255, .075); --ink: #dddce4; }
+  @keyframes dpIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .dpage.hidden { display: none; }
+  .dp-top { display: flex; align-items: center; gap: 6px; padding: 10px 12px 6px; }
+  .dp-top button { height: 40px; border-radius: 999px; color: var(--fg2); font-size: 15px; font-weight: 600; }
+  .dp-top .x { width: 40px; display: flex; align-items: center; justify-content: center; } .dp-top .x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .dp-top .ok { margin-left: auto; padding: 0 16px; background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+  .dp-head { padding: 4px 26px 2px; display: flex; align-items: flex-end; gap: 10px; }
+  .dp-date { font-family: var(--hand), cursive; font-size: 32px; line-height: 1; color: var(--ink); letter-spacing: -.01em; }
+  .dp-sub { font-size: 12.5px; color: var(--fg3); padding-bottom: 5px; }
+  .dp-stk { margin-left: auto; display: flex; gap: 2px; padding-bottom: 2px; }
+  .dp-stk button { min-width: 38px; height: 38px; border-radius: 12px; font-size: 26px; line-height: 1; border: 1.5px dashed transparent; }
+  .dp-stk button.empty { border-color: var(--rule); color: var(--fg3); font-size: 16px; }
+  .dp-pick { display: flex; gap: 4px; overflow-x: auto; padding: 6px 22px 4px; scrollbar-width: none; } .dp-pick::-webkit-scrollbar { display: none; }
+  .dp-pick.hidden { display: none; }
+  .dp-pick button { flex: none; width: 40px; height: 40px; border-radius: 12px; font-size: 23px; } .dp-pick button.on { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+  .dp-text { flex: 1; min-height: 0; width: 100%; border: 0; outline: none; resize: none; padding: 6px 26px 40px; margin-top: 26px; color: var(--ink); background-color: transparent;
+    font-family: var(--hand), cursive; font-size: 23px; line-height: 38px;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 37px, var(--rule) 37px 38px); background-position: 0 6px; background-attachment: local; }
+  .dp-text::placeholder { color: color-mix(in srgb, var(--ink) 32%, transparent); }
+  .dp-bar { display: flex; align-items: center; gap: 2px; padding: 6px 10px calc(8px + var(--sab)); border-top: 1px solid var(--rule); background: var(--paper); }
+  .dp-emo { flex: 1; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; } .dp-emo::-webkit-scrollbar { display: none; }
+  .dp-emo button { flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 24px; } .dp-emo button:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+  .dp-go { flex: none; font-size: 13px; color: var(--fg2); padding: 0 10px; height: 36px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
   .emo-hint { font-size: 12px; color: var(--fg3); margin: -4px 0 10px; }
   .cal .d .stk.s2 { right: 20px; top: -3px; font-size: 26px; }   /* 두 번째 스티커: 첫째 왼쪽 살짝 아래, 뒤에 깔림 */
   .diary-in { width: 100%; background: var(--bg); border: 0; border-radius: 14px; padding: 13px 15px; font-size: 15px; line-height: 1.45; outline: none; resize: none; color: var(--fg); margin-top: 4px; }
@@ -433,6 +461,17 @@
   .vx-resv { color: var(--sleep); font-weight: 500; }   /* 예약 줄 (10-08) */
   .vx-d { flex: none; font-size: 12px; font-weight: 600; color: var(--fg3); font-variant-numeric: tabular-nums; }
   .now .vx-d, .soon .vx-d { color: var(--ok); } .late .vx-d { color: var(--temp); }
+  /* 다크: 초록 포인트를 D+n 칩처럼 (10-13 사장님 "포인트컬러 녹색이 또렷하지 않은 느낌… 상단 디데이 표기처럼 배경톤과 컬러를") — 탁한 초록 상자 대신 보통 카드, 남은 날·지남은 칩으로 */
+  :root:not([data-theme="light"]) .stat-card.vx-next { background: color-mix(in srgb, var(--ok) 9%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok) 30%, transparent); }   /* 10-13 "조금더 어둡게 + 그전 테두리" */   /* = 프로필 D+n 칩 바탕 (사장님 "다음 할일의 배경톤도 이 페이지 상단 디데이 배경톤") */
+  :root:not([data-theme="light"]) .vx-next .vx-row { border-top-color: color-mix(in srgb, var(--ok) 13%, var(--bg)); }
+  :root:not([data-theme="light"]) .vx-next :is(.now, .soon) .vx-d, :root:not([data-theme="light"]) .vx-next .vx-cat:not(.chk):not(.own) { background: color-mix(in srgb, var(--ok) 20%, var(--bg)); }   /* 같은 바탕 위라 칩은 한 단계 진하게 */
+  :root:not([data-theme="light"]) .vx-item.done .vx-ck { background: #2f9e63; border-color: #2f9e63; color: #fff; }   /* 체크 초록 진하게 (사장님 "체크 녹색도 좀더 진해야") */
+  :root:not([data-theme="light"]) :is(.vx-item.now, .vx-item.soon) .vx-ck { border-color: #2f9e63; border-width: 2px; }
+  :root:not([data-theme="light"]) :is(.now, .soon, .late) .vx-d { padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 16%, var(--bg)); }
+  :root:not([data-theme="light"]) .late .vx-d { background: color-mix(in srgb, var(--temp) 16%, var(--bg)); }
+  :root:not([data-theme="light"]) .vx-cat { background: color-mix(in srgb, var(--ok) 16%, var(--bg)); }
+  :root:not([data-theme="light"]) .vx-cat.chk { background: color-mix(in srgb, var(--feed) 16%, var(--bg)); }
+  :root:not([data-theme="light"]) .vx-cat.own { background: color-mix(in srgb, var(--sleep) 16%, var(--bg)); }
   .vx-ck { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
   .vx-item.done .vx-ck { background: var(--ok); border-color: var(--ok); color: var(--bg); }
   .vx-item.now .vx-ck, .vx-item.soon .vx-ck { border-color: var(--ok); }
@@ -727,6 +766,7 @@
 <!-- 입력 바텀 시트 -->
 <div id="dim" class="dim hidden"></div>
 <div id="sheet" class="sheet hidden"></div>
+<div id="dpage" class="dpage hidden"></div>
 <div id="cropper" class="cropper hidden">
   <div class="cr-top"><button type="button" id="cr-cancel">취소</button><span>사진 맞추기</span><button type="button" id="cr-ok" class="ok">완료</button></div>
   <div class="cr-view" id="cr-view"><img id="cr-img" alt="" draggable="false"><div class="cr-mask"></div></div>
@@ -1040,22 +1080,34 @@ $('mon-today').onclick = () => { ym = dstr(new Date()).slice(0, 7); renderDiary(
 $('mon-next').onclick = () => { const d = new Date(ym + '-01T00:00'); d.setMonth(d.getMonth() + 1); ym = dstr(d).slice(0, 7); renderDiary(); };
 $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]'); if (!b || b.disabled) return; openDayNotes(b.dataset.d); });
 // ── 일지에서 날짜를 누르면: 그날 한마디 보기 + 쓰기 (지난 날에도 남길 수 있음) + 그날 표로 가기
+const DP_EMO = ['😊', '🥰', '😂', '😭', '😴', '🍼', '💩', '🛁', '👣', '🧸', '📸', '🎉', '❤️', '✨', '⭐', '🌙', '☀️', '🌧️', '🍀', '🤒', '💉', '🏥'];   // 글 중간에 넣는 이모지
 function openDayNotes(ds) {
-  const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date());   // 앞날 = 일정 적기 (10-09 사장님 "캘린더처럼")
-  $('sheet').innerHTML = `<h3>${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]} <small style="color:var(--fg3);font-weight:500;font-size:13px;margin-left:6px">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</small></h3>
-    <div class="emo" id="dn-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stkList(ds).includes(e) ? 'on' : ''}">${e}</button>`).join('')}</div>
-    <div class="emo-hint">두 개까지 붙일 수 있어요 · 다시 누르면 떼요</div>
-    <textarea id="dn-text" class="diary-in" maxlength="1000" rows="4" placeholder="${ahead ? '이날 일정 — 예: 오후 2시 소아과 예방접종' : '이날의 일기 — 예: 많이 운 날 ㅜㅜ, 처음 뒤집은 날'}">${esc(diaries[ds] || '')}</textarea>
-    <div class="acts">${ahead ? '' : '<button type="button" class="cancel" id="dn-go">이날 기록 보기</button>'}<button type="button" class="save" id="dn-save">저장</button></div>`;
-  $('sheet').dataset.kind = 'daynotes';
-  $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet;
-  $('dn-emo').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const em = b.dataset.e, cur = stkList(ds);
-    let next; if (cur.includes(em)) next = cur.filter(x => x !== em);   // 같은 걸 다시 누르면 뗌
-    else if (cur.length >= 2) { toast('두 개까지예요. 하나를 먼저 떼주세요'); return; } else next = cur.concat(em);
-    try { await db.setSticker(ds, next); for (const x of $('dn-emo').children) x.classList.toggle('on', next.includes(x.dataset.e)); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
-  $('dn-save').onclick = async () => { const t = $('dn-text').value.trim();
-    try { await db.setDiary(ds, t); closeSheet(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
-  if (!ahead) $('dn-go').onclick = () => { closeSheet(); day = ds; show('s-home'); render(); };
+  // 날짜를 누르면 화면 꽉 찬 공책 한 장 (10-13). 위 두 칸 = 달력에 붙는 스티커(그대로), 아래 줄 = 글에 넣는 이모지
+  const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date()), pg = $('dpage'), orig = diaries[ds] || '';
+  const stk = () => { const c = stkList(ds); return [0, 1].map(i => `<button type="button" data-slot="${i}" class="${c[i] ? '' : 'empty'}">${c[i] || '+'}</button>`).join(''); };
+  pg.innerHTML = `<div class="dp-top"><button type="button" class="x" id="dp-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="ok" id="dp-ok">완료</button></div>
+    <div class="dp-head"><div><div class="dp-date">${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div></div>
+      <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</div><div class="dp-stk" id="dp-stk">${stk()}</div></div>
+    <div class="dp-pick hidden" id="dp-pick">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stkList(ds).includes(e) ? 'on' : ''}">${e}</button>`).join('')}</div>
+    <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
+    <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
+  pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
+  const ta = $('dp-text');
+  const fit = () => { if (window.visualViewport) pg.style.height = visualViewport.height + 'px'; };   // 키보드가 올라오면 공책도 그만큼만 (이모지 줄이 키보드 위에)
+  fit(); window.visualViewport?.addEventListener('resize', fit);
+  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; document.documentElement.style.overflow = ''; window.visualViewport?.removeEventListener('resize', fit); };
+  const save = async () => { const t = ta.value.trim(); if (t === orig.trim()) { close(); return; }
+    try { await db.setDiary(ds, t); close(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
+  $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
+  $('dp-emo').addEventListener('pointerdown', e => e.preventDefault());   // 이모지 눌러도 키보드가 내려가지 않게
+  $('dp-emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = ta.selectionStart ?? ta.value.length, z = ta.selectionEnd ?? a;
+    ta.setRangeText(b.dataset.e, a, z, 'end'); ta.focus(); });
+  $('dp-stk').onclick = () => $('dp-pick').classList.toggle('hidden');
+  $('dp-pick').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const em = b.dataset.e, cur = stkList(ds);
+    let next; if (cur.includes(em)) next = cur.filter(x => x !== em);
+    else if (cur.length >= 2) { toast('스티커는 두 개까지예요. 하나를 먼저 떼주세요'); return; } else next = cur.concat(em);
+    try { await db.setSticker(ds, next); for (const x of $('dp-pick').children) x.classList.toggle('on', next.includes(x.dataset.e)); $('dp-stk').innerHTML = stk(); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
+  if (!ahead) $('dp-go').onclick = async () => { await save(); day = ds; show('s-home'); render(); };
 }
 
 // ── 통계: 최근 7/30일 막대 (인라인 SVG)
@@ -1837,7 +1889,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.65 · 10-13';
+const VER = 'v0.66 · 10-13';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
