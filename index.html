@@ -362,7 +362,13 @@
   .emo { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
   .emo button { width: 42px; height: 42px; border-radius: 12px; background: var(--bg); font-size: 22px; line-height: 1; }
   .emo button.on { background: var(--card2); box-shadow: 0 0 0 1.5px var(--fg2); }
-  .cal .d .stl { font-size: 11px; font-weight: 700; color: var(--ok); margin-top: 5px; line-height: 1; }
+  .cal .d .stl { align-self: flex-start; display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; color: var(--ms); margin-top: 5px; line-height: 1; padding: 4px 7px; border-radius: 999px; background: color-mix(in srgb, var(--ms) 16%, var(--card)); position: relative; z-index: 1; }
+  .cal .d .stl i { font-style: normal; font-size: 13px; line-height: 1; }
+  /* 기념일 칸 = 분홍 (50·100·200·300일 ♥, 첫돌 🎂) — 10-14 사장님 "좀더 부각" */
+  :root { --ms: #f27c9e; } :root[data-theme="light"] { --ms: #e2557f; }
+  .cal .d.ms:not(.today) { background: color-mix(in srgb, var(--ms) 8%, var(--card)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ms) 50%, transparent); }
+  .cal .d.ms .n { color: var(--ms); }
+  .dp-ms { margin-left: auto; align-self: center; padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--ms); background: color-mix(in srgb, var(--ms) 14%, transparent); white-space: nowrap; }
   .cal-legend { display: flex; justify-content: center; gap: 12px; margin-top: 14px; font-size: 11px; color: var(--fg3); }
   .cal-legend span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; background: var(--c); }
   .cal-legend .feed { --c: var(--feed); } .cal-legend .diaper { --c: var(--diaper); } .cal-legend .sleep { --c: var(--sleep); } .cal-legend .nt { --c: var(--ok); }
@@ -1070,9 +1076,10 @@ function detailOf(l) {
   return '';
 }
 // ── 날짜 도장: 생일 기준 자동 (출생일 = 1일)
-const MILESTONES = { 50: '50일', 100: '100일', 200: '200일', 300: '300일', 365: '첫돌' };
+const MILESTONES = { 50: '50일', 100: '100일', 200: '200일', 300: '300일' };   // 첫돌은 날짜로 (D+365는 하루 빠름, 10-14)
 const dayNo = d => Math.floor((new Date(d + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
-const stampOf = d => MILESTONES[dayNo(d)] || '';
+const stampOf = d => (baby?.birth_date && d === (+baby.birth_date.slice(0, 4) + 1) + baby.birth_date.slice(4)) ? '첫돌' : (MILESTONES[dayNo(d)] || '');
+const msIc = st => st === '첫돌' ? '🎂' : '♥';   // 기념일 뒤 표시 (10-14 사장님 "뒤에 하트, 돌은 케익")
 const MILESTONE_EMOJI = { '50일': '🎂', '100일': '🎂', '200일': '🎈', '300일': '🎈', '첫돌': '🎉' };
 const EMOJIS = ['👶', '🥰', '😊', '😭', '😴', '🍼', '💩', '🤒', '🏥', '💉', '🙃', '👣', '🦷', '🛁', '📸', '🧸', '🎉', '❤️', '⭐'];   // 🙃 = 뒤집은 날(웃는 얼굴 180°). 👼는 뺌(다른 뜻 오해)   // 우선 이모지로 (사장님 09-27). 그림 스티커는 나중에
 const stkList = d => (stickers[d] || '').split('|').filter(Boolean);
@@ -1097,8 +1104,8 @@ async function renderDiary() {
     const dots = v ? ['feed', 'diaper', 'sleep'].map(k => `<i class="${k}"></i>`.repeat(Math.min(v[k], 3))).join('') : '';
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
-    h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${st ? `<span class="stl">${st}</span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
+    h += `<button type="button" class="d ${st ? 'ms' : ''} ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -1127,7 +1134,7 @@ function openDayNotes(ds) {
   const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date()), pg = $('dpage'), orig = diaries[ds] || '';
   pg.innerHTML = `<div class="dp-top"><button type="button" class="x" id="dp-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="ok" id="dp-ok">완료</button></div>
     <div class="dp-head"><div><div class="dp-date">${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div></div>
-      <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</div></div>
+      <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}</div>${stampOf(ds) ? `<span class="dp-ms">${stampOf(ds)} ${msIc(stampOf(ds))}</span>` : ''}</div>
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
     ${dayInfo(ds)}
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
@@ -1938,7 +1945,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.77 · 10-14';
+const VER = 'v0.78 · 10-14';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
