@@ -99,6 +99,8 @@
   #s-home header .sub { font-size: 13px; color: var(--fg2); white-space: nowrap; line-height: 18px; }
   /* 홈 판 (10-12 사장님 "메인도 성장처럼 밑에 내용을 탭형식으로 스크롤 내리면 프로필 위로 덮어지게… 프로필 상단 부분의 배경컬러만 살짝 더 회색") — 판 = 원래 바탕색 그대로(카드색 안 바뀜), 프로필 뒤만 회색 */
   :root { --htop: #050507; --hpanel: #131317; } :root[data-theme="light"] { --htop: #e6e6ea; --hpanel: var(--bg); }   /* 다크: 올라오는 판이 프로필 배경보다 밝게 (10-13 사장님) */
+  :root:not([data-theme="light"]) #s-home .h-panel, :root:not([data-theme="light"]) .g-panel { --card: #27272e; --card2: #35353e; --line: #3d3d47; --line2: #2f2f37; --bg1: #222228; }   /* 밝아진 판 위 박스·버튼 한 단계 올림 (10-13 사장님) */
+  :root:not([data-theme="light"]) :is(#s-home .h-panel, .g-panel) :is(.card, .quick button, .status, .sum-pill, .stat-card) { box-shadow: inset 0 0 0 1px rgba(255,255,255,.09); }
   html:has(#s-home:not(.hidden)), html:has(#s-home:not(.hidden)) body { background: var(--htop); }
   #s-home.tabbed { padding-bottom: 0 !important; }
   #s-home header { display: contents; }   /* 헤더 상자를 없애야 프로필이 화면 전체에서 고정됨(헤더 안에선 헤더 끝에서 같이 올라감). 알약은 헤더 안 그대로 */
@@ -168,6 +170,15 @@
   .quick .sleep.on { background: var(--card2); }
   .quick .sleep.on .s { color: var(--fg2); }
   .quick .sleep.on .ic { background: color-mix(in srgb, var(--sleep) 22%, var(--card2)); }
+  /* 잠 버튼 = 토글: 잠듦 누르면 눌려 들어간 모습, 깸 누르면 원상태 (10-14 사장님) */
+  .quick button { transition: transform .12s, box-shadow .15s, background .15s; }
+  .quick button:active { transform: scale(.97); }
+  .quick .sleep.on { background: color-mix(in srgb, var(--sleep) 13%, var(--card2)); box-shadow: inset 0 2px 7px rgba(0,0,0,.10), inset 0 0 0 1.5px color-mix(in srgb, var(--sleep) 50%, transparent); }
+  .quick .sleep.on .k { color: var(--sleep); }
+  /* 다크: 버튼이 버튼처럼 — 위쪽 빛 + 아래 그림자로 살짝 떠 보이게 */
+  :root:not([data-theme="light"]) #s-home .h-panel .quick button:not(.on) { background: linear-gradient(180deg, #2e2e36, #25252c); box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 0 1px rgba(255,255,255,.07), 0 3px 8px rgba(0,0,0,.45); }
+  :root:not([data-theme="light"]) #s-home .h-panel .quick button:not(.on):active { background: #25252c; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); }
+  :root:not([data-theme="light"]) #s-home .h-panel .quick .sleep.on { background: color-mix(in srgb, var(--sleep) 15%, #141418); box-shadow: inset 0 3px 9px rgba(0,0,0,.6), inset 0 0 0 1.5px color-mix(in srgb, var(--sleep) 55%, transparent); }
 
   /* 오늘의 표 */
   .sheet-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 9px; padding: 0 2px; }
@@ -1881,7 +1892,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.70 · 10-13';
+const VER = 'v0.71 · 10-14';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
