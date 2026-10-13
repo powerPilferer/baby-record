@@ -98,12 +98,12 @@
   #s-home header .hero .dday { margin-left: 0; }
   #s-home header .sub { font-size: 13px; color: var(--fg2); white-space: nowrap; line-height: 18px; }
   /* 홈 판 (10-12 사장님 "메인도 성장처럼 밑에 내용을 탭형식으로 스크롤 내리면 프로필 위로 덮어지게… 프로필 상단 부분의 배경컬러만 살짝 더 회색") — 판 = 원래 바탕색 그대로(카드색 안 바뀜), 프로필 뒤만 회색 */
-  :root { --htop: #18181c; } :root[data-theme="light"] { --htop: #e6e6ea; }
+  :root { --htop: #050507; --hpanel: #131317; } :root[data-theme="light"] { --htop: #e6e6ea; --hpanel: var(--bg); }   /* 다크: 올라오는 판이 프로필 배경보다 밝게 (10-13 사장님) */
   html:has(#s-home:not(.hidden)), html:has(#s-home:not(.hidden)) body { background: var(--htop); }
   #s-home.tabbed { padding-bottom: 0 !important; }
   #s-home header { display: contents; }   /* 헤더 상자를 없애야 프로필이 화면 전체에서 고정됨(헤더 안에선 헤더 끝에서 같이 올라감). 알약은 헤더 안 그대로 */
   #s-home .hero { position: sticky; top: calc(var(--sat) + 64px); z-index: 0; margin-top: 64px; padding-bottom: 28px !important; }
-  #s-home .h-panel { position: relative; z-index: 2; margin: 0 -16px; padding: 2px 16px calc(112px + var(--sab)); min-height: 100dvh; background: var(--bg); border-radius: 30px 30px 0 0; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
+  #s-home .h-panel { position: relative; z-index: 2; margin: 0 -16px; padding: 2px 16px calc(112px + var(--sab)); min-height: 100dvh; background: var(--hpanel); border-radius: 30px 30px 0 0; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
   :root[data-theme="light"] #s-home .h-panel { border-top-color: rgba(0,0,0,.03); box-shadow: 0 -8px 28px rgba(0,0,0,.06); }
   #s-home header .who { opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .22s ease, transform .22s ease; }
   #s-home header .who.on { opacity: 1; transform: none; pointer-events: auto; }
@@ -387,7 +387,7 @@
   .g-panel { margin: 6px -16px 0; padding: 20px 16px 24px; background: #111114; border-radius: 30px 30px 0 0; min-height: 70vh; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
   :root[data-theme="light"] .g-panel { background: #fafafc; border-top-color: rgba(0,0,0,.03); box-shadow: 0 -8px 28px rgba(0,0,0,.06); }
   /* 성장도 홈과 같은 색 (10-12 사장님 "성장쪽도 메인과 동일하게 바꿔줘. 컬러") — 판 = 원래 바탕색, 프로필 뒤만 회색 */
-  .g-panel, :root[data-theme="light"] .g-panel { background: var(--bg); }
+  .g-panel, :root[data-theme="light"] .g-panel { background: var(--hpanel); }
   html:has(#s-growth:not(.hidden)), html:has(#s-growth:not(.hidden)) body { background: var(--htop); }
   #s-growth.tabbed { padding-bottom: 0 !important; }
   #s-growth .g-panel { min-height: 100dvh; padding-bottom: calc(112px + var(--sab)); }
@@ -1881,7 +1881,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.69 · 10-13';
+const VER = 'v0.70 · 10-13';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
