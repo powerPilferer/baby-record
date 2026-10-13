@@ -125,6 +125,9 @@
   header .gear svg { width: 25px; height: 25px; fill: currentColor; }
   header .gear:active { background: var(--card); }
   .daynav { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 21px; }
+  #s-diary .daynav { position: sticky; top: calc(var(--sat) + 58px); z-index: 5; margin: 4px -16px 13px; padding: 8px 16px; background: var(--bg); box-shadow: 0 12px 10px -8px var(--bg); }   /* 위 버튼(자온·더보기) 밑에 붙고, 그 위 띠도 배경으로 덮음 */
+  #s-diary .daynav::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: calc(var(--sat) + 60px); background: var(--bg); z-index: -1; }
+  #s-diary header { position: relative; z-index: 6; }   /* 달 바꾸기 줄 고정 (10-14 사장님 "맨위로 올라가는게 불편") */
   #s-home .daynav { margin-top: 24px; }   /* 고정 알약과 날짜 줄 사이 10→24px (v0.17, 사장님 "여백이 너무 좁아") */
   .daynav button { color: var(--fg2); width: 44px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
   .daynav button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -330,6 +333,7 @@
   :root:not([data-theme="light"]) .dpage { --paper: #19181d; --rule: rgba(255, 255, 255, .075); --ink: #dddce4; }
   @keyframes dpIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
   .dpage.hidden { display: none; }
+  .dpage { overscroll-behavior: contain; touch-action: pan-y; } .dp-text { overscroll-behavior: contain; }
   .dp-top { display: flex; align-items: center; gap: 6px; padding: 10px 12px 6px; }
   .dp-top button { height: 40px; border-radius: 999px; color: var(--fg2); font-size: 15px; font-weight: 600; }
   .dp-top .x { width: 40px; display: flex; align-items: center; justify-content: center; } .dp-top .x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -1129,11 +1133,18 @@ function openDayNotes(ds) {
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
     ${dayInfo(ds)}
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
+  // 키보드 올라올 때 iOS가 화면을 위로 밀어 공책 윗부분이 잘리고 뒤 달력이 비치던 것 (10-14 사장님) →
+  // 뒤 페이지는 body 고정으로 아예 못 움직이게, 공책은 보이는 영역(visualViewport) 위치·높이에 그대로 맞춤
+  const sy = window.scrollY, bs = document.body.style;
   pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
-  const ta = $('dp-text');
-  const fit = () => { if (window.visualViewport) pg.style.height = visualViewport.height + 'px'; };   // 키보드가 올라오면 공책도 그만큼만 (이모지 줄이 키보드 위에)
-  fit(); window.visualViewport?.addEventListener('resize', fit);
-  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; document.documentElement.style.overflow = ''; window.visualViewport?.removeEventListener('resize', fit); };
+  Object.assign(bs, { position: 'fixed', top: -sy + 'px', left: '0', right: '0', width: '100%' });
+  const ta = $('dp-text'), vv = window.visualViewport;
+  const fit = () => { if (!vv) return; pg.style.height = vv.height + 'px'; pg.style.transform = `translateY(${vv.offsetTop}px)`; };
+  fit(); vv?.addEventListener('resize', fit); vv?.addEventListener('scroll', fit);
+  ta.addEventListener('focus', () => { setTimeout(fit, 60); setTimeout(fit, 350); });
+  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; pg.style.transform = ''; document.documentElement.style.overflow = '';
+    Object.assign(bs, { position: '', top: '', left: '', right: '', width: '' }); window.scrollTo(0, sy);
+    vv?.removeEventListener('resize', fit); vv?.removeEventListener('scroll', fit); };
   const save = async () => { const t = ta.value.trim(); if (t === orig.trim()) { close(); return; }
     try { await db.setDiary(ds, t); close(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
@@ -1922,7 +1933,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.73 · 10-14';
+const VER = 'v0.74 · 10-14';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
