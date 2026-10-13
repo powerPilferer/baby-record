@@ -1133,9 +1133,23 @@ function openDayNotes(ds) {
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
   pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
   const ta = $('dp-text');
-  const fit = () => { if (window.visualViewport) pg.style.height = visualViewport.height + 'px'; };   // 키보드가 올라오면 공책도 그만큼만 (이모지 줄이 키보드 위에)
-  fit(); window.visualViewport?.addEventListener('resize', fit);
-  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; document.documentElement.style.overflow = ''; window.visualViewport?.removeEventListener('resize', fit); };
+  // 키보드가 올라오면 공책을 보이는 영역에 맞추고(높이·위치), 누른 줄이 보이게 공책 안만 스크롤 (10-14 사장님).
+  // v0.74처럼 body를 묶지 않는다 — 공책 자신만 건드림 (body 고정이 하단 메뉴·스크롤을 꼬이게 했음)
+  pg._off?.();
+  const vv = window.visualViewport;
+  const caretY = () => { const m = document.createElement('div'), cs = getComputedStyle(ta);
+    for (const k of ['fontFamily', 'fontSize', 'lineHeight', 'letterSpacing', 'paddingLeft', 'paddingRight', 'paddingTop', 'wordBreak', 'boxSizing']) m.style[k] = cs[k];
+    Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'break-word', width: ta.clientWidth + 'px', left: '-9999px', top: '0' });
+    m.textContent = ta.value.slice(0, ta.selectionEnd ?? ta.value.length); const mk = document.createElement('span'); mk.textContent = '\u200b'; m.appendChild(mk);
+    document.body.appendChild(m); const y = mk.offsetTop, lh = parseFloat(cs.lineHeight) || 38; m.remove(); return [y, lh]; };
+  const keep = () => { if (document.activeElement !== ta) return; const [y, lh] = caretY(), top = ta.scrollTop, h = ta.clientHeight;
+    if (y + lh + 12 > top + h) ta.scrollTop = y + lh + 12 - h; else if (y < top) ta.scrollTop = Math.max(0, y - 8); };
+  const fit = () => { if (!vv) return; pg.style.height = vv.height + 'px'; pg.style.top = vv.offsetTop + 'px'; requestAnimationFrame(keep); };
+  fit(); vv?.addEventListener('resize', fit); vv?.addEventListener('scroll', fit);
+  const onFocus = () => { setTimeout(fit, 80); setTimeout(fit, 400); };
+  ta.addEventListener('focus', onFocus); ta.addEventListener('click', () => setTimeout(keep, 50));
+  pg._off = () => { vv?.removeEventListener('resize', fit); vv?.removeEventListener('scroll', fit); pg._off = null; };
+  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; pg.style.top = ''; document.documentElement.style.overflow = ''; pg._off?.(); };
   const save = async () => { const t = ta.value.trim(); if (t === orig.trim()) { close(); return; }
     try { await db.setDiary(ds, t); close(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
@@ -1924,7 +1938,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.76 · 10-14';
+const VER = 'v0.77 · 10-14';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
