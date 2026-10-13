@@ -101,8 +101,8 @@
   :root { --htop: #050507; --hpanel: #131317; } :root[data-theme="light"] { --htop: #e6e6ea; --hpanel: var(--bg); }   /* 다크: 올라오는 판이 프로필 배경보다 밝게 (10-13 사장님) */
   :root:not([data-theme="light"]) #s-home .h-panel, :root:not([data-theme="light"]) .g-panel { --card: #27272e; --card2: #35353e; --line: #3d3d47; --line2: #2f2f37; --bg1: #222228; }   /* 밝아진 판 위 박스·버튼 한 단계 올림 (10-13 사장님) */
   /* 다크 홈 다듬기 (10-14 사장님): 상단 알림 상자 배경 더 어둡게(테두리 유지) · 기록표 시각칩/줄 또렷하게 · 한마디 입력칸 검정 → 카드에 어울리게 */
-  :root:not([data-theme="light"]) #s-home .h-panel .status { background: #0e0e12; }
-  :root:not([data-theme="light"]) #s-home .h-panel .status .chip b { background: color-mix(in srgb, var(--c) 18%, #0e0e12); }
+  :root:not([data-theme="light"]) #s-home .h-panel .status { background: #1a1a1f; }   /* #0e0e12는 너무 진해 튐 (10-14 사장님) → 판과 박스 사이 */
+  :root:not([data-theme="light"]) #s-home .h-panel .status .chip b { background: color-mix(in srgb, var(--c) 16%, #1a1a1f); }
   :root:not([data-theme="light"]) #s-home .h-panel :is(.row.feed, .row.diaper, .row.sleep) .t { background: color-mix(in srgb, var(--c) 24%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent); }
   :root:not([data-theme="light"]) #s-home .h-panel .row .t { font-weight: 600; }
   :root:not([data-theme="light"]) #s-home .h-panel .row :is(.d, .w) { border-top-color: rgba(255,255,255,.08); }
@@ -333,7 +333,6 @@
   :root:not([data-theme="light"]) .dpage { --paper: #19181d; --rule: rgba(255, 255, 255, .075); --ink: #dddce4; }
   @keyframes dpIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
   .dpage.hidden { display: none; }
-  .dpage { overscroll-behavior: contain; touch-action: pan-y; } .dp-text { overscroll-behavior: contain; }
   .dp-top { display: flex; align-items: center; gap: 6px; padding: 10px 12px 6px; }
   .dp-top button { height: 40px; border-radius: 999px; color: var(--fg2); font-size: 15px; font-weight: 600; }
   .dp-top .x { width: 40px; display: flex; align-items: center; justify-content: center; } .dp-top .x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -1133,18 +1132,11 @@ function openDayNotes(ds) {
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
     ${dayInfo(ds)}
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
-  // 키보드 올라올 때 iOS가 화면을 위로 밀어 공책 윗부분이 잘리고 뒤 달력이 비치던 것 (10-14 사장님) →
-  // 뒤 페이지는 body 고정으로 아예 못 움직이게, 공책은 보이는 영역(visualViewport) 위치·높이에 그대로 맞춤
-  const sy = window.scrollY, bs = document.body.style;
   pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
-  Object.assign(bs, { position: 'fixed', top: -sy + 'px', left: '0', right: '0', width: '100%' });
-  const ta = $('dp-text'), vv = window.visualViewport;
-  const fit = () => { if (!vv) return; pg.style.height = vv.height + 'px'; pg.style.transform = `translateY(${vv.offsetTop}px)`; };
-  fit(); vv?.addEventListener('resize', fit); vv?.addEventListener('scroll', fit);
-  ta.addEventListener('focus', () => { setTimeout(fit, 60); setTimeout(fit, 350); });
-  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; pg.style.transform = ''; document.documentElement.style.overflow = '';
-    Object.assign(bs, { position: '', top: '', left: '', right: '', width: '' }); window.scrollTo(0, sy);
-    vv?.removeEventListener('resize', fit); vv?.removeEventListener('scroll', fit); };
+  const ta = $('dp-text');
+  const fit = () => { if (window.visualViewport) pg.style.height = visualViewport.height + 'px'; };   // 키보드가 올라오면 공책도 그만큼만 (이모지 줄이 키보드 위에)
+  fit(); window.visualViewport?.addEventListener('resize', fit);
+  const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; document.documentElement.style.overflow = ''; window.visualViewport?.removeEventListener('resize', fit); };
   const save = async () => { const t = ta.value.trim(); if (t === orig.trim()) { close(); return; }
     try { await db.setDiary(ds, t); close(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
@@ -1933,7 +1925,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.74 · 10-14';
+const VER = 'v0.75 · 10-14';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
