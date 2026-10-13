@@ -311,12 +311,6 @@
   .dp-head { padding: 4px 26px 2px; display: flex; align-items: flex-end; gap: 10px; }
   .dp-date { font-family: var(--hand), cursive; font-size: 32px; line-height: 1; color: var(--ink); letter-spacing: -.01em; }
   .dp-sub { font-size: 12.5px; color: var(--fg3); padding-bottom: 5px; }
-  .dp-stk { margin-left: auto; display: flex; gap: 2px; padding-bottom: 2px; }
-  .dp-stk button { min-width: 38px; height: 38px; border-radius: 12px; font-size: 26px; line-height: 1; border: 1.5px dashed transparent; }
-  .dp-stk button.empty { border-color: var(--rule); color: var(--fg3); font-size: 16px; }
-  .dp-pick { display: flex; gap: 4px; overflow-x: auto; padding: 6px 22px 4px; scrollbar-width: none; } .dp-pick::-webkit-scrollbar { display: none; }
-  .dp-pick.hidden { display: none; }
-  .dp-pick button { flex: none; width: 40px; height: 40px; border-radius: 12px; font-size: 23px; } .dp-pick button.on { background: color-mix(in srgb, var(--ink) 10%, transparent); }
   .dp-text { flex: 1; min-height: 0; width: 100%; border: 0; outline: none; resize: none; padding: 6px 26px 40px; margin-top: 26px; color: var(--ink); background-color: transparent;
     font-family: var(--hand), cursive; font-size: 23px; line-height: 38px;
     background-image: repeating-linear-gradient(to bottom, transparent 0 37px, var(--rule) 37px 38px); background-position: 0 6px; background-attachment: local; }
@@ -1068,9 +1062,7 @@ async function renderDiary() {
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
     h += `<button type="button" class="d ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${(() => { const L = stkList(ds), t = stickers[ds] ? (tilts[ds] || 1) : ((d * 7 + mo * 3) % 2 ? 1 : -1);
-        if (!L.length) return stickerOf(ds) ? `<span class="stk" style="transform:rotate(${t * 10}deg)">${stickerOf(ds)}</span>` : '';
-        return (L[1] ? `<span class="stk s2" style="transform:rotate(${-t * 12}deg)">${L[1]}</span>` : '') + `<span class="stk" style="transform:rotate(${t * 10}deg)">${L[0]}</span>`; })()}${st ? `<span class="stl">${st}</span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${st ? `<span class="stl">${st}</span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -1082,13 +1074,11 @@ $('cal').addEventListener('click', e => { const b = e.target.closest('.d[data-d]
 // ── 일지에서 날짜를 누르면: 그날 한마디 보기 + 쓰기 (지난 날에도 남길 수 있음) + 그날 표로 가기
 const DP_EMO = ['😊', '🥰', '😂', '😭', '😴', '🍼', '💩', '🛁', '👣', '🧸', '📸', '🎉', '❤️', '✨', '⭐', '🌙', '☀️', '🌧️', '🍀', '🤒', '💉', '🏥'];   // 글 중간에 넣는 이모지
 function openDayNotes(ds) {
-  // 날짜를 누르면 화면 꽉 찬 공책 한 장 (10-13). 위 두 칸 = 달력에 붙는 스티커(그대로), 아래 줄 = 글에 넣는 이모지
+  // 날짜를 누르면 화면 꽉 찬 공책 한 장 (10-13). 아래 줄 = 글에 넣는 이모지 (달력 스티커는 10-13 뗌)
   const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date()), pg = $('dpage'), orig = diaries[ds] || '';
-  const stk = () => { const c = stkList(ds); return [0, 1].map(i => `<button type="button" data-slot="${i}" class="${c[i] ? '' : 'empty'}">${c[i] || '+'}</button>`).join(''); };
   pg.innerHTML = `<div class="dp-top"><button type="button" class="x" id="dp-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="ok" id="dp-ok">완료</button></div>
     <div class="dp-head"><div><div class="dp-date">${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div></div>
-      <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</div><div class="dp-stk" id="dp-stk">${stk()}</div></div>
-    <div class="dp-pick hidden" id="dp-pick">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${stkList(ds).includes(e) ? 'on' : ''}">${e}</button>`).join('')}</div>
+      <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}${stampOf(ds) ? ' · ' + stampOf(ds) : ''}</div></div>
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
   pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
@@ -1102,11 +1092,6 @@ function openDayNotes(ds) {
   $('dp-emo').addEventListener('pointerdown', e => e.preventDefault());   // 이모지 눌러도 키보드가 내려가지 않게
   $('dp-emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = ta.selectionStart ?? ta.value.length, z = ta.selectionEnd ?? a;
     ta.setRangeText(b.dataset.e, a, z, 'end'); ta.focus(); });
-  $('dp-stk').onclick = () => $('dp-pick').classList.toggle('hidden');
-  $('dp-pick').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return; const em = b.dataset.e, cur = stkList(ds);
-    let next; if (cur.includes(em)) next = cur.filter(x => x !== em);
-    else if (cur.length >= 2) { toast('스티커는 두 개까지예요. 하나를 먼저 떼주세요'); return; } else next = cur.concat(em);
-    try { await db.setSticker(ds, next); for (const x of $('dp-pick').children) x.classList.toggle('on', next.includes(x.dataset.e)); $('dp-stk').innerHTML = stk(); renderDiary(); } catch (err) { alert('스티커 실패: ' + err.message); } });
   if (!ahead) $('dp-go').onclick = async () => { await save(); day = ds; show('s-home'); render(); };
 }
 
@@ -1889,7 +1874,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.66 · 10-13';
+const VER = 'v0.67 · 10-13';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
