@@ -339,13 +339,15 @@
   .dp-head { padding: 4px 26px 2px; display: flex; align-items: flex-end; gap: 10px; }
   .dp-date { font-family: var(--hand), cursive; font-size: 32px; line-height: 1; color: var(--ink); letter-spacing: -.01em; }
   .dp-sub { font-size: 12.5px; color: var(--fg3); padding-bottom: 5px; }
-  .dp-text { flex: 1; min-height: 0; width: 100%; border: 0; outline: none; resize: none; padding: 6px 26px 40px; margin-top: 26px; color: var(--ink); background-color: transparent;
+  .dp-body { flex: 1; min-height: 0; overflow-y: auto; position: relative; display: flex; flex-direction: column; padding-bottom: calc(16px + var(--sab)); }   /* 날짜·사진·일기·이날의 기록이 한 장으로 같이 스크롤 (10-15 사장님 "일기 가장밑으로") */
+  .dpage:has(.dp-text:focus) .dp-body { padding-bottom: 8px; }
+  .dp-text { flex: none; min-height: 158px; overflow: hidden; width: 100%; border: 0; outline: none; resize: none; padding: 6px 26px 0; margin-top: 26px; color: var(--ink); background-color: transparent;
     font-family: var(--hand), cursive; font-size: 23px; line-height: 38px;
-    background-image: var(--lines); background-size: 100% 152px; background-position: 0 6px; background-attachment: local; }
+    background-image: var(--lines); background-size: 100% 152px; background-position: 0 6px; }
   .dpage { --lines: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='152' viewBox='0 0 400 152' preserveAspectRatio='none'%3E%3Cpath d='M0.0,37.07 Q36.5,37.54 73.0,37.79 Q102.5,37.40 131.9,37.22 Q171.0,37.48 210.0,37.66 Q235.5,37.10 261.0,37.05 Q286.1,37.17 311.3,37.96 Q347.9,37.91 384.5,37.20 Q392.2,37.77 400.0,38.13' stroke='rgba%2870,110,190,.20%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,37.07 Q36.5,37.54 73.0,37.79 Q102.5,37.40 131.9,37.22 Q171.0,37.48 210.0,37.66 Q235.5,37.10 261.0,37.05 Q286.1,37.17 311.3,37.96 Q347.9,37.91 384.5,37.20 Q392.2,37.77 400.0,38.13' transform='translate%280 .45%29' stroke='rgba%2870,110,190,.20%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='63 3 67 2'/%3E%3Cpath d='M0.0,74.97 Q26.9,75.02 53.8,75.03 Q80.5,74.89 107.2,75.42 Q134.3,75.31 161.3,75.30 Q186.1,75.37 210.9,75.89 Q239.6,75.33 268.3,75.46 Q301.0,75.95 333.7,76.03 Q363.6,75.84 393.4,76.11 Q396.7,75.88 400.0,75.69' stroke='rgba%2870,110,190,.20%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,74.97 Q26.9,75.02 53.8,75.03 Q80.5,74.89 107.2,75.42 Q134.3,75.31 161.3,75.30 Q186.1,75.37 210.9,75.89 Q239.6,75.33 268.3,75.46 Q301.0,75.95 333.7,76.03 Q363.6,75.84 393.4,76.11 Q396.7,75.88 400.0,75.69' transform='translate%280 .45%29' stroke='rgba%2870,110,190,.20%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='37 2 60 4'/%3E%3Cpath d='M0.0,112.88 Q32.3,112.96 64.6,112.99 Q92.0,113.29 119.3,113.62 Q150.7,113.84 182.1,113.45 Q217.9,113.82 253.7,113.91 Q283.9,114.03 314.2,113.64 Q345.5,113.92 376.9,113.59 Q388.4,113.40 400.0,113.55' stroke='rgba%2870,110,190,.20%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,112.88 Q32.3,112.96 64.6,112.99 Q92.0,113.29 119.3,113.62 Q150.7,113.84 182.1,113.45 Q217.9,113.82 253.7,113.91 Q283.9,114.03 314.2,113.64 Q345.5,113.92 376.9,113.59 Q388.4,113.40 400.0,113.55' transform='translate%280 .45%29' stroke='rgba%2870,110,190,.20%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='65 3 68 2'/%3E%3Cpath d='M0.0,151.11 Q28.0,150.96 56.1,151.37 Q86.1,151.38 116.1,150.85 Q143.8,150.56 171.6,150.73 Q207.7,151.29 243.8,151.61 Q277.6,151.09 311.4,150.96 Q338.3,150.97 365.2,150.69 Q382.6,151.37 400.0,151.35' stroke='rgba%2870,110,190,.20%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,151.11 Q28.0,150.96 56.1,151.37 Q86.1,151.38 116.1,150.85 Q143.8,150.56 171.6,150.73 Q207.7,151.29 243.8,151.61 Q277.6,151.09 311.4,150.96 Q338.3,150.97 365.2,150.69 Q382.6,151.37 400.0,151.35' transform='translate%280 .45%29' stroke='rgba%2870,110,190,.20%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='55 4 66 2'/%3E%3C/svg%3E"); } :root:not([data-theme="light"]) .dpage { --lines: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='152' viewBox='0 0 400 152' preserveAspectRatio='none'%3E%3Cpath d='M0.0,36.87 Q28.9,37.11 57.8,36.99 Q88.3,37.40 118.9,37.36 Q148.1,37.49 177.3,37.13 Q205.0,37.48 232.7,37.59 Q257.1,37.87 281.6,37.52 Q308.1,37.42 334.6,37.45 Q358.6,37.13 382.5,36.76 Q391.3,36.71 400.0,36.65' stroke='rgba%28255,255,255,.085%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,36.87 Q28.9,37.11 57.8,36.99 Q88.3,37.40 118.9,37.36 Q148.1,37.49 177.3,37.13 Q205.0,37.48 232.7,37.59 Q257.1,37.87 281.6,37.52 Q308.1,37.42 334.6,37.45 Q358.6,37.13 382.5,36.76 Q391.3,36.71 400.0,36.65' transform='translate%280 .45%29' stroke='rgba%28255,255,255,.085%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='61 4 45 3'/%3E%3Cpath d='M0.0,75.35 Q29.9,75.29 59.9,74.64 Q98.8,74.72 137.7,75.13 Q174.3,74.52 210.8,74.42 Q248.3,74.37 285.8,74.28 Q323.4,74.25 361.0,74.59 Q380.5,74.34 400.0,74.64' stroke='rgba%28255,255,255,.085%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,75.35 Q29.9,75.29 59.9,74.64 Q98.8,74.72 137.7,75.13 Q174.3,74.52 210.8,74.42 Q248.3,74.37 285.8,74.28 Q323.4,74.25 361.0,74.59 Q380.5,74.34 400.0,74.64' transform='translate%280 .45%29' stroke='rgba%28255,255,255,.085%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='40 4 43 2'/%3E%3Cpath d='M0.0,113.05 Q27.8,113.19 55.7,113.43 Q83.2,113.25 110.8,113.08 Q136.4,113.21 162.1,112.86 Q184.9,112.71 207.7,112.71 Q230.5,112.96 253.2,113.19 Q285.4,112.99 317.5,112.53 Q348.3,113.24 379.1,113.28 Q389.6,113.10 400.0,113.13' stroke='rgba%28255,255,255,.085%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,113.05 Q27.8,113.19 55.7,113.43 Q83.2,113.25 110.8,113.08 Q136.4,113.21 162.1,112.86 Q184.9,112.71 207.7,112.71 Q230.5,112.96 253.2,113.19 Q285.4,112.99 317.5,112.53 Q348.3,113.24 379.1,113.28 Q389.6,113.10 400.0,113.13' transform='translate%280 .45%29' stroke='rgba%28255,255,255,.085%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='70 3 65 3'/%3E%3Cpath d='M0.0,151.47 Q22.7,151.09 45.5,151.41 Q83.4,151.28 121.3,151.33 Q144.8,151.38 168.2,151.67 Q197.4,151.97 226.6,151.59 Q266.1,151.58 305.5,151.82 Q340.2,151.25 374.8,151.33 Q387.4,151.74 400.0,151.62' stroke='rgba%28255,255,255,.085%29' stroke-width='0.9' fill='none' stroke-linecap='round'/%3E%3Cpath d='M0.0,151.47 Q22.7,151.09 45.5,151.41 Q83.4,151.28 121.3,151.33 Q144.8,151.38 168.2,151.67 Q197.4,151.97 226.6,151.59 Q266.1,151.58 305.5,151.82 Q340.2,151.25 374.8,151.33 Q387.4,151.74 400.0,151.62' transform='translate%280 .45%29' stroke='rgba%28255,255,255,.085%29' stroke-opacity='.45' stroke-width='0.7' fill='none' stroke-dasharray='43 4 51 1'/%3E%3C/svg%3E"); }
   .dp-text::placeholder { color: color-mix(in srgb, var(--ink) 32%, transparent); }
   /* 그날 기록 요약 — 달력 점으로만 보이던 걸 공책 맨 아래에 (10-14 사장님). 글 쓰는 중(키보드)엔 숨김 */
-  .dp-info { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 18px 10px; padding: 11px 14px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px dashed color-mix(in srgb, var(--ink) 16%, transparent); font-size: 13px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+  .dp-info { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 14px 18px 10px; padding: 11px 14px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px dashed color-mix(in srgb, var(--ink) 16%, transparent); font-size: 13px; color: var(--fg2); font-variant-numeric: tabular-nums; }
   .dp-info em { font-style: normal; font-size: 11.5px; color: var(--fg3); width: 100%; margin-bottom: 1px; }
   .dp-info span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
   .dp-info span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--fg3)); }
@@ -353,7 +355,7 @@
   .dpage:has(.dp-text:focus) .dp-info { display: none; }
   /* 주 1장 사진 (10-15 사장님 "주 한장으로 우선") — 공책에 테이프로 붙인 폴라로이드 */
   .dp-ph { margin: 16px 26px 0; align-self: flex-start; position: relative; padding: 8px 8px 22px; background: #fff; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.12); transform: rotate(-2deg); }
-  .dp-ph img { display: block; height: 160px; max-width: 230px; object-fit: cover; border-radius: 2px; }
+  .dp-ph img { display: block; width: 168px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 2px; }
   .dp-ph::before { content: ""; position: absolute; top: -9px; left: 50%; width: 64px; height: 20px; margin-left: -32px; background: rgba(240, 220, 170, .7); transform: rotate(3deg); }
   .dp-ph .wk { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: var(--hand), cursive; font-size: 13px; color: #8a8790; }
   .dp-ph .rm { position: absolute; right: -10px; top: -10px; width: 28px; height: 28px; border-radius: 50%; background: var(--card2); color: var(--fg2); font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
@@ -362,6 +364,9 @@
   .dp-phadd u { text-decoration: none; color: var(--ms); font-weight: 600; }
   .dpage:has(.dp-text:focus) :is(.dp-ph, .dp-phadd) { display: none; }
   .cal .d .ph { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 7px; object-fit: cover; border: 2px solid var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.18); transform: rotate(4deg); }
+  .dpage:not(:has(.dp-text:focus)) .dp-bar { display: none; }   /* 이모지 줄은 키보드 떠 있을 때만 (10-15 사장님) */
+  .dp-top .go { margin-left: auto; padding: 0 14px; font-size: 14px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
+  .dp-top .go + .ok { margin-left: 0; }
   .dp-bar { display: flex; align-items: center; gap: 2px; padding: 6px 10px calc(8px + var(--sab)); border-top: 1px solid var(--rule); background: var(--paper); }
   .dp-emo { flex: 1; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; } .dp-emo::-webkit-scrollbar { display: none; }
   .dp-emo button { flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 24px; } .dp-emo button:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
@@ -637,6 +642,7 @@
   .cr-top button.ok { color: #fff; font-weight: 700; }
   .cr-view { position: relative; width: min(320px, calc(100vw - 32px)); aspect-ratio: 1; margin: auto 0; overflow: hidden; touch-action: none; border-radius: 12px; background: #111; }
   .cr-view img { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-select: none; pointer-events: none; }
+  .cr-view.rect .cr-mask { border-radius: 4px; }
   .cr-mask { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.62); pointer-events: none; outline: 1.5px solid rgba(255,255,255,.55); outline-offset: -1px; }
   .cr-zoom { display: flex; align-items: center; gap: 12px; width: min(320px, calc(100vw - 32px)); margin-top: 22px; color: #999; font-size: 19px; }
   .cr-zoom input { flex: 1; accent-color: #fff; }
@@ -1113,11 +1119,9 @@ async function signPhotos(days = Object.keys(photoPaths)) {        // 비공개 
   (data || []).forEach((r, i) => { if (r.signedUrl) photos[days[i]] = r.signedUrl; });
 }
 const weekPhotoDay = d => Object.keys({ ...photos, ...photoPaths }).find(x => weekOf(x) === weekOf(d));
-function shrinkPhoto(file) {                                       // 긴 변 1280 JPEG — 한 장 150KB 안팎
+function framePhoto(file) {                                        // 폴라로이드 틀(4:5)에 맞춰 확대·이동 → 1024×1280 JPEG (10-15 사장님 "프로필처럼 프레임")
   return new Promise((res, rej) => { const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => { const k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
-      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);   // 투명 PNG가 JPEG에서 검게 안 되게
-      URL.revokeObjectURL(url); c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', .8); };
+    img.onload = () => cropPhoto(img, { ratio: 1.25, rect: true, out: 1024 }).then(v => { URL.revokeObjectURL(url); res(v); }, e => { URL.revokeObjectURL(url); rej(e); });
     img.onerror = () => rej(new Error('이미지를 읽을 수 없어요')); img.src = url; });
 }
 const stampOf = d => (baby?.birth_date && d === (+baby.birth_date.slice(0, 4) + 1) + baby.birth_date.slice(4)) ? '첫돌' : (MILESTONES[dayNo(d)] || '');
@@ -1181,13 +1185,13 @@ function phBlock(ds, ahead) {                                       // 공책 �
 function openDayNotes(ds) {
   // 날짜를 누르면 화면 꽉 찬 공책 한 장 (10-13). 아래 줄 = 글에 넣는 이모지 (달력 스티커는 10-13 뗌)
   const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date()), pg = $('dpage'), orig = diaries[ds] || '';
-  pg.innerHTML = `<div class="dp-top"><button type="button" class="x" id="dp-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="ok" id="dp-ok">완료</button></div>
-    <div class="dp-head"><div><div class="dp-date">${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div></div>
+  pg.innerHTML = `<div class="dp-top"><button type="button" class="x" id="dp-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>${ahead ? '' : '<button type="button" class="go" id="dp-go">이날 기록</button>'}<button type="button" class="ok" id="dp-ok">완료</button></div>
+    <div class="dp-body" id="dp-body"><div class="dp-head"><div><div class="dp-date">${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div></div>
       <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}</div>${stampOf(ds) ? `<span class="dp-ms">${stampOf(ds)} ${msIc(stampOf(ds))}</span>` : ''}</div>
     ${phBlock(ds, ahead)}
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
-    ${dayInfo(ds)}
-    <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
+    ${dayInfo(ds)}</div>
+    <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div></div>`;
   pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
   const ta = $('dp-text');
   // 키보드가 올라오면 공책을 보이는 영역에 맞추고(높이·위치), 누른 줄이 보이게 공책 안만 스크롤 (10-14 사장님).
@@ -1199,8 +1203,12 @@ function openDayNotes(ds) {
     Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'break-word', width: ta.clientWidth + 'px', left: '-9999px', top: '0' });
     m.textContent = ta.value.slice(0, ta.selectionEnd ?? ta.value.length); const mk = document.createElement('span'); mk.textContent = '\u200b'; m.appendChild(mk);
     document.body.appendChild(m); const y = mk.offsetTop, lh = parseFloat(cs.lineHeight) || 38; m.remove(); return [y, lh]; };
-  const keep = () => { if (document.activeElement !== ta) return; const [y, lh] = caretY(), top = ta.scrollTop, h = ta.clientHeight;
-    if (y + lh + 12 > top + h) ta.scrollTop = y + lh + 12 - h; else if (y < top) ta.scrollTop = Math.max(0, y - 8); };
+  const sc = $('dp-body');
+  const grow = () => { const t = sc.scrollTop; ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; sc.scrollTop = t; };   // 일기 길이만큼 늘어나고 그 바로 밑에 이날의 기록
+  const keep = () => { if (document.activeElement !== ta) return; const [y, lh] = caretY(), Y = ta.offsetTop + y, top = sc.scrollTop, h = sc.clientHeight;
+    if (Y + lh + 12 > top + h) sc.scrollTop = Y + lh + 12 - h; else if (Y < top) sc.scrollTop = Math.max(0, Y - 8); };
+  grow(); ta.addEventListener('input', () => { grow(); keep(); });
+  sc.addEventListener('click', e => { if (e.target === sc) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } });   // 밑 빈 종이를 눌러도 이어 쓰기
   const fit = () => { if (!vv) return; pg.style.height = vv.height + 'px'; pg.style.top = vv.offsetTop + 'px'; requestAnimationFrame(keep); };
   fit(); vv?.addEventListener('resize', fit); vv?.addEventListener('scroll', fit);
   const onFocus = () => { setTimeout(fit, 80); setTimeout(fit, 400); };
@@ -1212,13 +1220,13 @@ function openDayNotes(ds) {
   $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
   $('dp-emo').addEventListener('pointerdown', e => e.preventDefault());   // 이모지 눌러도 키보드가 내려가지 않게
   $('dp-emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = ta.selectionStart ?? ta.value.length, z = ta.selectionEnd ?? a;
-    ta.setRangeText(b.dataset.e, a, z, 'end'); ta.focus(); });
+    ta.setRangeText(b.dataset.e, a, z, 'end'); ta.focus(); grow(); });
   if (!ahead) $('dp-go').onclick = async () => { await save(); day = ds; show('s-home'); render(); };
   const rePh = () => { const old = pg.querySelector('.dp-ph, .dp-phadd'), f = $('dp-file'); f?.remove(); old.outerHTML = phBlock(ds, ahead); bindPh(); renderDiary(); };
   const bindPh = () => {
     if ($('dp-phadd')) { $('dp-phadd').onclick = () => $('dp-file').click();
       $('dp-file').onchange = async e => { const f = e.target.files[0]; if (!f) return;
-        try { toast('사진 올리는 중…'); const b = await shrinkPhoto(f); await db.setPhoto(ds, b); rePh(); toast(weekOf(ds) + '주차 사진을 붙였어요'); } catch (err) { toast('사진 실패: ' + err.message); } }; }
+        e.target.value = ''; try { const b = await framePhoto(f); toast('사진 올리는 중…'); await db.setPhoto(ds, b); rePh(); toast(weekOf(ds) + '주차 사진을 붙였어요'); } catch (err) { if (err.message !== '취소') toast('사진 실패: ' + err.message); } }; }
     if ($('dp-phrm')) $('dp-phrm').onclick = async () => { if (!confirm('이 사진을 뗄까요?')) return; await db.setPhoto(ds, null); rePh(); toast('사진을 뗐어요'); };
   };
   bindPh();
@@ -1925,15 +1933,17 @@ function squareJpeg(file) {
     img.onerror = () => rej(new Error('이미지를 읽을 수 없어요')); img.src = url;
   });
 }
-function cropPhoto(img) {
+function cropPhoto(img, o = {}) {                                   // o.ratio = 세로/가로, o.rect = 네모 틀(다이어리 사진, 10-15), o.out = 내보낼 가로 px
+  const ratio = o.ratio || 1, OUT = o.out || 512;
   return new Promise((res, rej) => {
     const box = $('cropper'), view = $('cr-view'), el = $('cr-img'), zoom = $('cr-zoom');
+    view.style.aspectRatio = String(1 / ratio); view.classList.toggle('rect', !!o.rect);
     box.classList.remove('hidden'); el.src = img.src;
-    const V = view.clientWidth;                                   // 뷰(=원 지름)
-    const base = V / Math.min(img.naturalWidth, img.naturalHeight);   // 원을 꽉 채우는 최소 배율
-    let s = base, tx = (V - img.naturalWidth * base) / 2, ty = (V - img.naturalHeight * base) / 2;
+    const V = view.clientWidth, VH = view.clientHeight;          // 틀 가로·세로
+    const base = Math.max(V / img.naturalWidth, VH / img.naturalHeight);   // 틀을 꽉 채우는 최소 배율
+    let s = base, tx = (V - img.naturalWidth * base) / 2, ty = (VH - img.naturalHeight * base) / 2;
     const MAXZ = 4;
-    const clamp = () => { s = Math.min(Math.max(s, base), base * MAXZ); const w = img.naturalWidth * s, h = img.naturalHeight * s; tx = Math.min(0, Math.max(V - w, tx)); ty = Math.min(0, Math.max(V - h, ty)); };
+    const clamp = () => { s = Math.min(Math.max(s, base), base * MAXZ); const w = img.naturalWidth * s, h = img.naturalHeight * s; tx = Math.min(0, Math.max(V - w, tx)); ty = Math.min(0, Math.max(VH - h, ty)); };
     const draw = () => { clamp(); el.style.width = img.naturalWidth * s + 'px'; el.style.height = img.naturalHeight * s + 'px'; el.style.transform = `translate(${tx}px, ${ty}px)`; zoom.value = Math.round((s / base - 1) / (MAXZ - 1) * 100); };
     const zoomAt = (ns, cx, cy) => { ns = Math.min(Math.max(ns, base), base * MAXZ); tx = cx - (cx - tx) * (ns / s); ty = cy - (cy - ty) * (ns / s); s = ns; draw(); };
     draw();
@@ -1951,15 +1961,16 @@ function cropPhoto(img) {
     };
     const onUp = e => { pts.delete(e.pointerId); last = null; };
     view.addEventListener('pointerdown', onDown); view.addEventListener('pointermove', onMove); view.addEventListener('pointerup', onUp); view.addEventListener('pointercancel', onUp);
-    const onZoom = () => zoomAt(base * (1 + (MAXZ - 1) * zoom.value / 100), V / 2, V / 2);
+    const onZoom = () => zoomAt(base * (1 + (MAXZ - 1) * zoom.value / 100), V / 2, VH / 2);
     zoom.addEventListener('input', onZoom);
     const done = ok => {
       view.removeEventListener('pointerdown', onDown); view.removeEventListener('pointermove', onMove); view.removeEventListener('pointerup', onUp); view.removeEventListener('pointercancel', onUp); zoom.removeEventListener('input', onZoom);
       box.classList.add('hidden'); el.src = '';
       if (!ok) return rej(new Error('취소'));
-      const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
-      c.getContext('2d').drawImage(img, -tx / s, -ty / s, V / s, V / s, 0, 0, S, S);   // 원의 외접 정사각 영역
-      c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', .86);
+      const c = document.createElement('canvas'); c.width = OUT; c.height = Math.round(OUT * ratio); const g = c.getContext('2d');
+      g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, -tx / s, -ty / s, V / s, VH / s, 0, 0, c.width, c.height);   // 틀(원이면 외접 정사각) 영역
+      c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', o.rect ? .8 : .86);
     };
     $('cr-ok').onclick = () => done(true); $('cr-cancel').onclick = () => done(false);
   });
@@ -2004,7 +2015,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.80 · 10-15';
+const VER = 'v0.81 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
