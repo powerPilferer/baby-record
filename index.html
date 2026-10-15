@@ -1748,7 +1748,7 @@ function openSheet(kind, log) {
     body = `<div class="frow"><label>깬 시각</label><input type="time" id="f-end" value="${log && log.ended_at ? hhmm(log.ended_at) : ''}"></div>
       <div class="foot" style="margin:0 0 4px">비워두면 "자는 중"으로 남아요</div>`;
   } else if (kind === 'temp') {
-    body = `<div class="frow"><label>체온 (℃)</label><input type="number" inputmode="decimal" step="0.1" id="f-c" value="${d.c || 36.8}"></div>`;
+    body = `<div class="frow"><label>체온 (℃)</label><input type="number" inputmode="decimal" step="0.1" id="f-c" placeholder="36.8" value="${d.c || ''}"></div>`;
   }
   $('sheet').innerHTML = `<h3 class="${kind}">${KIND[kind]} ${log ? '고치기' : ''}</h3>${body}
     <div class="frow"><label>${kind === 'sleep' ? '잠든 시각' : '시각'}</label><input type="time" id="f-at" value="${t}"></div>
@@ -1756,6 +1756,7 @@ function openSheet(kind, log) {
     <div class="acts">${log ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">${log ? '저장' : '기록'}</button></div>`;
   $('sheet').dataset.kind = kind;
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden');
+  if (kind === 'temp' && !log) $('f-c').focus();   // 바로 숫자 키보드
   // 세그먼트·ml 칩
   for (const seg of $('sheet').querySelectorAll('.seg')) seg.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1807,7 +1808,7 @@ async function saveSheet() {
     if (detail.type === 'breast') detail.min = +$('f-min').value || 0; else { detail.ml = +$('f-ml').value || 0; localStorage.setItem('bb-ml', detail.ml); }
     localStorage.setItem('bb-feedtype', detail.type);
   } else if (kind === 'diaper') { const v = $('dp-type').querySelector('.on').dataset.v; detail.pee = v !== 'poo'; detail.poo = v !== 'pee'; }
-  else if (kind === 'temp') detail.c = +$('f-c').value || null;
+  else if (kind === 'temp') { detail.c = +$('f-c').value || null; if (!detail.c) { $('f-c').focus(); return toast('체온을 적어 주세요'); } }
   else if (kind === 'sleep') { const e = $('f-end').value; if (e) { const ed = atFromTime(e, baseDay); if (ed < at) ed.setDate(ed.getDate() + 1); ended_at = ed.toISOString(); } else ended_at = null; }
   const row = { baby_id: baby.id, user_id: editing ? editing.user_id : me.id, kind, at: at.toISOString(), ended_at, detail, note: $('f-note').value.trim() };   // 고칠 땐 원래 쓴 사람 유지
   try {
@@ -1945,7 +1946,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.78 · 10-14';
+const VER = 'v0.79 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
