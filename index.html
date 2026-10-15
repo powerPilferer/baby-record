@@ -368,7 +368,7 @@
   .dpage:not(:has(.dp-text:focus)) .dp-bar { display: none; }   /* 이모지 줄은 키보드 떠 있을 때만 (10-15 사장님) */
   .dp-top .go { margin-left: auto; padding: 0 14px; font-size: 14px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
   .dp-top .go + .ok { margin-left: 0; }
-  .dp-bar { display: flex; align-items: center; gap: 2px; padding: 6px 10px calc(8px + var(--sab)); border-top: 1px solid var(--rule); background: var(--paper); }
+  .dp-bar { display: flex; align-items: center; gap: 2px; padding: 4px 10px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); background: color-mix(in srgb, var(--ink) 9%, var(--paper)); }   /* 키보드 뜰 때만 보이므로 아래 안전여백 없이 키보드에 딱 붙게, 공책보다 한 톤 진하게 (10-15 사장님) */
   .dp-emo { flex: 1; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; } .dp-emo::-webkit-scrollbar { display: none; }
   .dp-emo button { flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 24px; } .dp-emo button:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
   .dp-go { flex: none; font-size: 13px; color: var(--fg2); padding: 0 10px; height: 36px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
@@ -2027,7 +2027,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.82 · 10-15';
+const VER = 'v0.83 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
