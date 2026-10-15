@@ -351,6 +351,17 @@
   .dp-info span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--fg3)); }
   .dp-info b { color: var(--fg); font-weight: 600; }
   .dpage:has(.dp-text:focus) .dp-info { display: none; }
+  /* 주 1장 사진 (10-15 사장님 "주 한장으로 우선") — 공책에 테이프로 붙인 폴라로이드 */
+  .dp-ph { margin: 16px 26px 0; align-self: flex-start; position: relative; padding: 8px 8px 22px; background: #fff; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.12); transform: rotate(-2deg); }
+  .dp-ph img { display: block; height: 160px; max-width: 230px; object-fit: cover; border-radius: 2px; }
+  .dp-ph::before { content: ""; position: absolute; top: -9px; left: 50%; width: 64px; height: 20px; margin-left: -32px; background: rgba(240, 220, 170, .7); transform: rotate(3deg); }
+  .dp-ph .wk { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: var(--hand), cursive; font-size: 13px; color: #8a8790; }
+  .dp-ph .rm { position: absolute; right: -10px; top: -10px; width: 28px; height: 28px; border-radius: 50%; background: var(--card2); color: var(--fg2); font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  .dp-phadd { margin: 14px 26px 0; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg2); padding: 8px 13px; border-radius: 999px; border: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent); }
+  .dp-phadd small { color: var(--fg3); font-size: 12px; }
+  .dp-phadd u { text-decoration: none; color: var(--ms); font-weight: 600; }
+  .dpage:has(.dp-text:focus) :is(.dp-ph, .dp-phadd) { display: none; }
+  .cal .d .ph { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 7px; object-fit: cover; border: 2px solid var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.18); transform: rotate(4deg); }
   .dp-bar { display: flex; align-items: center; gap: 2px; padding: 6px 10px calc(8px + var(--sab)); border-top: 1px solid var(--rule); background: var(--paper); }
   .dp-emo { flex: 1; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; } .dp-emo::-webkit-scrollbar { display: none; }
   .dp-emo button { flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 24px; } .dp-emo button:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
@@ -895,6 +906,9 @@ let growth = [];       // baby_growth 측정 기록 (v0.10)
 let stickers = {};      // day → 이모지 (baby_days)
 let tilts = {};         // day → 1/-1 (붙일 때 랜덤으로 정해진 기울기 방향)
 let diaries = {};       // day → 일기 글 (baby_days.diary) — 홈의 한마디(baby_notes)와 별개
+let photos = {};        // day → 그 주 사진 보기 주소(서명, 7일) — 주 1장 (10-15)
+let photoPaths = {};    // day → 비공개 저장소 diary-photos 안 경로 (baby_days.photo)
+const PHOTO_ON = true;
 let day = dstr(new Date());
 let channel = null;
 
@@ -907,7 +921,7 @@ const db = {
       sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at'),
       sb.from('baby_notes').select('*').eq('baby_id', baby.id).order('created_at'),
       sb.from('baby_members').select('user_id, avatar_url').eq('baby_id', baby.id),
-      sb.from('baby_days').select('day, sticker, tilt, diary').eq('baby_id', baby.id),
+      sb.from('baby_days').select('day, sticker, tilt, diary, photo').eq('baby_id', baby.id),
       sb.from('baby_growth').select('*').eq('baby_id', baby.id).order('day'),
       sb.from('baby_checks').select('*').eq('baby_id', baby.id),
       sb.from('baby_extra_vax').select('*').eq('baby_id', baby.id)
@@ -918,6 +932,7 @@ const db = {
     stickers = Object.fromEntries((sd.data || []).filter(x => x.sticker).map(x => [x.day, x.sticker]));
     tilts = Object.fromEntries((sd.data || []).map(x => [x.day, x.tilt || 1]));
     diaries = Object.fromEntries((sd.data || []).filter(x => x.diary).map(x => [x.day, x.diary]));
+    photoPaths = Object.fromEntries((sd.data || []).filter(x => x.photo).map(x => [x.day, x.photo])); await signPhotos();
     const ids = (m.data || []).map(x => x.user_id);
     avatarById = Object.fromEntries((m.data || []).map(x => [x.user_id, x.avatar_url || '']));
     const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
@@ -966,6 +981,19 @@ const db = {
     if (MOCK) return;
     const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, sticker: v, tilt, updated_by: me.id, updated_at: new Date().toISOString() });
     if (error) throw error;
+  },
+  async setPhoto(dayStr, blob) {                                   // 주 1장: 같은 주 다른 날 사진은 뗀다 (저장소 파일도 지움)
+    const w = weekOf(dayStr), old = Object.keys({ ...photos, ...photoPaths }).filter(d => weekOf(d) === w);
+    if (MOCK) { for (const d of old) delete photos[d]; if (blob) photos[dayStr] = await uploadPhoto(blob); return; }
+    let path = '';
+    if (blob) { path = `${baby.id}/${dayStr}-${Date.now()}.jpg`;
+      const { error } = await sb.storage.from('diary-photos').upload(path, blob, { contentType: 'image/jpeg' }); if (error) throw error; }
+    for (const d of old) { if (d === dayStr) continue;
+      const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: d, photo: '', updated_by: me.id, updated_at: new Date().toISOString() }); if (error) throw error; }
+    const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, photo: path, updated_by: me.id, updated_at: new Date().toISOString() }); if (error) throw error;
+    const gone = old.map(d => photoPaths[d]).filter(Boolean); if (gone.length) sb.storage.from('diary-photos').remove(gone);   // 실패해도 기록엔 영향 없음
+    for (const d of old) { delete photos[d]; delete photoPaths[d]; }
+    if (path) { photoPaths[dayStr] = path; await signPhotos([dayStr]); }
   },
   async setDiary(dayStr, text) {
     if (text) diaries[dayStr] = text; else delete diaries[dayStr];
@@ -1049,7 +1077,7 @@ function subscribe() {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; } else { if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; delete photos[d]; delete photoPaths[d]; } else { if ((p.new.photo || '') !== (photoPaths[d] || '')) { if (p.new.photo) { photoPaths[d] = p.new.photo; signPhotos([d]).then(() => { if (!$('s-diary').classList.contains('hidden')) renderDiary(); }); } else { delete photoPaths[d]; delete photos[d]; } } if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_extra_vax', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') extras = extras.filter(x => x.id !== p.old.id); else upsertLocal(extras, p.new); render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_checks', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') delete checks[p.old.item]; else checks[p.new.item] = p.new; render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_growth', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') growth = growth.filter(x => x.id !== p.old.id); else upsertLocal(growth, p.new); if (!$('s-growth').classList.contains('hidden')) renderGrowth(); })
@@ -1078,6 +1106,20 @@ function detailOf(l) {
 // ── 날짜 도장: 생일 기준 자동 (출생일 = 1일)
 const MILESTONES = { 50: '50일', 100: '100일', 200: '200일', 300: '300일' };   // 첫돌은 날짜로 (D+365는 하루 빠름, 10-14)
 const dayNo = d => Math.floor((new Date(d + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
+const weekOf = d => Math.floor((dayNo(d) - 1) / 7) + 1;           // 태어난 날부터 7일씩 = 1주차 (100일 북과 같은 셈)
+async function signPhotos(days = Object.keys(photoPaths)) {        // 비공개 사진은 서명 주소로만 보임
+  if (MOCK || !days.length) return;
+  const { data } = await sb.storage.from('diary-photos').createSignedUrls(days.map(d => photoPaths[d]), 7 * 86400);
+  (data || []).forEach((r, i) => { if (r.signedUrl) photos[days[i]] = r.signedUrl; });
+}
+const weekPhotoDay = d => Object.keys({ ...photos, ...photoPaths }).find(x => weekOf(x) === weekOf(d));
+function shrinkPhoto(file) {                                       // 긴 변 1280 JPEG — 한 장 150KB 안팎
+  return new Promise((res, rej) => { const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);   // 투명 PNG가 JPEG에서 검게 안 되게
+      URL.revokeObjectURL(url); c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', .8); };
+    img.onerror = () => rej(new Error('이미지를 읽을 수 없어요')); img.src = url; });
+}
 const stampOf = d => (baby?.birth_date && d === (+baby.birth_date.slice(0, 4) + 1) + baby.birth_date.slice(4)) ? '첫돌' : (MILESTONES[dayNo(d)] || '');
 const msIc = st => st === '첫돌' ? '🎂' : '♥';   // 기념일 뒤 표시 (10-14 사장님 "뒤에 하트, 돌은 케익")
 const MILESTONE_EMOJI = { '50일': '🎂', '100일': '🎂', '200일': '🎈', '300일': '🎈', '첫돌': '🎉' };
@@ -1105,7 +1147,7 @@ async function renderDiary() {
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
     h += `<button type="button" class="d ${st ? 'ms' : ''} ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${PHOTO_ON && photos[ds] ? `<img class="ph" src="${esc(photos[ds])}" alt="">` : ''}${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -1129,12 +1171,20 @@ function dayInfo(ds) {   // 공책 맨 아래 한 덩어리: 그날 수유·기�
   for (const x of rv) p.push(`<span style="--c:var(--ok)">📅 ${esc(x)}</span>`);
   return p.length ? `<div class="dp-info"><em>이날의 기록</em>${p.join('')}</div>` : '';
 }
+function phBlock(ds, ahead) {                                       // 공책 위 사진 자리: 이 날 사진 / 같은 주 다른 날에 있음 / 붙이기
+  if (!PHOTO_ON || ahead || ds < baby.birth_date) return '';
+  const w = weekOf(ds), on = weekPhotoDay(ds), file = '<input type="file" id="dp-file" accept="image/*" hidden>';
+  if (on === ds) return `<div class="dp-ph"><img src="${esc(photos[ds] || '')}" alt=""><span class="wk">${w}주차</span><button type="button" class="rm" id="dp-phrm" aria-label="사진 떼기">✕</button></div>`;
+  if (on) { const o = new Date(on + 'T00:00'); return `<button type="button" class="dp-phadd" id="dp-phadd">📷 <small>${w}주차 사진은 ${o.getMonth() + 1}월 ${o.getDate()}일에 있어요 ·</small> <u>이 날로 바꾸기</u></button>${file}`; }
+  return `<button type="button" class="dp-phadd" id="dp-phadd">📷 ${w}주차 사진 붙이기 <small>· 한 주에 한 장</small></button>${file}`;
+}
 function openDayNotes(ds) {
   // 날짜를 누르면 화면 꽉 찬 공책 한 장 (10-13). 아래 줄 = 글에 넣는 이모지 (달력 스티커는 10-13 뗌)
   const d = new Date(ds + 'T00:00'), ahead = ds > dstr(new Date()), pg = $('dpage'), orig = diaries[ds] || '';
   pg.innerHTML = `<div class="dp-top"><button type="button" class="x" id="dp-x" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="ok" id="dp-ok">완료</button></div>
     <div class="dp-head"><div><div class="dp-date">${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div></div>
       <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}</div>${stampOf(ds) ? `<span class="dp-ms">${stampOf(ds)} ${msIc(stampOf(ds))}</span>` : ''}</div>
+    ${phBlock(ds, ahead)}
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
     ${dayInfo(ds)}
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>${ahead ? '' : '<button type="button" class="dp-go" id="dp-go">이날 기록</button>'}</div>`;
@@ -1164,6 +1214,14 @@ function openDayNotes(ds) {
   $('dp-emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = ta.selectionStart ?? ta.value.length, z = ta.selectionEnd ?? a;
     ta.setRangeText(b.dataset.e, a, z, 'end'); ta.focus(); });
   if (!ahead) $('dp-go').onclick = async () => { await save(); day = ds; show('s-home'); render(); };
+  const rePh = () => { const old = pg.querySelector('.dp-ph, .dp-phadd'), f = $('dp-file'); f?.remove(); old.outerHTML = phBlock(ds, ahead); bindPh(); renderDiary(); };
+  const bindPh = () => {
+    if ($('dp-phadd')) { $('dp-phadd').onclick = () => $('dp-file').click();
+      $('dp-file').onchange = async e => { const f = e.target.files[0]; if (!f) return;
+        try { toast('사진 올리는 중…'); const b = await shrinkPhoto(f); await db.setPhoto(ds, b); rePh(); toast(weekOf(ds) + '주차 사진을 붙였어요'); } catch (err) { toast('사진 실패: ' + err.message); } }; }
+    if ($('dp-phrm')) $('dp-phrm').onclick = async () => { if (!confirm('이 사진을 뗄까요?')) return; await db.setPhoto(ds, null); rePh(); toast('사진을 뗐어요'); };
+  };
+  bindPh();
 }
 
 // ── 통계: 최근 7/30일 막대 (인라인 SVG)
@@ -1946,7 +2004,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.79 · 10-15';
+const VER = 'v0.80 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
