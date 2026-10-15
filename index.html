@@ -369,7 +369,7 @@
   .dp-top .go { margin-left: auto; padding: 0 14px; font-size: 14px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
   .dp-top .go + .ok { margin-left: 0; }
   .dp-bar { display: flex; align-items: center; gap: 2px; padding: 4px 10px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); background: color-mix(in srgb, var(--ink) 9%, var(--paper)); }   /* 키보드 뜰 때만 보이므로 아래 안전여백 없이 키보드에 딱 붙게, 공책보다 한 톤 진하게 (10-15 사장님) */
-  .dp-emo { flex: 1; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; } .dp-emo::-webkit-scrollbar { display: none; }
+  .dp-emo { flex: 1; display: flex; gap: 2px; overflow-x: auto; overscroll-behavior: contain; touch-action: pan-x; scrollbar-width: none; } .dp-emo::-webkit-scrollbar { display: none; }
   .dp-emo button { flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 24px; } .dp-emo button:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
   .dp-go { flex: none; font-size: 13px; color: var(--fg2); padding: 0 10px; height: 36px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
   .emo-hint { font-size: 12px; color: var(--fg3); margin: -4px 0 10px; }
@@ -1185,10 +1185,11 @@ function phBlock(ds, ahead) {                                       // 공책 �
 }
 // 공책이 떠 있을 때 손가락 스크롤이 뒤(다이어리 목록·문서)로 새지 않게 — 공책 안 스크롤 칸이 더 못 갈 때만 막음 (10-15 사장님 "키보드 위를 스크롤하면 드르륵·뒤 목록이 스크롤").
 // body를 묶지 않는다(v0.74 교훈). 공책 자신의 터치만 다룬다
-(() => { const pg = $('dpage'); let y0 = 0;
-  pg.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+(() => { const pg = $('dpage'); let x0 = 0, y0 = 0;
+  pg.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   pg.addEventListener('touchmove', e => {
-    if (e.touches.length > 1 || e.target.closest('#dp-emo')) return;   // 이모지 줄은 가로 스크롤
+    if (e.touches.length > 1) return;
+    if (e.target.closest('#dp-emo')) { if (Math.abs(e.touches[0].clientY - y0) > Math.abs(e.touches[0].clientX - x0)) e.preventDefault(); return; }   // 이모지 줄은 가로만 (10-15 "이모티콘 영역 위아래로 끌면 덜덜·뒤 목록 움직임")
     const sc = e.target.closest('#dp-body'); if (!sc) { e.preventDefault(); return; }
     const dy = e.touches[0].clientY - y0, top = sc.scrollTop <= 0, bot = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
     if ((dy > 0 && top) || (dy < 0 && bot)) e.preventDefault();
@@ -2027,7 +2028,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.83 · 10-15';
+const VER = 'v0.84 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
