@@ -364,6 +364,13 @@
   .dp-phadd small { color: var(--fg3); font-size: 12px; }
   .dp-phadd u { text-decoration: none; color: var(--ms); font-weight: 600; }
   .dpage:has(.dp-text:focus) :is(.dp-ph, .dp-phadd) { display: none; }
+  /* 사진 크게 보기 (10-15 사장님 "클릭하면 크게 팝업") — 누르면 닫힘 */
+  .phview { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: calc(var(--sat) + 20px) 16px calc(var(--sab) + 20px); animation: pvIn .18s ease-out; }
+  .phview.hidden { display: none; }
+  .phview img { max-width: 100%; max-height: calc(100% - 40px); border-radius: 6px; object-fit: contain; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  .phview p { color: rgba(255,255,255,.7); font-size: 13px; }
+  @keyframes pvIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+  .dp-ph img { cursor: zoom-in; }
   .cal .d .ph { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 7px; object-fit: cover; border: 2px solid var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.18); transform: rotate(4deg); }
   .dpage:not(:has(.dp-text:focus)) .dp-bar { display: none; }   /* 이모지 줄은 키보드 떠 있을 때만 (10-15 사장님) */
   .dp-top .go { margin-left: auto; padding: 0 14px; font-size: 14px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
@@ -821,6 +828,7 @@
 <div id="dim" class="dim hidden"></div>
 <div id="sheet" class="sheet hidden"></div>
 <div id="dpage" class="dpage hidden"></div>
+<div id="phview" class="phview hidden"><img alt=""><p></p></div>
 <div id="cropper" class="cropper hidden">
   <div class="cr-top"><button type="button" id="cr-cancel">취소</button><span>사진 맞추기</span><button type="button" id="cr-ok" class="ok">완료</button></div>
   <div class="cr-view" id="cr-view"><img id="cr-img" alt="" draggable="false"><div class="cr-mask"></div></div>
@@ -1243,7 +1251,11 @@ function openDayNotes(ds) {
     if ($('dp-phrm')) $('dp-phrm').onclick = async () => { if (!confirm('이 사진을 뗄까요?')) return; await db.setPhoto(ds, null); rePh(); toast('사진을 뗐어요'); };
   };
   bindPh();
+  pg.querySelector('.dp-body').addEventListener('click', e => { if (!e.target.closest('.dp-ph img')) return;   // 사진 누르면 크게
+    const v = $('phview'); v.querySelector('img').src = photos[ds] || ''; v.querySelector('p').textContent = `${weekOf(ds)}주차 · ${d.getMonth() + 1}월 ${d.getDate()}일`; v.classList.remove('hidden'); });
 }
+$('phview').onclick = () => { $('phview').classList.add('hidden'); $('phview').querySelector('img').src = ''; };
+$('phview').addEventListener('touchmove', e => e.preventDefault(), { passive: false });   // 뒤로 스크롤 안 새게
 
 // ── 통계: 최근 7/30일 막대 (인라인 SVG)
 let statRange = +(localStorage.getItem('bb-stat') || 7);
@@ -2028,7 +2040,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.84 · 10-15';
+const VER = 'v0.85 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
