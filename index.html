@@ -998,11 +998,11 @@ const db = {
     if (error) throw error;
   },
   async setPhoto(dayStr, blob) {                                   // 주 1장: 같은 주 다른 날 사진은 뗀다 (저장소 파일도 지움)
-    const w = weekOf(dayStr), old = Object.keys({ ...photos, ...photoPaths }).filter(d => weekOf(d) === w);
+    const w = phGroup(dayStr), old = Object.keys({ ...photos, ...photoPaths }).filter(d => phGroup(d) === w);
     if (MOCK) { for (const d of old) delete photos[d]; if (blob) photos[dayStr] = await uploadPhoto(blob); return; }
     let path = '';
     if (blob) { path = `${baby.id}/${dayStr}-${Date.now()}.jpg`;
-      const { error } = await sb.storage.from('diary-photos').upload(path, blob, { contentType: 'image/jpeg' }); if (error) throw error; }
+      const { error } = await sb.storage.from('diary-photos').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' }); if (error) throw error; }   // 파일은 안 바뀜(새로 올리면 새 경로) → 폰이 1년 보관
     for (const d of old) { if (d === dayStr) continue;
       const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: d, photo: '', updated_by: me.id, updated_at: new Date().toISOString() }); if (error) throw error; }
     const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, photo: path, updated_by: me.id, updated_at: new Date().toISOString() }); if (error) throw error;
@@ -1122,12 +1122,23 @@ function detailOf(l) {
 const MILESTONES = { 50: '50일', 100: '100일', 200: '200일', 300: '300일' };   // 첫돌은 날짜로 (D+365는 하루 빠름, 10-14)
 const dayNo = d => Math.floor((new Date(d + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;
 const weekOf = d => Math.floor((dayNo(d) - 1) / 7) + 1;           // 태어난 날부터 7일씩 = 1주차 (100일 북과 같은 셈)
-async function signPhotos(days = Object.keys(photoPaths)) {        // 비공개 사진은 서명 주소로만 보임
+// 비공개 사진은 서명 주소로만 보임. 같은 파일엔 같은 주소를 다시 써서(폰에 저장, 6일) 폰 캐시가 받게 — 앱 열 때마다 새 주소면 사진을 매번 다시 내려받아 전송량이 샘 (10-15)
+const SIGN_KEY = 'bb-phsign';
+const signCache = (() => { try { return JSON.parse(localStorage.getItem(SIGN_KEY) || '{}'); } catch { return {}; } })();   // 경로 → [주소, 만료시각]
+async function signPhotos(days = Object.keys(photoPaths)) {
   if (MOCK || !days.length) return;
-  const { data } = await sb.storage.from('diary-photos').createSignedUrls(days.map(d => photoPaths[d]), 7 * 86400);
-  (data || []).forEach((r, i) => { if (r.signedUrl) photos[days[i]] = r.signedUrl; });
+  const now = Date.now(), need = [];
+  for (const d of days) { const c = signCache[photoPaths[d]]; if (c && c[1] > now) photos[d] = c[0]; else need.push(d); }
+  if (need.length) {
+    const { data } = await sb.storage.from('diary-photos').createSignedUrls(need.map(d => photoPaths[d]), 7 * 86400);
+    (data || []).forEach((r, i) => { if (r.signedUrl) { photos[need[i]] = r.signedUrl; signCache[photoPaths[need[i]]] = [r.signedUrl, now + 6 * 86400000]; } });
+  }
+  const live = new Set(Object.values(photoPaths)); for (const k of Object.keys(signCache)) if (!live.has(k) || signCache[k][1] <= now) delete signCache[k];
+  try { localStorage.setItem(SIGN_KEY, JSON.stringify(signCache)); } catch {}
 }
-const weekPhotoDay = d => Object.keys({ ...photos, ...photoPaths }).find(x => weekOf(x) === weekOf(d));
+const PHOTO_WEEKLY = false;   // 10-15 사장님 "베타라 둘만 쓰니 매일 한 장으로" — 출시 때 주 1장으로 돌리려면 true
+const phGroup = d => PHOTO_WEEKLY ? weekOf(d) : d;   // 사진 한 장이 차지하는 칸(하루 또는 한 주)
+const weekPhotoDay = d => Object.keys({ ...photos, ...photoPaths }).find(x => phGroup(x) === phGroup(d));
 function framePhoto(file) {                                        // 폴라로이드 틀(4:5)에 맞춰 확대·이동 → 1024×1280 JPEG (10-15 사장님 "프로필처럼 프레임")
   return new Promise((res, rej) => { const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => cropPhoto(img, { ratio: 1.25, rect: true, out: 1024 }).then(v => { URL.revokeObjectURL(url); res(v); }, e => { URL.revokeObjectURL(url); rej(e); });
@@ -1187,9 +1198,9 @@ function dayInfo(ds) {   // 공책 맨 아래 한 덩어리: 그날 수유·기�
 function phBlock(ds, ahead) {                                       // 공책 위 사진 자리: 이 날 사진 / 같은 주 다른 날에 있음 / 붙이기
   if (!PHOTO_ON || ahead || ds < baby.birth_date) return '';
   const w = weekOf(ds), on = weekPhotoDay(ds), file = '<input type="file" id="dp-file" accept="image/*" hidden>';
-  if (on === ds) return `<div class="dp-ph"><img src="${esc(photos[ds] || '')}" alt=""><span class="wk">${w}주차</span><button type="button" class="rm" id="dp-phrm" aria-label="사진 떼기">✕</button></div>`;
+  if (on === ds) return `<div class="dp-ph"><img src="${esc(photos[ds] || '')}" alt=""><span class="wk">${PHOTO_WEEKLY ? w + '주차' : 'D+' + dayNo(ds)}</span><button type="button" class="rm" id="dp-phrm" aria-label="사진 떼기">✕</button></div>`;
   if (on) { const o = new Date(on + 'T00:00'); return `<button type="button" class="dp-phadd" id="dp-phadd">📷 <small>${w}주차 사진은 ${o.getMonth() + 1}월 ${o.getDate()}일에 있어요 ·</small> <u>이 날로 바꾸기</u></button>${file}`; }
-  return `<button type="button" class="dp-phadd" id="dp-phadd">📷 ${w}주차 사진 붙이기 <small>· 한 주에 한 장</small></button>${file}`;
+  return `<button type="button" class="dp-phadd" id="dp-phadd">📷 ${PHOTO_WEEKLY ? w + '주차 사진 붙이기 <small>· 한 주에 한 장</small>' : '사진 붙이기 <small>· 하루 한 장</small>'}</button>${file}`;
 }
 // 공책이 떠 있을 때 손가락 스크롤이 뒤(다이어리 목록·문서)로 새지 않게 — 공책 안 스크롤 칸이 더 못 갈 때만 막음 (10-15 사장님 "키보드 위를 스크롤하면 드르륵·뒤 목록이 스크롤").
 // body를 묶지 않는다(v0.74 교훈). 공책 자신의 터치만 다룬다
@@ -1247,12 +1258,12 @@ function openDayNotes(ds) {
   const bindPh = () => {
     if ($('dp-phadd')) { $('dp-phadd').onclick = () => $('dp-file').click();
       $('dp-file').onchange = async e => { const f = e.target.files[0]; if (!f) return;
-        e.target.value = ''; try { const b = await framePhoto(f); toast('사진 올리는 중…'); await db.setPhoto(ds, b); rePh(); toast(weekOf(ds) + '주차 사진을 붙였어요'); } catch (err) { if (err.message !== '취소') toast('사진 실패: ' + err.message); } }; }
+        e.target.value = ''; try { const b = await framePhoto(f); toast('사진 올리는 중…'); await db.setPhoto(ds, b); rePh(); toast(PHOTO_WEEKLY ? weekOf(ds) + '주차 사진을 붙였어요' : '사진을 붙였어요'); } catch (err) { if (err.message !== '취소') toast('사진 실패: ' + err.message); } }; }
     if ($('dp-phrm')) $('dp-phrm').onclick = async () => { if (!confirm('이 사진을 뗄까요?')) return; await db.setPhoto(ds, null); rePh(); toast('사진을 뗐어요'); };
   };
   bindPh();
   pg.querySelector('.dp-body').addEventListener('click', e => { if (!e.target.closest('.dp-ph img')) return;   // 사진 누르면 크게
-    const v = $('phview'); v.querySelector('img').src = photos[ds] || ''; v.querySelector('p').textContent = `${weekOf(ds)}주차 · ${d.getMonth() + 1}월 ${d.getDate()}일`; v.classList.remove('hidden'); });
+    const v = $('phview'); v.querySelector('img').src = photos[ds] || ''; v.querySelector('p').textContent = `${PHOTO_WEEKLY ? weekOf(ds) + '주차' : 'D+' + dayNo(ds)} · ${d.getMonth() + 1}월 ${d.getDate()}일`; v.classList.remove('hidden'); });
 }
 $('phview').onclick = () => { $('phview').classList.add('hidden'); $('phview').querySelector('img').src = ''; };
 $('phview').addEventListener('touchmove', e => e.preventDefault(), { passive: false });   // 뒤로 스크롤 안 새게
@@ -2040,7 +2051,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.85 · 10-15';
+const VER = 'v0.86 · 10-15';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
