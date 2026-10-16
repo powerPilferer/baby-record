@@ -40,6 +40,20 @@
   .screen { max-width: 480px; margin: 0 auto; padding: 0 16px calc(28px + var(--sab)); }
 
   /* ── 로그인 / 첫 설정 ── */
+  /* 시작 로딩 화면 — 첫 show() 때 걷힌다 */
+  #splash { position: fixed; inset: 0; z-index: 999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 8vh; transition: opacity .28s ease; }
+  #splash.out { opacity: 0; pointer-events: none; }
+  #splash .roll { position: relative; width: 140px; height: 118px; margin-bottom: 12px; }
+  #splash .roll img { position: absolute; left: 50%; bottom: 0; height: 110px; width: auto; transform: translateX(-50%); visibility: hidden; }
+  #splash .roll img.on { visibility: visible; }
+  #splash .msg { font-size: 15px; font-weight: 400; color: var(--fg2); letter-spacing: -.01em; margin: 0 0 12px; }
+  #splash .dots { display: flex; gap: 6px; }
+  #splash .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--fg2); opacity: .25; animation: sp-dot 1.2s ease-in-out infinite; }
+  #splash .dots i:nth-child(2) { animation-delay: .2s; } #splash .dots i:nth-child(3) { animation-delay: .4s; }
+  #splash .slow { color: var(--fg2); font-size: 13px; margin-top: 16px; opacity: 0; transition: opacity .4s; }
+  #splash .slow.on { opacity: 1; }
+  @keyframes sp-dot { 0%, 100% { opacity: .25; } 40% { opacity: .9; } }
+  @media (prefers-reduced-motion: reduce) { #splash .dots i { animation: none; opacity: .6; } }
   .onb { padding: 14vh 0 40px; max-width: 360px; margin: 0 auto; }
   #s-login .onb { text-align: center; padding-top: 18vh; }
   .onb h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
@@ -662,6 +676,12 @@
 </head>
 <body>
 
+<!-- 시작 로딩 -->
+<div id="splash" aria-label="불러오는 중"><div class="roll" id="splash-roll"><img class="on" src="img/로딩-아기.webp" alt=""><img src="img/로딩-엄마.webp" alt=""><img src="img/로딩-아빠2.webp" alt=""></div><p class="msg">깨우는 중</p><div class="dots"><i></i><i></i><i></i></div><div class="slow" id="splash-slow">연결이 조금 느려요. 잠시만요</div></div>
+<script>(function(){var r=document.getElementById('splash-roll').children,i=0;   // 아기 → 엄마 → 아빠 → 아기 …
+var t=setInterval(function(){if(!document.getElementById('splash'))return clearInterval(t);r[i].className='';i=(i+1)%r.length;r[i].className='on';},500);
+setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classList.add('on');},6000);})();</script>
+
 <!-- 로그인 -->
 <section id="s-login" class="screen hidden">
   <div class="onb">
@@ -904,6 +924,7 @@ const dur = (a, b) => { const m = Math.max(0, Math.round((new Date(b || Date.now
 const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800); };
 const TABBED = ['s-home', 's-diary', 's-growth', 's-stats'];
 const show = id => {
+  const sp = $('splash'); if (sp && !sp.classList.contains('out')) { sp.classList.add('out'); setTimeout(() => sp.remove(), 320); }
   for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id);
   $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id)); $('open-ai').classList.toggle('hidden', !TABBED.includes(id));
   $('close-settings').classList.toggle('hidden', id !== 's-settings');
@@ -2051,7 +2072,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.86 · 10-15';
+const VER = 'v0.87 · 10-16';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
