@@ -41,16 +41,16 @@
 
   /* ── 로그인 / 첫 설정 ── */
   /* 시작 로딩 화면 — 첫 show() 때 걷힌다 */
-  #splash { position: fixed; inset: 0; z-index: 999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 8vh; transition: opacity .28s ease; }
+  #splash { position: fixed; inset: 0; z-index: 999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity .28s ease; }
   #splash.out { opacity: 0; pointer-events: none; }
-  #splash .roll { position: relative; width: 140px; height: 118px; margin-bottom: 12px; }
-  #splash .roll img { position: absolute; left: 50%; bottom: 0; height: 110px; width: auto; transform: translateX(-50%); visibility: hidden; }
+  #splash .roll { position: relative; width: 120px; height: 92px; margin-bottom: 12px; }
+  #splash .roll img { position: absolute; left: 50%; bottom: 0; height: 88px; width: auto; transform: translateX(-50%); visibility: hidden; }
   #splash .roll img.on { visibility: visible; }
   #splash .msg { font-size: 15px; font-weight: 400; color: var(--fg2); letter-spacing: -.01em; margin: 0 0 12px; }
   #splash .dots { display: flex; gap: 6px; }
   #splash .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--fg2); opacity: .25; animation: sp-dot 1.2s ease-in-out infinite; }
   #splash .dots i:nth-child(2) { animation-delay: .2s; } #splash .dots i:nth-child(3) { animation-delay: .4s; }
-  #splash .slow { color: var(--fg2); font-size: 13px; margin-top: 16px; opacity: 0; transition: opacity .4s; }
+  #splash .slow { position: absolute; left: 0; right: 0; top: calc(50% + 80px); text-align: center; color: var(--fg2); font-size: 13px; opacity: 0; transition: opacity .4s; }
   #splash .slow.on { opacity: 1; }
   @keyframes sp-dot { 0%, 100% { opacity: .25; } 40% { opacity: .9; } }
   @media (prefers-reduced-motion: reduce) { #splash .dots i { animation: none; opacity: .6; } }
@@ -1268,7 +1268,7 @@ function openDayNotes(ds) {
   ta.addEventListener('focus', onFocus); ta.addEventListener('click', () => setTimeout(keep, 50));
   pg._off = () => { vv?.removeEventListener('resize', fit); vv?.removeEventListener('scroll', fit); pg._off = null; };
   const close = () => { pg.classList.add('hidden'); pg.innerHTML = ''; pg.style.height = ''; pg.style.top = ''; document.documentElement.style.overflow = ''; pg._off?.(); };
-  const save = async () => { const t = ta.value.trim(); if (t === orig.trim()) { close(); return; }
+  const save = async () => { const t = ta.value.trim() ? ta.value : ''; if (t === orig) { close(); return; }   // 엔터로 띄운 여백도 그대로 저장 (10-17 사장님) — 글자가 하나도 없을 때만 지움
     try { await db.setDiary(ds, t); close(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
   $('dp-emo').addEventListener('pointerdown', e => e.preventDefault());   // 이모지 눌러도 키보드가 내려가지 않게
@@ -2072,7 +2072,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.87 · 10-16';
+const VER = 'v0.88 · 10-17';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
