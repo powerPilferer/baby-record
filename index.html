@@ -2077,7 +2077,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.90 · 10-19';
+const VER = 'v0.91 · 10-19';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2091,24 +2091,6 @@ async function checkUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkUpdate(); resync(0); } });
 window.addEventListener('pageshow', e => { if (e.persisted) resync(0); });   // 사파리가 페이지를 얼려뒀다 되살릴 때
-// 다른 앱에서 키보드 올린 채 넘어오면 iOS가 화면 높이를 키보드 높이만큼 덜 돌려놔 하단 메뉴가 붕 뜨던 것 (10-19 사장님)
-// → 입력 중이 아닐 때 화면을 살짝 흔들어 다시 재게 하고, 그래도 보이는 화면과 어긋나면 그만큼 메뉴를 내려 붙임
-const isField = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
-const pinTabs = () => {
-  const vv = window.visualViewport, t = $('tabs'); if (!vv || !t) return;
-  const gap = isField(document.activeElement) ? 0 : Math.round(innerHeight - vv.height - vv.offsetTop);
-  t.style.transform = gap > 2 ? `translateY(${-gap}px)` : (gap < -2 ? `translateY(${-gap}px)` : '');
-};
-const fixVp = () => {
-  if (isField(document.activeElement)) return;
-  const y = scrollY; window.scrollTo(0, y + 1); window.scrollTo(0, y); pinTabs();
-};
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') for (const ms of [0, 120, 400, 900]) setTimeout(fixVp, ms); });
-window.addEventListener('focus', () => setTimeout(fixVp, 60));
-window.addEventListener('pageshow', () => setTimeout(fixVp, 60));
-window.visualViewport?.addEventListener('resize', pinTabs);
-window.visualViewport?.addEventListener('scroll', pinTabs);
-document.addEventListener('focusout', () => setTimeout(fixVp, 250));   // 우리 앱에서 키보드 내릴 때도 같은 자리로
 setTimeout(checkUpdate, 4000); setInterval(checkUpdate, 30 * 60000);
 $('open-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
