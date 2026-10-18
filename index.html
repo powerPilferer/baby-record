@@ -2077,7 +2077,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.94 · 10-19';
+const VER = 'v0.95 · 10-19';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2091,18 +2091,6 @@ async function checkUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkUpdate(); resync(0); } });
 window.addEventListener('pageshow', e => { if (e.persisted) resync(0); });   // 사파리가 페이지를 얼려뒀다 되살릴 때
-// 유령 키보드 (10-19 실측): 자온이 앱에서 키보드 띄운 채 앱 전환으로 넘어오면 iOS가 키보드가 떠 있다고 착각 — 앱 높이 874인데 보이는 높이 498.
-// 이 상태로 스크롤하면 iOS가 '보이는 창'을 끌어내리고(offsetTop 0→376) 메뉴가 딱 그만큼 떠 보인다(측정 tab 858→570, offsetTop 288).
-// 착각 풀기(inputmode=none 칸 focus/blur, v0.93)는 안 먹음 → 착각 상태일 때만 메뉴를 offsetTop만큼 내려 붙인다. 정상 상태에선 아무것도 안 함(v0.90 떨림 재발 방지)
-const isField = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
-const ghostKb = () => { const v = window.visualViewport; return !!v && !isField(document.activeElement) && innerHeight - v.height > 120; };
-const pinGhost = () => { const t = $('tabs'), v = window.visualViewport; if (!t) return;
-  const off = ghostKb() ? Math.round(v.offsetTop) : 0; const want = off > 0 ? `translateY(${off}px)` : '';
-  if (t.style.transform !== want) t.style.transform = want; };
-window.visualViewport?.addEventListener('scroll', pinGhost);
-window.visualViewport?.addEventListener('resize', pinGhost);
-document.addEventListener('focusin', pinGhost); document.addEventListener('focusout', () => setTimeout(pinGhost, 0));
-
 // [임시 측정 10-19] 하단 메뉴 뜸 — 화면 크기 값이 어긋나 있을 때만 위에 작은 숫자 띄움. 원인 확인 뒤 지움
 (function () {
   const box = document.createElement('div'); box.id = 'vpdbg';
