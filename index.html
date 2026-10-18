@@ -2077,7 +2077,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.91 · 10-19';
+const VER = 'v0.92 · 10-19';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2091,6 +2091,20 @@ async function checkUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkUpdate(); resync(0); } });
 window.addEventListener('pageshow', e => { if (e.persisted) resync(0); });   // 사파리가 페이지를 얼려뒀다 되살릴 때
+// [임시 측정 10-19] 하단 메뉴 뜸 — 화면 크기 값이 어긋나 있을 때만 위에 작은 숫자 띄움. 원인 확인 뒤 지움
+(function () {
+  const box = document.createElement('div'); box.id = 'vpdbg';
+  box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(var(--sat) + 4px);z-index:9999;font:11px/1.35 ui-monospace,monospace;background:rgba(0,0,0,.78);color:#fff;padding:6px 8px;border-radius:8px;pointer-events:none;display:none;white-space:pre-wrap';
+  document.body.appendChild(box); let lines = [];
+  const snap = tag => { const v = window.visualViewport, t = $('tabs').getBoundingClientRect();
+    return `${tag} in${innerHeight} cl${document.documentElement.clientHeight} vv${v ? Math.round(v.height) + '/' + Math.round(v.offsetTop) : '-'} sc${screen.height} y${Math.round(scrollY)} tab${Math.round(t.bottom)}`; };
+  const bad = () => { const v = window.visualViewport; return Math.abs(innerHeight - screen.height) > 4 || (v && Math.abs(v.height - innerHeight) > 4) || Math.abs($('tabs').getBoundingClientRect().bottom + 16 - innerHeight) > 4 && !$('tabs').classList.contains('hidden'); };
+  const check = tag => { if (!navigator.standalone && !location.search.includes('vpdbg')) return; if (!bad() && !lines.length) return; lines.push(snap(tag)); lines = lines.slice(-6); box.textContent = lines.join('\n'); box.style.display = 'block'; clearTimeout(box._t); box._t = setTimeout(() => { box.style.display = 'none'; lines = []; }, 15000); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') for (const ms of [50, 500, 1500]) setTimeout(() => check('v' + ms), ms); });
+  window.visualViewport?.addEventListener('resize', () => check('rs'));
+  let st; window.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => check('sc'), 200); }, { passive: true });
+  setTimeout(() => check('load'), 1500);
+})();
 setTimeout(checkUpdate, 4000); setInterval(checkUpdate, 30 * 60000);
 $('open-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; fillSettings(); show('s-settings'); };
 $('edit-nick').onclick = () => {
