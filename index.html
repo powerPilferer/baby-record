@@ -2077,7 +2077,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.92 · 10-19';
+const VER = 'v0.93 · 10-19';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2091,6 +2091,21 @@ async function checkUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkUpdate(); resync(0); } });
 window.addEventListener('pageshow', e => { if (e.persisted) resync(0); });   // 사파리가 페이지를 얼려뒀다 되살릴 때
+// 유령 키보드 (10-19 실측): 자온이 앱에서 키보드 띄운 채 앱 전환으로 넘어오면 iOS가 키보드가 떠 있다고 착각 — 앱 높이 874인데 보이는 높이 498.
+// 이 상태로 스크롤하면 iOS가 화면 대신 '보이는 창'을 끌어 메뉴가 그만큼 떠 보인다. 위치를 보정하지 않고(v0.90 실패) 착각 자체를 풀어 준다:
+// 키보드 안 띄우는 입력칸(inputmode=none)에 잠깐 들어갔다 나오면 iOS가 키보드 상태를 다시 맞춘다
+const isField = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+const ghostKb = () => { const v = window.visualViewport; return v && !isField(document.activeElement) && innerHeight - v.height > 120; };
+const unGhost = () => {
+  if (!ghostKb()) return;
+  const i = document.createElement('input'); i.setAttribute('inputmode', 'none'); i.setAttribute('aria-hidden', 'true'); i.tabIndex = -1;
+  i.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;font-size:16px';
+  document.body.appendChild(i); const y = scrollY; i.focus({ preventScroll: true });
+  setTimeout(() => { i.blur(); i.remove(); window.scrollTo(0, y); }, 60);
+};
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') for (const ms of [80, 600]) setTimeout(unGhost, ms); });
+document.addEventListener('touchstart', () => { if (ghostKb()) unGhost(); }, { passive: true, capture: true });   // 손가락 닿는 순간(사용자 동작 안)이면 iOS가 확실히 받아 줌
+
 // [임시 측정 10-19] 하단 메뉴 뜸 — 화면 크기 값이 어긋나 있을 때만 위에 작은 숫자 띄움. 원인 확인 뒤 지움
 (function () {
   const box = document.createElement('div'); box.id = 'vpdbg';
