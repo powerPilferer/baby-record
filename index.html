@@ -281,7 +281,8 @@
   .ai-log { height: min(52vh, 440px); overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 10px; margin: 0 -2px; overscroll-behavior: contain; }
   .ai-hello { margin: auto 0; text-align: center; color: var(--fg2); font-size: 15px; line-height: 1.6; }
   .ai-hello img { width: 64px; height: 64px; border-radius: 50%; display: block; margin: 0 auto 10px; }
-  .ai-hello img.full { width: auto; height: 120px; border-radius: 0; margin-bottom: 12px; }   /* 첫 화면은 부엉쌤 전신 (10-19) */
+  .ai-hello .who { font-size: 13px; color: var(--fg3); margin: 0 0 4px; }
+  .ai-hello img.full { width: auto; height: 108px; border-radius: 0; margin-bottom: 12px; }   /* 첫 화면은 부엉쌤 전신 (10-19) */
   .ai-hello small { color: var(--fg3); font-size: 13px; }
   .ai-msg { display: flex; gap: 8px; align-items: flex-end; }
   .ai-msg img { width: 28px; height: 28px; border-radius: 50%; flex: none; }
@@ -2078,7 +2079,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v0.99 · 10-19';
+const VER = 'v1.00 · 10-19';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2156,7 +2157,7 @@ let aiBusy = false;
 const aiSave = () => { try { localStorage.setItem('bb-ai-chat', JSON.stringify(aiLog.slice(-60))); } catch (_) {} };
 function aiRender() {
   const box = $('ai-log'); if (!box) return;
-  box.innerHTML = (aiLog.length ? '' : `<div class="ai-hello"><img class="full" src="img/부엉쌤-전신.webp" alt=""><p>${esc(baby.name)}에 대해 궁금한 걸 물어보세요.<br><small>예: 트림을 잘 안 해요 · 분유 텀이 짧아요 · 딸꾹질이 잦아요</small></p></div>`)
+  box.innerHTML = (aiLog.length ? '' : `<div class="ai-hello"><img class="full" src="img/부엉쌤-전신.webp" alt=""><p class="who">새벽 수유 때도 깨어 있는 부엉쌤이에요</p><p>${esc(baby.name)}에 대해 궁금한 걸 물어보세요.<br><small>예: 트림을 잘 안 해요 · 분유 텀이 짧아요 · 딸꾹질이 잦아요</small></p></div>`)
     + aiLog.map(m => `<div class="ai-msg ${m.role}">${m.role === 'assistant' ? '<img src="img/부엉쌤-A.png" alt="">' : ''}<div class="ai-bub">${esc(m.text)}</div></div>`).join('')
     + (aiBusy ? '<div class="ai-msg assistant"><img src="img/부엉쌤-A.png" alt=""><div class="ai-bub ai-dots"><i></i><i></i><i></i></div></div>' : '');
   box.scrollTop = box.scrollHeight;
