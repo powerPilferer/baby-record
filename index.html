@@ -278,7 +278,8 @@
   .ai-head h3 img { width: 28px; height: 28px; border-radius: 50%; }
   .sheet h3.grow:has(img)::before { display: none; }
   .ai-new { padding: 6px 12px; border-radius: 999px; background: var(--card2); font-size: 13px; font-weight: 600; color: var(--fg2); }
-  .ai-log { height: min(52vh, 440px); overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 10px; margin: 0 -2px; overscroll-behavior: contain; }
+  .ai-log { height: min(52vh, 440px); overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 10px; margin: 0 -2px; overscroll-behavior: contain; scrollbar-width: none; }
+  .ai-log::-webkit-scrollbar { display: none; }   /* 스크롤 중 내 말풍선 위에 뜨던 흰 스크롤바 숨김 (10-19) */
   .ai-hello { margin: auto 0; text-align: center; color: var(--fg2); font-size: 15px; line-height: 1.6; }
   .ai-hello img { width: 64px; height: 64px; border-radius: 50%; display: block; margin: 0 auto 10px; }
   .ai-hello .who { font-size: 13px; color: var(--fg3); margin: 0 0 4px; }
@@ -2079,7 +2080,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.00 · 10-19';
+const VER = 'v1.01 · 10-19';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
