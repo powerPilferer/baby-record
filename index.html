@@ -158,9 +158,18 @@
   :root[data-theme="light"] #s-home .h-panel { border-top-color: rgba(0,0,0,.03); box-shadow: 0 -8px 28px rgba(0,0,0,.06); }
   #s-home header .who { opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .22s ease, transform .22s ease; }
   #s-home header .who.on { opacity: 1; transform: none; pointer-events: auto; }
-  header .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
-  header .name { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
-  header .dday { color: var(--ok); font-size: 13px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); font-variant-numeric: tabular-nums; }
+  /* 성장도 홈처럼: 판이 프로필을 덮으면 좌상단 알약 (10-22 사장님) — 홈 알약과 같은 모양 */
+  #s-growth #g-pill { display: flex; align-items: center; cursor: pointer; position: fixed; top: calc(var(--sat) + 12px); left: 16px; z-index: 31; max-width: calc(100% - 150px); height: 46px; padding: 0 6px; border-radius: 999px; background: rgba(28,28,32,.42); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 6px 20px rgba(0,0,0,.3);
+    opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .22s ease, transform .22s ease; }
+  :root[data-theme="light"] #s-growth #g-pill { background: rgba(255,255,255,.34); border-color: rgba(0,0,0,.06); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  #s-growth #g-pill .bf { width: 32px; height: 32px; margin-right: 10px; }
+  #s-growth #g-pill .dday { margin-left: 8px; }
+  #s-growth #g-pill.on { opacity: 1; transform: none; pointer-events: auto; }
+  #s-growth #g-title { transition: opacity .22s ease; }
+  #s-growth header.pill #g-title { opacity: 0; }
+  header .bf, #g-pill .bf { width: 31px; height: 31px; border-radius: 50%; margin-right: 10px; }
+  header .name, #g-pill .name { font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
+  header .dday, #g-pill .dday { color: var(--ok); font-size: 13px; margin-left: 8px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, var(--bg)); font-variant-numeric: tabular-nums; }
   header .gear { width: 40px; height: 40px; margin-right: -8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg2); }
   header .gear svg { width: 25px; height: 25px; fill: currentColor; }
   header .gear:active { background: var(--card); }
@@ -818,7 +827,8 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
 
 <!-- 성장 (v0.11: 통계에서 분리, 사장님 "성장은 하단 메뉴로 따로") -->
 <section id="s-growth" class="screen tabbed hidden">
-  <header><div class="who"><span class="name">성장</span></div></header>
+  <div class="who" id="g-pill"><img class="bf" src="img/아기-2g-원형.png" alt=""><span class="name" id="gpl-name">아기</span><span class="dday" id="gpl-dday"></span></div>   <!-- 헤더(sticky z0) 밖에 둬야 판 위로 뜸 -->
+  <header><div class="who" id="g-title"><span class="name">성장</span></div></header>
   <div id="g-prof"></div>
   <div class="g-panel">
   <div class="g-sub" id="g-sub"><button type="button" data-v="info"><svg class="g-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5c-5.5 0-9.5 4.2-9.5 9.3 0 3.3 1.7 5.6 3.5 7.3 1 .9 1.5 2 1.5 3.1v1h9v-1c0-1.1.5-2.2 1.5-3.1 1.8-1.7 3.5-4 3.5-7.3 0-5.1-4-9.3-9.5-9.3z" fill="#ffc93c"/><path d="M12.8 12.5c.4-2 1.8-3.4 3.8-3.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/><rect x="11.5" y="24.5" width="9" height="2.6" rx="1.3" fill="#9aa3ad"/><rect x="12.8" y="27.6" width="6.4" height="2.4" rx="1.2" fill="#7d8792"/></svg><span>이 시기엔</span></button><i class="g-sub-div"></i><button type="button" data-v="grow"><svg class="g-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 26 C 11 25, 17 19, 23 8" fill="none" stroke="#b77be6" stroke-width="3.2" stroke-linecap="round"/><path d="M18.5 8.2 L24.6 5.6 L25.6 12.2" fill="none" stroke="#b77be6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 29.5 C 4.5 25, 2 21.5, 2 18.6 C 2 16.4, 3.7 14.8, 5.8 14.8 C 7.2 14.8, 8.4 15.6, 9.1 16.8 C 9.8 15.6, 11 14.8, 12.4 14.8 C 14.5 14.8, 16.2 16.4, 16.2 18.6 C 16.2 21.5, 13.7 25, 11 29.5 Z" transform="translate(-1 -3)" fill="#f77fb3"/></svg><span>성장곡선</span></button><i class="g-sub-div"></i><button type="button" data-v="vax"><svg class="g-ic" viewBox="0 0 32 32" aria-hidden="true"><g transform="rotate(45 16 16)"><rect x="12" y="7" width="8" height="15" rx="2" fill="#62d2c6"/><rect x="12" y="10" width="4" height="1.6" rx=".8" fill="#fff" opacity=".85"/><rect x="12" y="13.5" width="4" height="1.6" rx=".8" fill="#fff" opacity=".85"/><rect x="12" y="17" width="4" height="1.6" rx=".8" fill="#fff" opacity=".85"/><rect x="10" y="5.5" width="12" height="2.6" rx="1.3" fill="#3fb8ab"/><rect x="14.8" y="1" width="2.4" height="5" fill="#3fb8ab"/><rect x="12" y="0" width="8" height="2.4" rx="1.2" fill="#3fb8ab"/><rect x="14.2" y="22" width="3.6" height="2.6" fill="#3fb8ab"/><rect x="15.4" y="24.5" width="1.2" height="6" rx=".6" fill="#9aa3ad"/></g></svg><span>검진/접종</span></button></div>
@@ -1781,7 +1791,7 @@ let _tabHandled = 0;
 function goTab(id) {
   if (id === 's-home') { day = dstr(new Date()); show(id); render(); }
   else if (id === 's-diary') { ym = dstr(new Date()).slice(0, 7); show(id); renderDiary().then(toToday); }   // 들어오면 이번 달·오늘 칸으로 (10-18 사장님)
-  else if (id === 's-growth') { show(id); renderGrowth(); setGSub(gSub); }
+  else if (id === 's-growth') { show(id); renderGrowth(); setGSub(gSub); updPill(); }
   else { show(id); renderStats(); }
   resync(10000);
 }
@@ -1841,7 +1851,8 @@ function render() {
   const today = dstr(new Date());
   $('h-name').textContent = $('hp-name').textContent = baby.name; for (const im of document.querySelectorAll('#s-home header .bf')) im.src = babyFace();
   const dd = Math.floor((new Date(today + 'T00:00') - new Date(baby.birth_date + 'T00:00')) / 86400000) + 1;   // 출생일 = D+1 (09-27 사장님: 당일도 1로). 날짜를 넘겨도 프로필 D+n은 오늘 기준 (10-08 사장님)
-  $('h-dday').textContent = $('hp-dday').textContent = `D+${dd}` + (stampOf(today) ? ` · ${stampOf(today)} 🎉` : '');
+  $('gpl-name').textContent = baby.name; $('g-pill').querySelector('.bf').src = babyFace();
+  $('h-dday').textContent = $('hp-dday').textContent = $('gpl-dday').textContent = `D+${dd}` + (stampOf(today) ? ` · ${stampOf(today)} 🎉` : '');
   $('h-sub').textContent = babyInfoLine(); $('h-crown').src = baby.sex === 'f' ? 'img/왕관-여.png' : 'img/왕관-남.png'; updPill();   // 왕관: 남아·미정 = 노랑 단색, 여아 = 코랄 공 (10-07)
   $('h-pick').defaultValue = today; $('h-pick').value = day; $('h-pick').min = baby.birth_date; $('h-pick').max = today;
   $('h-date').innerHTML = day === today ? `오늘 <small>${fmtDate(day).replace(/<\/?small>/g, '')}</small>` : fmtDate(day);
@@ -2097,11 +2108,14 @@ $('setup-file').addEventListener('change', async e => {
 $('setup-photo-clear').onclick = () => { setupPhoto = null; $('setup-file').value = ''; $('setup-photo').src = BABY_FACE; $('setup-photo-clear').classList.add('hidden'); };
 // 아기 알약도 고정 (v0.12): 스크롤 중 첫 탭을 iOS가 삼키지 않게 설정 버튼과 같은 touchend 처리
 $('st-who').onclick = () => openBabySheet();
+$('g-pill').onclick = () => openBabySheet();
 const _who = document.querySelector('#s-home header .who');
 // 큰 프로필이 위로 사라지면 좌상단 알약 (10-07)
 const _hero = $('h-hero'); let _pRaf = 0;
 function updPill() { _pRaf = 0; const r = $('h-hero').getBoundingClientRect(), pt = document.querySelector('#s-home .h-panel').getBoundingClientRect().top;   // 홈이 숨어 있으면 높이 0 → 알약 켜지던 오류 (10-09 사장님)
-  document.querySelector('#s-home header .who').classList.toggle('on', r.height > 0 && pt < r.top + r.height * .45); }   // 판이 프로필을 반쯤 덮으면 (10-12 프로필은 고정)
+  document.querySelector('#s-home header .who').classList.toggle('on', r.height > 0 && pt < r.top + r.height * .45);
+  const gp = $('g-prof').getBoundingClientRect(), gt = document.querySelector('#s-growth .g-panel').getBoundingClientRect().top, gon = gp.height > 0 && gt < gp.top + gp.height * .45;   // 성장도 같은 규칙 (10-22)
+  $('g-pill').classList.toggle('on', gon); document.querySelector('#s-growth > header').classList.toggle('pill', gon); }   // 판이 프로필을 반쯤 덮으면 (10-12 프로필은 고정)
 window.addEventListener('scroll', () => { if (!_pRaf) _pRaf = requestAnimationFrame(updPill); }, { passive: true });
 _hero.onclick = e => { if (e.target.closest('.hav, .wl, .sub')) openBabySheet(); };   // 사진·이름·정보 줄만 (10-12 사장님 "상단 영역 어디든 터치하면 바로 뜨는데… 사진이랑 텍스트 쪽")
 function babyInfoLine() {   // 정보 줄: 9월 15일생 · 생후 2주 6일 · 남아
@@ -2120,7 +2134,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.05 · 10-22';
+const VER = 'v1.06 · 10-22';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
