@@ -498,6 +498,7 @@
   #s-growth .g-panel { position: relative; z-index: 2; }
   #s-growth .g-sub { margin: 4px 0 0; padding-bottom: 0; border-bottom: 1px solid var(--line2); }
   #growth, #g-vax, #g-info { padding-top: 24px; }
+  #g-info { position: relative; overflow-x: clip; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }   /* 화면 끝까지 보이게 판 여백만큼 넓힘 */   /* 옆 달 본문이 화면 밖에서 대기 (10-22 캐러셀) */
   /* 성장 하위 탭 (인스타 프로필 탭처럼 밑줄) + 접종·검진 (v0.19) */
   /* 성장: 프로필 아래 화면 폭 전체 흰 판이 둥근 윗모서리로 올라오고, 그 위에 탭 (v0.22, 사장님 레퍼런스 "상단의 탭 디자인을 요런형태로") */
   .g-panel { margin: 6px -16px 0; padding: 20px 16px 24px; background: #111114; border-radius: 30px 30px 0 0; min-height: 70vh; border-top: 1px solid rgba(255,255,255,.06); box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
@@ -989,6 +990,13 @@ let stickers = {};      // day → 이모지 (baby_days)
 let tilts = {};         // day → 1/-1 (붙일 때 랜덤으로 정해진 기울기 방향)
 let diaries = {};       // day → 일기 글 (baby_days.diary) — 홈의 한마디(baby_notes)와 별개
 let photos = {};        // day → 그 주 사진 보기 주소(서명, 7일) — 주 1장 (10-15)
+let thumbs = {};        // day → 썸네일 주소. 달력·공책은 썸네일, 크게 볼 때만 원본 (10-22 전송량 1/10)
+const thumbPath = p => p.replace(/\.jpg$/, '.t.jpg');
+async function makeThumb(blob) {   // 336×420(화면 168px의 2배) JPEG ≈ 20~30KB
+  const bm = await createImageBitmap(blob), c = document.createElement('canvas'); c.width = 336; c.height = 420;
+  const r = Math.max(336 / bm.width, 420 / bm.height), w = bm.width * r, h = bm.height * r;
+  c.getContext('2d').drawImage(bm, (336 - w) / 2, (420 - h) / 2, w, h);
+  return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('썸네일 실패')), 'image/jpeg', .78)); }
 let photoPaths = {};    // day → 비공개 저장소 diary-photos 안 경로 (baby_days.photo)
 const PHOTO_ON = true;
 let day = dstr(new Date());
@@ -1066,15 +1074,16 @@ const db = {
   },
   async setPhoto(dayStr, blob) {                                   // 주 1장: 같은 주 다른 날 사진은 뗀다 (저장소 파일도 지움)
     const w = phGroup(dayStr), old = Object.keys({ ...photos, ...photoPaths }).filter(d => phGroup(d) === w);
-    if (MOCK) { for (const d of old) delete photos[d]; if (blob) photos[dayStr] = await uploadPhoto(blob); return; }
+    if (MOCK) { for (const d of old) delete photos[d]; delete thumbs[d]; if (blob) photos[dayStr] = await uploadPhoto(blob); return; }
     let path = '';
     if (blob) { path = `${baby.id}/${dayStr}-${Date.now()}.jpg`;
-      const { error } = await sb.storage.from('diary-photos').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' }); if (error) throw error; }   // 파일은 안 바뀜(새로 올리면 새 경로) → 폰이 1년 보관
+      const { error } = await sb.storage.from('diary-photos').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' }); if (error) throw error;
+      try { await sb.storage.from('diary-photos').upload(thumbPath(path), await makeThumb(blob), { contentType: 'image/jpeg', cacheControl: '31536000' }); } catch (_) {} }   // 썸네일 실패해도 원본으로 보임   // 파일은 안 바뀜(새로 올리면 새 경로) → 폰이 1년 보관
     for (const d of old) { if (d === dayStr) continue;
       const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: d, photo: '', updated_by: me.id, updated_at: new Date().toISOString() }); if (error) throw error; }
     const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, photo: path, updated_by: me.id, updated_at: new Date().toISOString() }); if (error) throw error;
-    const gone = old.map(d => photoPaths[d]).filter(Boolean); if (gone.length) sb.storage.from('diary-photos').remove(gone);   // 실패해도 기록엔 영향 없음
-    for (const d of old) { delete photos[d]; delete photoPaths[d]; }
+    const gone = old.map(d => photoPaths[d]).filter(Boolean).flatMap(p => [p, thumbPath(p)]); if (gone.length) sb.storage.from('diary-photos').remove(gone);   // 실패해도 기록엔 영향 없음
+    for (const d of old) { delete photos[d]; delete thumbs[d]; delete photoPaths[d]; }
     if (path) { photoPaths[dayStr] = path; await signPhotos([dayStr]); }
   },
   async setDiary(dayStr, text) {
@@ -1159,7 +1168,7 @@ function subscribe() {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; delete photos[d]; delete photoPaths[d]; } else { if ((p.new.photo || '') !== (photoPaths[d] || '')) { if (p.new.photo) { photoPaths[d] = p.new.photo; signPhotos([d]).then(() => { if (!$('s-diary').classList.contains('hidden')) renderDiary(); }); } else { delete photoPaths[d]; delete photos[d]; } } if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; delete photos[d]; delete thumbs[d]; delete photoPaths[d]; } else { if ((p.new.photo || '') !== (photoPaths[d] || '')) { if (p.new.photo) { photoPaths[d] = p.new.photo; signPhotos([d]).then(() => { if (!$('s-diary').classList.contains('hidden')) renderDiary(); }); } else { delete photoPaths[d]; delete photos[d]; delete thumbs[d]; } } if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_extra_vax', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') extras = extras.filter(x => x.id !== p.old.id); else upsertLocal(extras, p.new); render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_checks', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') delete checks[p.old.item]; else checks[p.new.item] = p.new; render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_growth', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') growth = growth.filter(x => x.id !== p.old.id); else upsertLocal(growth, p.new); if (!$('s-growth').classList.contains('hidden')) renderGrowth(); })
@@ -1195,14 +1204,20 @@ const signCache = (() => { try { return JSON.parse(localStorage.getItem(SIGN_KEY
 async function signPhotos(days = Object.keys(photoPaths)) {
   if (MOCK || !days.length) return;
   const now = Date.now(), need = [];
-  for (const d of days) { const c = signCache[photoPaths[d]]; if (c && c[1] > now) photos[d] = c[0]; else need.push(d); }
+  const want = days.flatMap(d => photoPaths[d] ? [[d, photoPaths[d], photos], [d, thumbPath(photoPaths[d]), thumbs]] : []);   // 원본·썸네일 둘 다 서명 (서명은 내려받기 아님)
+  for (const w of want) { const c = signCache[w[1]]; if (c && c[1] > now) w[2][w[0]] = c[0]; else need.push(w); }
   if (need.length) {
-    const { data } = await sb.storage.from('diary-photos').createSignedUrls(need.map(d => photoPaths[d]), 7 * 86400);
-    (data || []).forEach((r, i) => { if (r.signedUrl) { photos[need[i]] = r.signedUrl; signCache[photoPaths[need[i]]] = [r.signedUrl, now + 6 * 86400000]; } });
+    const { data } = await sb.storage.from('diary-photos').createSignedUrls(need.map(w => w[1]), 7 * 86400);
+    (data || []).forEach((r, i) => { const w = need[i]; if (r.signedUrl && !r.error) { w[2][w[0]] = r.signedUrl; signCache[w[1]] = [r.signedUrl, now + 6 * 86400000]; } });
   }
-  const live = new Set(Object.values(photoPaths)); for (const k of Object.keys(signCache)) if (!live.has(k) || signCache[k][1] <= now) delete signCache[k];
+  backfillThumbs(days.filter(d => photoPaths[d] && !thumbs[d] && photos[d]));
+  const live = new Set(Object.values(photoPaths).flatMap(p => [p, thumbPath(p)])); for (const k of Object.keys(signCache)) if (!live.has(k) || signCache[k][1] <= now) delete signCache[k];
   try { localStorage.setItem(SIGN_KEY, JSON.stringify(signCache)); } catch {}
 }
+// 썸네일 없는 옛 사진은 한 번만 원본을 받아 썸네일을 만들어 올려 둠 (10-22 이전 사진)
+const _thumbTried = new Set();
+async function backfillThumbs(days) { for (const d of days) { const p = photoPaths[d]; if (_thumbTried.has(p)) continue; _thumbTried.add(p);
+  try { const b = await (await fetch(photos[d])).blob(); const { error } = await sb.storage.from('diary-photos').upload(thumbPath(p), await makeThumb(b), { contentType: 'image/jpeg', cacheControl: '31536000' }); if (!error) await signPhotos([d]); } catch (_) {} } }
 const PHOTO_WEEKLY = false;   // 10-15 사장님 "베타라 둘만 쓰니 매일 한 장으로" — 출시 때 주 1장으로 돌리려면 true
 const phGroup = d => PHOTO_WEEKLY ? weekOf(d) : d;   // 사진 한 장이 차지하는 칸(하루 또는 한 주)
 const weekPhotoDay = d => Object.keys({ ...photos, ...photoPaths }).find(x => phGroup(x) === phGroup(d));
@@ -1238,7 +1253,7 @@ async function renderDiary() {
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
     h += `<button type="button" class="d ${st ? 'ms' : ''} ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${PHOTO_ON && photos[ds] ? `<img class="ph" src="${esc(photos[ds])}" alt="">` : ''}${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${PHOTO_ON && photos[ds] ? `<img class="ph" src="${esc(thumbs[ds] || photos[ds])}" alt="">` : ''}${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(rv[ds] || []).map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('')}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
 }
@@ -1270,7 +1285,7 @@ function dayInfo(ds) {   // 공책 맨 아래 한 덩어리: 그날 수유·기�
 function phBlock(ds, ahead) {                                       // 공책 위 사진 자리: 이 날 사진 / 같은 주 다른 날에 있음 / 붙이기
   if (!PHOTO_ON || ahead || ds < baby.birth_date) return '';
   const w = weekOf(ds), on = weekPhotoDay(ds), file = '<input type="file" id="dp-file" accept="image/*" hidden>';
-  if (on === ds) return `<div class="dp-ph"><img src="${esc(photos[ds] || '')}" alt=""><span class="wk">${PHOTO_WEEKLY ? w + '주차' : 'D+' + dayNo(ds)}</span><button type="button" class="rm" id="dp-phrm" aria-label="사진 떼기">✕</button></div>`;
+  if (on === ds) return `<div class="dp-ph"><img src="${esc(thumbs[ds] || photos[ds] || '')}" alt=""><span class="wk">${PHOTO_WEEKLY ? w + '주차' : 'D+' + dayNo(ds)}</span><button type="button" class="rm" id="dp-phrm" aria-label="사진 떼기">✕</button></div>`;
   if (on) { const o = new Date(on + 'T00:00'); return `<button type="button" class="dp-phadd" id="dp-phadd">📷 <small>${w}주차 사진은 ${o.getMonth() + 1}월 ${o.getDate()}일에 있어요 ·</small> <u>이 날로 바꾸기</u></button>${file}`; }
   return `<button type="button" class="dp-phadd" id="dp-phadd">📷 ${PHOTO_WEEKLY ? w + '주차 사진 붙이기 <small>· 한 주에 한 장</small>' : '사진 붙이기 <small>· 하루 한 장</small>'}</button>${file}`;
 }
@@ -1743,32 +1758,51 @@ function avgHW(m) {                                  // 성별 있으면 그 성
   return `${l.toFixed(1)}cm / ${w.toFixed(1)}kg`;
 }
 // 본문 좌우로 밀어서 달 넘기기 (10-12 사장님 "상단 카테고리로도 이동할수 있지만 본문을 좌우로 슬라이드해서도") — 위 알약 줄은 자체 가로 스크롤이라 제외
-(() => { const el = $('g-info'); if (!el) return; let x0 = null, y0 = 0;
-  el.addEventListener('touchstart', e => { if (e.target.closest('#if-months') || e.touches.length > 1) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-  el.addEventListener('touchend', e => { if (x0 == null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    const to = infoM + (dx < 0 ? 1 : -1); if (to < 0 || to >= MONTHLY.length) return;
-    infoM = to; renderInfo(); const c = el.querySelector('.if-hero'); if (c) c.animate([{ opacity: .3, transform: `translateX(${dx < 0 ? 28 : -28}px)` }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' }); }, { passive: true });
+// 10-22 사장님 "좌로 끌면 오른쪽 박스가 같이 끌려와야" → 끄는 방향의 옆 달 본문을 바로 옆에 그려 두고 둘이 함께 밀림(캐러셀). 놓으면 넘어가거나 제자리로
+(() => { const el = $('g-info'); if (!el) return; const GAP = 16;
+  let x0 = null, y0 = 0, dir = null, dx = 0, lastX = 0, lastT = 0, vx = 0, busy = false, peek = null, side = 0;
+  const body = () => $('if-body');
+  const dropPeek = () => { if (peek) { peek.remove(); peek = null; side = 0; } };
+  const place = (b, x) => { b.style.transform = `translateX(${x}px)`; if (peek) peek.style.transform = `translateX(${x + side * (b.offsetWidth + GAP)}px)`; };
+  const ensurePeek = (b, sd) => {   // sd = 1: 오른쪽에 다음 달, -1: 왼쪽에 이전 달
+    if (side === sd && peek) return; dropPeek(); const m = infoM + sd; if (m < 0 || m >= MONTHLY.length) return;
+    peek = document.createElement('div'); peek.className = 'if-body if-peek'; peek.innerHTML = infoBody(m);
+    peek.style.cssText = `position:absolute;left:${b.offsetLeft}px;top:${b.offsetTop}px;width:${b.offsetWidth}px;pointer-events:none;transition:none`;
+    el.appendChild(peek); side = sd; };
+  el.addEventListener('touchstart', e => { if (busy || e.target.closest('#if-months') || e.touches.length > 1) { x0 = null; return; }
+    x0 = lastX = e.touches[0].clientX; y0 = e.touches[0].clientY; lastT = e.timeStamp; dir = null; dx = 0; vx = 0; }, { passive: true });
+  el.addEventListener('touchmove', e => { if (x0 == null) return; const x = e.touches[0].clientX, y = e.touches[0].clientY;
+    if (!dir) { const ax = Math.abs(x - x0), ay = Math.abs(y - y0); if (ax < 8 && ay < 8) return; dir = ax > ay * 1.2 ? 'h' : 'v'; }
+    if (dir !== 'h') return; e.preventDefault();
+    const dt = e.timeStamp - lastT; if (dt > 0) vx = .7 * ((x - lastX) / dt) + .3 * vx; lastX = x; lastT = e.timeStamp;
+    dx = x - x0; const b = body(); if (!b) return; b.style.transition = 'none';
+    if (dx !== 0) ensurePeek(b, dx < 0 ? 1 : -1);
+    const edge = !peek;   // 끝 달이면 옆이 없음 → 고무줄
+    place(b, edge ? dx * .3 : dx); }, { passive: false });
+  const end = () => { if (x0 == null) return; x0 = null; if (dir !== 'h') return; const b = body(); if (!b) return;
+    const W = b.offsetWidth + GAP, go = peek && (Math.abs(dx) > 70 || (Math.abs(dx) > 24 && Math.abs(vx) > .45) || Math.abs(dx) > W / 3);
+    const tr = 'transform .26s cubic-bezier(.2,.8,.2,1)'; b.style.transition = tr; if (peek) peek.style.transition = tr;
+    if (!go) { place(b, 0); setTimeout(() => { if (!busy) dropPeek(); b.style.transition = ''; b.style.transform = ''; }, 270); return; }
+    busy = true; const to = infoM + side; place(b, -side * W);
+    setTimeout(() => { dropPeek(); infoM = to; renderInfo(); busy = false; }, 270); };
+  el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
 })();
-function renderInfo() {
-  // 우리 앱 문법으로 (v0.24 2차, 사장님 "디자인이 너무 마미톡이랑 동일해. 일단은 아기부분만")
-  const el = $('g-info'); if (!el) return;
-  if (!MONTHLY.length) { el.innerHTML = '<div class="g-empty">내용 준비 중이에요</div>'; return; }
-  if (infoM == null) infoM = curMonth();
-  const d = MONTHLY[infoM], now = curMonth(), f = d.feed || {}, sl = d.sleep || {};
+// 한 달치 본문 (10-22: 좌우 드래그 때 옆 달 카드를 미리 그리려고 renderInfo에서 분리)
+function infoBody(m) {
+  const d = MONTHLY[m], now = curMonth(), f = d.feed || {}, sl = d.sleep || {};
   const NAMES = { 'childcare.go.kr': '임신육아종합포털 아이사랑', 'thensf.org': '미국수면재단', 'nip.kdca.go.kr': '질병관리청 예방접종도우미', 'health.kdca.go.kr': '국가건강정보포털', 'kdca.go.kr': '질병관리청', 'healthychildren.org': '미국소아과학회', 'nhs.uk': '영국 NHS', 'pediatrics.or.kr': '대한소아청소년과학회', 'snuh.org': '서울대학교병원', 'amc.seoul.kr': '서울아산병원' };
   const hosts = {}; for (const u of d.sources || []) { let h = u; try { h = new URL(u).hostname.replace('www.', ''); } catch (_) {} if (!hosts[h]) hosts[h] = u; }
   const srcOf = urls => { const hs = {}; for (const u of urls) { let h = u; try { h = new URL(u).hostname.replace('www.', '').replace(/^.*\.(nhs\.uk|amc\.seoul\.kr)$/, '$1'); } catch (_) {} if (!hs[h]) hs[h] = u; }
     return Object.entries(hs).map(([h, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(NAMES[h] || h)}</a>`).join(' · '); };
-  const tips = (TIPS.find(x => x.m === infoM) || {}).tips || [];
+  const tips = (TIPS.find(x => x.m === m) || {}).tips || [];
   const src = Object.entries(hosts).map(([h, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(NAMES[h] || h)}</a>`).join(' · ');
-  const [hl, hw] = avgHW(infoM).split(' / ');
-  const st = BABY_STAGES.find(x => infoM >= x.from && infoM <= x.to);   // 그 달의 아기 캐릭터(없으면 그림 없이 기본 카드)
+  const [hl, hw] = avgHW(m).split(' / ');
+  const st = BABY_STAGES.find(x => m >= x.from && m <= x.to);   // 그 달의 아기 캐릭터(없으면 그림 없이 기본 카드)
   // 수유·잠 = 아이콘 + 제목 + 항목을 한 줄씩 (v0.26, 사장님 "2줄부턴 정렬이 이상, 수유·잠 아이콘 넣어서")
   const block = (cls, ic, title, items) => { const it = items.filter(x => x[1]); if (!it.length) return '';
     return `<div class="if-blk ${cls}"><span class="if-ic"><img src="img/${ic}.png" alt=""></span><div class="if-bd"><b>${title}</b>${it.map(([k, v]) => `<div class="if-li"><span>${k}</span><em>${esc(v)}</em></div>`).join('')}</div></div>`; };
-  el.innerHTML = `<div class="if-months" id="if-months">${MONTHLY.map((_, i) => `<button type="button" data-m="${i}" class="${i === infoM ? 'on' : ''} ${i === now ? 'now' : ''}">${i}개월</button>`).join('')}</div>
-    <div class="stat-card if-hero ${st ? 'art' : ''}" ${st ? `style="--hb1:${st.bg[0]};--hb2:${st.bg[1]};--hb3:${st.bg[2]};--hlab:${st.lab}"` : ''}><div class="if-lab">생후 ${infoM}개월${infoM === now ? ' · 지금' : ''}</div><div class="if-head">${esc(d.headline || '')}</div>${st ? `<img class="if-baby" src="${st.img}" alt="" style="width:${st.size || 230}px;height:${st.size || 230}px">` : ''}
+  return `
+    <div class="stat-card if-hero ${st ? 'art' : ''}" ${st ? `style="--hb1:${st.bg[0]};--hb2:${st.bg[1]};--hb3:${st.bg[2]};--hlab:${st.lab}"` : ''}><div class="if-lab">생후 ${m}개월${m === now ? ' · 지금' : ''}</div><div class="if-head">${esc(d.headline || '')}</div>${st ? `<img class="if-baby" src="${st.img}" alt="" style="width:${st.size || 230}px;height:${st.size || 230}px">` : ''}
       <div class="if-avg"><div><span>평균 키</span><b>${hl}</b></div><div><span>평균 몸무게</span><b>${hw}</b></div></div></div>
     ${(f.count || f.interval || f.amount || sl.total || sl.nap) ? `<div class="status if-rhythm">
       ${block('feed', 'ic-feed', '수유', [['횟수', f.count], ['간격', f.interval], ['양', f.amount]])}
@@ -1780,6 +1814,14 @@ function renderInfo() {
     ${tips.length ? `<div class="stat-card tip"><div class="g-head" style="margin-bottom:2px"><h3>이맘때 자주 하는 고민</h3></div>
       ${tips.map((t, i) => `<details class="if-q" ${i === 0 ? 'open' : ''}><summary>${esc(t.q)}</summary><p>${esc(t.a)}</p>${t.warn ? `<p class="if-warn">${esc(t.warn)}</p>` : ''}</details>`).join('')}
       <div class="if-src" style="margin-top:6px">출처: ${srcOf(tips.flatMap(t => t.src || []))}</div></div>` : ''}`;
+}
+function renderInfo() {
+  // 우리 앱 문법으로 (v0.24 2차, 사장님 "디자인이 너무 마미톡이랑 동일해. 일단은 아기부분만")
+  const el = $('g-info'); if (!el) return;
+  if (!MONTHLY.length) { el.innerHTML = '<div class="g-empty">내용 준비 중이에요</div>'; return; }
+  if (infoM == null) infoM = curMonth();
+  const now = curMonth();
+  el.innerHTML = `<div class="if-months" id="if-months">${MONTHLY.map((_, i) => `<button type="button" data-m="${i}" class="${i === infoM ? 'on' : ''} ${i === now ? 'now' : ''}">${i}개월</button>`).join('')}</div><div class="if-body" id="if-body">${infoBody(infoM)}</div>`;
   $('if-months').onclick = e => { const b = e.target.closest('button'); if (!b) return; infoM = +b.dataset.m; renderInfo(); };
   const on = $('if-months').querySelector('.on'); if (on) $('if-months').scrollLeft = on.offsetLeft - 120;   // 고른 달이 보이게
 }
@@ -2134,7 +2176,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.06 · 10-22';
+const VER = 'v1.07 · 10-22';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
