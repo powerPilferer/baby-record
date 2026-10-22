@@ -648,6 +648,10 @@
   .frow input { background: var(--bg); border: 0; border-radius: 10px; padding: 10px 12px; width: 140px; text-align: right; font-size: 20px; font-weight: 600; outline: none; font-variant-numeric: tabular-nums; }
   .frow input[type=time] { width: 150px; }
   .frow input.wide { width: 100%; text-align: left; font-size: 17px; font-weight: 400; }
+  .frow:has(> .nx) { position: relative; }   /* 숫자 칸 오른쪽 X = 한 번에 지우기 (10-23 사장님 "내용 있는 건 바로 지울 수 있게") */
+  .frow input.has-x { padding-right: 38px; }
+  .frow .nx { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: none; }
+  .frow .nx.on { display: grid; }
   .frow.col { flex-direction: column; align-items: stretch; gap: 8px; }
   .ml { display: flex; gap: 6px; margin: 6px 0 4px; }
   .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
@@ -1497,7 +1501,7 @@ function openGrowthSheet(rec, focus) {
   const entry = !!focus, today = dstr(new Date());
   let target = entry ? (growth.find(r => r.day === today) || null) : rec;
   const val = (r, k) => r && r[GM[k].key] != null ? +r[GM[k].key] : '';
-  $('sheet').innerHTML = `<h3 class="grow" id="g-title"></h3>
+  $('sheet').innerHTML = `<h3 class="grow" id="gs-title"></h3>
     <div class="frow"><label>날짜</label><input type="date" id="g-day" value="${entry ? today : rec.day}" max="${today}" style="width:170px"></div>
     <div class="frow${focus === 'w' ? ' focus' : ''}"><label>몸무게 <small style="color:var(--fg3)">kg</small></label><input type="number" inputmode="decimal" step="0.01" id="g-w" placeholder="3.52"></div>
     <div class="frow${focus === 'l' ? ' focus' : ''}"><label>키 <small style="color:var(--fg3)">cm</small></label><input type="number" inputmode="decimal" step="0.1" id="g-l" placeholder="51.5"></div>
@@ -1506,7 +1510,7 @@ function openGrowthSheet(rec, focus) {
     <div class="foot" style="margin:2px 0 0" id="g-foot">재지 않은 칸은 비워두세요</div>
     <div class="acts">${!entry ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save"></button></div>`;
   const fill = r => { for (const k of ['w', 'l', 'h']) $('g-' + k).value = val(r, k); $('g-note').value = r ? r.note || '' : '';
-    $('g-title').textContent = !entry ? '성장 측정 고치기' : r ? (r.day === today ? '오늘 측정 이어 적기' : '이날 측정 이어 적기') : '성장 측정';
+    $('gs-title').textContent = !entry ? '성장 측정 고치기' : r ? (r.day === today ? '오늘 측정 이어 적기' : '이날 측정 이어 적기') : '성장 측정';
     $('sh-save').textContent = entry && !r ? '기록' : '저장';
     $('g-foot').textContent = entry && r ? '이날 적어둔 값이에요. 바꾸거나 빈칸을 채워주세요' : '재지 않은 칸은 비워두세요'; };
   fill(target);
@@ -1951,6 +1955,21 @@ setInterval(() => { if (!$('s-home').classList.contains('hidden')) render(); }, 
 // ── 바텀 시트 (새로 적기 / 고치기)
 let editing = null;
 function nowTime() { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+// 시트 안 숫자 칸마다 X 붙이기 — 칸을 감싸지 않고 옆에 붙여서 이미 잡은 포커스·키보드를 안 놓침 (10-23)
+const NX_SVG = '<svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg>';
+new MutationObserver(() => {
+  for (const inp of $('sheet').querySelectorAll('.frow > input[type=number]:not(.has-x)')) {
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'bf-x nx'; x.setAttribute('aria-label', '지우기'); x.innerHTML = NX_SVG;
+    const upd = () => x.classList.toggle('on', document.activeElement === inp && inp.value !== '');
+    inp.classList.add('has-x'); inp.after(x);
+    inp.addEventListener('input', upd); inp.addEventListener('focus', upd); inp.addEventListener('blur', upd);
+    x.addEventListener('pointerdown', e => e.preventDefault());   // 키보드 안 내려가게
+    x.onclick = () => { inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus(); };
+    upd();
+  }
+}).observe($('sheet'), { childList: true, subtree: true });
+
 function openSheet(kind, log) {
   editing = log || null;
   const d = (log && log.detail) || {};
@@ -2176,7 +2195,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.07 · 10-22';
+const VER = 'v1.08 · 10-23';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
