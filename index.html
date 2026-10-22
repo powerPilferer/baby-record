@@ -1723,7 +1723,7 @@ const BABY_STAGES = [
   { from: 8, to: 8, img: 'img/아기-단계-89.webp?r=2', bg: ['#f1e1bd', '#f4e6c1', '#f3e9c6'], lab: '#93700a', size: 290 },   // 데님 우주복 + 바닐라, 옆에서 본 기기 (10-08 사장님 89-1R A) — 카드색은 몸에 걸려 원본 가장자리에서 수동
   { from: 9, to: 9, img: 'img/아기-단계-m9.webp', bg: ['#e7cea3', '#ead6b5', '#ebddc4'], lab: '#a7721b', size: 290 },   // 페리윙클 인디고 + 허니, 짝짜꿍 (9-B)
   { from: 10, to: 10, img: 'img/아기-단계-1011.webp?r=2', bg: ['#c0d5ee', '#d2e6f8', '#d7e9fa'], lab: '#0159c1', size: 290 },   // 라즈베리 로즈 우주복 + 파우더 스카이, 스툴 잡고 서기 (10-09 사장님 1011-1R A) — 아래 띠는 몸에 걸려 원본 바닥색으로 수동
-  { from: 11, to: 11, img: 'img/아기-단계-m11.webp', bg: ['#c9c8e8', '#cfcdea', '#d5d3ec'], lab: '#5a4f72', size: 300 },   // 멀베리 플럼 + 라일락 스카이, 소파 잡고 옆걸음 (11-B)
+  { from: 11, to: 11, img: 'img/아기-단계-m11.webp?r=2', bg: ['#cccaea', '#d5d3ef', '#d3cfea'], lab: '#5a4f72', size: 300 },   // 멀베리 플럼 + 라일락 스카이, 소파 잡고 옆걸음 (11-D = 11-B 줌아웃, 10-22 잘린 소파 고침)
   { from: 12, to: 99, img: 'img/아기-단계-12.webp?r=2', bg: ['#ebc1e2', '#f3d2e6', '#fadfed'], lab: '#a91872', size: 290 },   // 맑은 틸 우주복 + 오키드 핑크, 케이크 향해 첫걸음 (10-09 사장님 12-2R B) — 위·아래 띠는 원본 가장자리에서 수동
 ];
 const curMonth = () => Math.max(0, Math.min(MONTHLY.length - 1, Math.floor(ageMon(dstr(new Date())))));
@@ -2120,7 +2120,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.04 · 10-22';
+const VER = 'v1.05 · 10-22';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
