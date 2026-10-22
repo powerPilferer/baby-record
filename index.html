@@ -86,11 +86,11 @@
   .bp-ph .cam { position: absolute; right: -2px; bottom: -2px; width: 34px; height: 34px; border-radius: 50%; background: var(--fg); border: 3px solid var(--card); display: grid; place-items: center; }
   .bp-ph .cam svg { width: 17px; height: 17px; fill: none; stroke: var(--card); stroke-width: 1.9; stroke-linejoin: round; }
   .bp-rm { font-size: 13px; color: var(--fg3); padding: 2px 8px; }
-  .bf { margin-bottom: 14px; }
-  .bf > label { display: block; font-size: 13px; color: var(--fg2); font-weight: 600; margin: 0 0 6px 2px; }
-  .bf input { width: 100%; background: var(--bg); border: 0; border-radius: 14px; padding: 0 14px; height: 52px; font-size: 18px; font-weight: 600; color: var(--fg); outline: none; text-align: left; -webkit-appearance: none; appearance: none; }
-  .bf input[type=date] { display: flex; align-items: center; line-height: 52px; }
-  .bf input:focus { box-shadow: inset 0 0 0 1.5px var(--ok); }
+  .bfd { margin-bottom: 14px; }   /* .bf는 알약 얼굴 클래스와 겹쳐서 .bfd (10-22 알약 얼굴 위로 쏠림 원인) */
+  .bfd > label { display: block; font-size: 13px; color: var(--fg2); font-weight: 600; margin: 0 0 6px 2px; }
+  .bfd input { width: 100%; background: var(--bg); border: 0; border-radius: 14px; padding: 0 14px; height: 52px; font-size: 18px; font-weight: 600; color: var(--fg); outline: none; text-align: left; -webkit-appearance: none; appearance: none; }
+  .bfd input[type=date] { display: flex; align-items: center; line-height: 52px; }
+  .bfd input:focus { box-shadow: inset 0 0 0 1.5px var(--ok); }
   .bf-in { position: relative; }
   .bf-in input { padding-right: 46px; }
   .bf-x { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--fg3); display: grid; place-items: center; padding: 0; }
@@ -99,6 +99,11 @@
   .sexpick button { height: 52px; border-radius: 14px; background: var(--bg); color: var(--fg2); font-size: 17px; font-weight: 600; transition: background .12s, color .12s; }
   .sexpick button.m.on { background: var(--boy); color: #fff; font-weight: 700; }
   .sexpick button.f.on { background: var(--girl); color: #fff; font-weight: 700; }
+  /* 다크 팝업 통일: 바탕(카드)보다 입력칸·선택칸·취소가 한 단계 밝게 — 시트 안의 var(--bg)를 전부 밝은 칸 색으로 (10-22 사장님 "팝업 컬러 다 통일") */
+  :root:not([data-theme="light"]) .sheet { --bg: #34343c; }
+  :root:not([data-theme="light"]) .sheet .acts .save { color: #0b0b0d; }
+  :root:not([data-theme="light"]) .sheet .seg.mini { background: #34343c; }
+  :root:not([data-theme="light"]) .bf-x { background: #6b6b75; }
   .card.form label.pbtn { display: inline-block; margin: 0; font-size: 14px; color: var(--fg); font-weight: 600; }
   header .who { cursor: pointer; border-radius: 999px; }
   header .who:active { opacity: .7; }
@@ -220,6 +225,11 @@
   .quick button:active { transform: scale(.97); }
   .quick .sleep.on { background: color-mix(in srgb, var(--sleep) 13%, var(--card2)); box-shadow: inset 0 2px 7px rgba(0,0,0,.10), inset 0 0 0 1.5px color-mix(in srgb, var(--sleep) 50%, transparent); }
   .quick .sleep.on .k { color: var(--sleep); }
+  /* 잠 버튼만 켜고 끄는 성격 → 오른쪽 빈 곳에 스위치 표시 (10-22 사장님) */
+  .quick .sw { position: absolute; top: 10px; right: 10px; width: 28px; height: 16px; border-radius: 999px; background: var(--line); transition: background .2s; }   /* 오른쪽 위 모서리 — 글자 자리 안 뺏게 */
+  .quick .sw i { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+  .quick .sleep.on .sw { background: var(--sleep); }
+  .quick .sleep.on .sw i { transform: translateX(12px); }
   /* 다크: 버튼이 버튼처럼 — 위쪽 빛 + 아래 그림자로 살짝 떠 보이게 */
   :root:not([data-theme="light"]) #s-home .h-panel .quick button:not(.on) { background: linear-gradient(180deg, #2e2e36, #25252c); box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 0 1px rgba(255,255,255,.07), 0 3px 8px rgba(0,0,0,.45); }
   :root:not([data-theme="light"]) #s-home .h-panel .quick button:not(.on):active { background: #25252c; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); }
@@ -644,7 +654,9 @@
   .sheet[data-kind="vax"] .acts button { padding: 15px 6px; font-size: 16px; white-space: nowrap; }   /* 버튼 3개(닫기·메모·완료로 표시)가 한 줄에 (10-08) */
   .sheet[data-kind="vax"] .acts .save { flex: 1.4; }   /* 완료로 표시 폭 줄임 (10-08 사장님) */
   .acts .cancel { background: var(--bg); color: var(--fg2); white-space: nowrap; }
-  .acts .del { background: none; color: var(--temp); flex: 0 0 auto; padding: 14px 12px; }
+  .acts .del { background: var(--bg); color: var(--temp); white-space: nowrap; }
+  /* 삭제 버튼이 있으면 삭제·취소·저장 세 칸을 같은 폭으로, 삭제도 같은 알약 모양 (10-22 사장님) */
+  .acts:has(.del) button, .sheet[data-kind] .acts:has(.del) button { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; }
 
   /* 설정 */
   .menu { background: var(--card); border-radius: 16px; margin: 12px 0; padding: 0 16px; }
@@ -777,7 +789,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
   <div class="quick">
     <button type="button" class="feed" data-kind="feed"><span class="ic"><img src="img/ic-feed.png" alt=""></span><span class="tx"><span class="k">수유</span><span class="s">분유 · 모유 · 유축</span></span></button>
     <button type="button" class="diaper" data-kind="diaper"><span class="ic"><img src="img/ic-diaper.png" alt=""></span><span class="tx"><span class="k">기저귀</span><span class="s">소변 · 대변</span></span></button>
-    <button type="button" class="sleep" data-kind="sleep" id="q-sleep"><span class="ic"><img src="img/ic-sleep.png" alt=""></span><span class="tx"><span class="k">잠듦</span><span class="s">지금부터</span></span></button>
+    <button type="button" class="sleep" data-kind="sleep" id="q-sleep"><span class="ic"><img src="img/ic-sleep.png" alt=""></span><span class="tx"><span class="k">잠듦</span><span class="s">지금부터</span></span><span class="sw" aria-hidden="true"><i></i></span></button>
     <button type="button" class="temp" data-kind="temp"><span class="ic"><img src="img/ic-temp.png" alt=""></span><span class="tx"><span class="k">체온</span><span class="s">℃</span></span></button>
   </div>
   <div class="sheet-title"><h2>오늘의 표</h2><span class="vt" id="view-seg"><button type="button" data-v="list" aria-label="목록"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><button type="button" data-v="clock" aria-label="24시간"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></button></span></div>
@@ -1835,7 +1847,7 @@ function render() {
   const open = sorted.find(l => l.kind === 'sleep' && !l.ended_at);
   $('st-sleep').innerHTML = open ? `자는 중<small>${dur(open.at)}</small>` : (() => { const s = [...sorted].reverse().find(l => l.kind === 'sleep' && l.ended_at); return s ? `${hhmm(s.ended_at)} 깸<small>${ago(s.ended_at)}</small>` : '아직 없음'; })();
   const qs = $('q-sleep'); qs.classList.toggle('on', !!open);
-  qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 자는 중' : '지금부터';
+  qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 째' : '지금부터';   // 스위치가 '자는 중'을 보여 줘서 글은 시간만 (10-22)
   const qi = qs.querySelector('.ic img'); const want = open ? 'img/ic-wake.png' : 'img/ic-sleep.png';   // 자는 중이면 해, 아니면 달
   if (!qi.src.endsWith(want)) { qi.onerror = () => { qi.onerror = null; qi.src = 'img/ic-sleep.png'; }; qi.src = want; }
   const rows = $('rows');
@@ -2100,7 +2112,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.02 · 10-22';
+const VER = 'v1.03 · 10-22';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2145,9 +2157,9 @@ function openBabySheet() {
   $('sheet').innerHTML = `<h3>아기 정보</h3>
     <div class="bp"><button type="button" class="bp-ph" id="b-pick" aria-label="사진 고르기"><img id="b-photo" src="${esc(babyFace())}" alt=""><span class="cam"><svg viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg></span></button>
       <button type="button" class="bp-rm ${baby.photo_url ? '' : 'hidden'}" id="b-photo-clear">사진 지우기</button><input type="file" id="b-file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
-    <div class="bf"><label for="b-name">이름</label><div class="bf-in"><input id="b-name" maxlength="12" value="${esc(baby.name)}" autocomplete="off"><button type="button" class="bf-x ${baby.name ? '' : 'hidden'}" id="b-name-x" aria-label="이름 지우기"><svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg></button></div></div>
-    <div class="bf"><label for="b-birth">생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
-    <div class="bf"><label>성별</label><div class="sexpick" id="b-sex"><button type="button" data-v="m" class="m ${baby.sex === 'm' ? 'on' : ''}">남아</button><button type="button" data-v="f" class="f ${baby.sex === 'f' ? 'on' : ''}">여아</button></div></div>
+    <div class="bfd"><label for="b-name">이름</label><div class="bf-in"><input id="b-name" maxlength="12" value="${esc(baby.name)}" autocomplete="off"><button type="button" class="bf-x ${baby.name ? '' : 'hidden'}" id="b-name-x" aria-label="이름 지우기"><svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg></button></div></div>
+    <div class="bfd"><label for="b-birth">생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
+    <div class="bfd"><label>성별</label><div class="sexpick" id="b-sex"><button type="button" data-v="m" class="m ${baby.sex === 'm' ? 'on' : ''}">남아</button><button type="button" data-v="f" class="f ${baby.sex === 'f' ? 'on' : ''}">여아</button></div></div>
     <div class="foot" style="margin:2px 0 0">생일을 바꾸면 D+n이, 성별을 고르면 성장 기준 곡선이 맞춰져요</div>
     <div class="acts"><button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">저장</button></div>`;
   $('sheet').dataset.kind = 'baby';
@@ -2217,19 +2229,22 @@ function openAi() {
   $('ai-in').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px'; });
   if ($('ai-new')) $('ai-new').onclick = () => { if (!confirm('지금 대화를 지우고 새로 시작할까요?')) return; aiLog = []; aiSave(); openAi(); };
 }
-// 부엉쌤 시트 위 스크롤이 뒤 화면으로 새지 않게 (10-19 사장님 "대화창 위에서 스크롤하면 대화창만"). 대화 목록·입력칸이 더 갈 수 있을 때만 허용.
+// 시트(팝업)가 떠 있으면 뒤 화면이 스크롤되지 않게 — 모든 시트 공통 (10-19 부엉쌤 → 10-22 사장님 "모든 설정 팝업이 떴을 때는 뒤 화면 스크롤 안 돼").
+// 시트 안에서 스크롤 가능한 칸(대화 목록·긴 입력칸 등)이 그 방향으로 더 갈 수 있을 때만 허용, 가로 끌기는 그대로 둠.
 // body를 묶지 않는다(v0.74 교훈). 시트·딤 자신의 터치만 다룬다 — 공책 가드와 같은 방식
-(() => { const sh = $('sheet'), dim = $('dim'); let y0 = 0;
-  const on = () => sh.dataset.kind === 'ai' && !sh.classList.contains('hidden');
-  sh.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+(() => { const sh = $('sheet'), dim = $('dim'); let x0 = 0, y0 = 0;
+  const on = () => !sh.classList.contains('hidden');
+  const canScroll = (el, dy) => { const cs = getComputedStyle(el); if (!/(auto|scroll)/.test(cs.overflowY) || el.scrollHeight <= el.clientHeight + 1) return false;
+    return dy > 0 ? el.scrollTop > 0 : el.scrollTop + el.clientHeight < el.scrollHeight - 1; };
+  sh.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   sh.addEventListener('touchmove', e => {
     if (!on() || e.touches.length > 1) return;
-    const sc = e.target.closest('#ai-log, #ai-in');
-    if (sc) { const dy = e.touches[0].clientY - y0, top = sc.scrollTop <= 0, bot = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
-      if (!((dy > 0 && top) || (dy < 0 && bot))) return; }
+    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    if (Math.abs(dx) > Math.abs(dy)) return;   // 가로 스크롤 칸은 그대로
+    for (let el = e.target; el && el !== sh.parentNode; el = el.parentElement) { if (canScroll(el, dy)) return; if (el === sh) break; }
     if (e.cancelable) e.preventDefault();
   }, { passive: false });
-  dim.addEventListener('touchmove', e => { if (on() && e.cancelable) e.preventDefault(); }, { passive: false });
+  dim.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 })();
 $('open-ai').addEventListener('touchend', e => { e.preventDefault(); _tabHandled = Date.now(); openAi(); }, { passive: false });
 $('open-ai').onclick = () => { if (Date.now() - _tabHandled < 500) return; openAi(); };
