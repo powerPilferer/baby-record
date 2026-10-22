@@ -17,7 +17,7 @@
   :root {
     --bg: #0b0b0d; --card: #1f1f24; --card2: #2b2b32; --line: #303038;   /* 다크 박스 더 잘 보이게 (10-08 사장님) */
     --line2: #26262c; --fg: #f1f1f4; --fg2: #9a9aa4; --fg3: #6b6b75;   /* 다크 회색 글 살짝 밝게 (10-12 사장님, 전 #8f8f99·#55555e) */
-    --feed: #6f9ee0; --diaper: #f2c94c; --sleep: #9d93d6; --temp: #d98079; --ok: #7fc39c;
+    --feed: #6f9ee0; --diaper: #f2c94c; --sleep: #9d93d6; --temp: #d98079; --ok: #7fc39c; --boy: #4fae7c; --girl: #e7799b;
     --kakao: #fee500;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
   }
@@ -25,7 +25,7 @@
   :root[data-theme="light"] {
     --bg: #f4f4f6; --bg1: #ececef; --card: #ffffff; --card2: #eeeef1; --line: #e4e4e9; --line2: #ededf1;
     --fg: #1b1b1f; --fg2: #6b6b75; --fg3: #9a9aa3;
-    --feed: #3b7bd4; --diaper: #e8b10e; --sleep: #7565cf; --temp: #d4554d; --ok: #2f9e63;
+    --feed: #3b7bd4; --diaper: #e8b10e; --sleep: #7565cf; --temp: #d4554d; --ok: #2f9e63; --boy: #2f9e63; --girl: #e5638c;
     --dim: rgba(0,0,0,.35); color-scheme: light;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -79,6 +79,26 @@
   .photo-pick .pv { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--card2); }
   .pbtn { padding: 8px 14px; border-radius: 999px; background: var(--card2); color: var(--fg); font-size: 14px; font-weight: 600; cursor: pointer; }
   .pbtn.ghost { background: none; color: var(--fg2); }
+  /* 아기 정보 시트 (10-22 새 구성): 큰 사진 + 카메라 배지, 이름 X 지우기, 성별 큰 두 칸(남 초록·여 분홍) */
+  .bp { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 4px 0 18px; }
+  .bp-ph { position: relative; width: 104px; height: 104px; border-radius: 50%; padding: 0; }
+  .bp-ph img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--card2); display: block; }
+  .bp-ph .cam { position: absolute; right: -2px; bottom: -2px; width: 34px; height: 34px; border-radius: 50%; background: var(--fg); border: 3px solid var(--card); display: grid; place-items: center; }
+  .bp-ph .cam svg { width: 17px; height: 17px; fill: none; stroke: var(--card); stroke-width: 1.9; stroke-linejoin: round; }
+  .bp-rm { font-size: 13px; color: var(--fg3); padding: 2px 8px; }
+  .bf { margin-bottom: 14px; }
+  .bf > label { display: block; font-size: 13px; color: var(--fg2); font-weight: 600; margin: 0 0 6px 2px; }
+  .bf input { width: 100%; background: var(--bg); border: 0; border-radius: 14px; padding: 0 14px; height: 52px; font-size: 18px; font-weight: 600; color: var(--fg); outline: none; text-align: left; -webkit-appearance: none; appearance: none; }
+  .bf input[type=date] { display: flex; align-items: center; line-height: 52px; }
+  .bf input:focus { box-shadow: inset 0 0 0 1.5px var(--ok); }
+  .bf-in { position: relative; }
+  .bf-in input { padding-right: 46px; }
+  .bf-x { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--fg3); display: grid; place-items: center; padding: 0; }
+  .bf-x svg { width: 14px; height: 14px; fill: none; stroke: var(--card); stroke-width: 2.4; stroke-linecap: round; }
+  .sexpick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sexpick button { height: 52px; border-radius: 14px; background: var(--bg); color: var(--fg2); font-size: 17px; font-weight: 600; transition: background .12s, color .12s; }
+  .sexpick button.m.on { background: var(--boy); color: #fff; font-weight: 700; }
+  .sexpick button.f.on { background: var(--girl); color: #fff; font-weight: 700; }
   .card.form label.pbtn { display: inline-block; margin: 0; font-size: 14px; color: var(--fg); font-weight: 600; }
   header .who { cursor: pointer; border-radius: 999px; }
   header .who:active { opacity: .7; }
@@ -2080,7 +2100,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.01 · 10-19';
+const VER = 'v1.02 · 10-22';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2123,16 +2143,21 @@ $('edit-baby').onclick = () => openBabySheet();
 function openBabySheet() {
   let photoBlob = null, clearPhoto = false;
   $('sheet').innerHTML = `<h3>아기 정보</h3>
-    <div class="frow"><label>사진</label><span class="photo-pick"><img id="b-photo" class="pv" src="${esc(babyFace())}" alt=""><button type="button" class="pbtn" id="b-pick">고르기</button><input type="file" id="b-file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button type="button" class="pbtn ghost ${baby.photo_url ? '' : 'hidden'}" id="b-photo-clear">기본으로</button></span></div>
-    <div class="frow"><label>이름</label><input id="b-name" maxlength="12" value="${esc(baby.name)}"></div>
-    <div class="frow"><label>생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
-    <div class="frow"><label>성별</label><span class="seg mini" id="b-sex" style="margin:0"><button type="button" data-v="m" class="${baby.sex === 'm' ? 'on' : ''}">남아</button><button type="button" data-v="f" class="${baby.sex === 'f' ? 'on' : ''}">여아</button></span></div>
+    <div class="bp"><button type="button" class="bp-ph" id="b-pick" aria-label="사진 고르기"><img id="b-photo" src="${esc(babyFace())}" alt=""><span class="cam"><svg viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg></span></button>
+      <button type="button" class="bp-rm ${baby.photo_url ? '' : 'hidden'}" id="b-photo-clear">사진 지우기</button><input type="file" id="b-file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
+    <div class="bf"><label for="b-name">이름</label><div class="bf-in"><input id="b-name" maxlength="12" value="${esc(baby.name)}" autocomplete="off"><button type="button" class="bf-x ${baby.name ? '' : 'hidden'}" id="b-name-x" aria-label="이름 지우기"><svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg></button></div></div>
+    <div class="bf"><label for="b-birth">생년월일</label><input type="date" id="b-birth" value="${baby.birth_date}"></div>
+    <div class="bf"><label>성별</label><div class="sexpick" id="b-sex"><button type="button" data-v="m" class="m ${baby.sex === 'm' ? 'on' : ''}">남아</button><button type="button" data-v="f" class="f ${baby.sex === 'f' ? 'on' : ''}">여아</button></div></div>
     <div class="foot" style="margin:2px 0 0">생일을 바꾸면 D+n이, 성별을 고르면 성장 기준 곡선이 맞춰져요</div>
     <div class="acts"><button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">저장</button></div>`;
   $('sheet').dataset.kind = 'baby';
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden'); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
   $('b-sex').onclick = e => { const b = e.target.closest('button'); if (!b) return; for (const x of $('b-sex').children) x.classList.toggle('on', x === b); };
   $('b-pick').onclick = () => $('b-file').click();
+  const nm = $('b-name'), nx = $('b-name-x');   // 이름 칸 오른쪽 X = 한 번에 지우기 (10-22 사장님 "터치한 곳이 활성화돼서 지우기 어려움")
+  nm.addEventListener('input', () => nx.classList.toggle('hidden', !nm.value));
+  nx.addEventListener('pointerdown', e => e.preventDefault());   // 키보드 안 내려가게
+  nx.onclick = () => { nm.value = ''; nx.classList.add('hidden'); nm.focus(); };
   $('b-file').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) { toast('사진이 선택되지 않았어요'); return; }
     toast('사진 읽는 중…');
