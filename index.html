@@ -650,8 +650,17 @@
   .frow input.wide { width: 100%; text-align: left; font-size: 17px; font-weight: 400; }
   .frow:has(> .nx) { position: relative; }   /* 숫자 칸 오른쪽 X = 한 번에 지우기 (10-23 사장님 "내용 있는 건 바로 지울 수 있게") */
   .frow input.has-x { padding-right: 38px; }
-  .frow .nx { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: none; }
-  .frow .nx.on { display: grid; }
+  .lr { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }   /* 모유 = 왼쪽·오른쪽 상자 나란히, 상자 안은 가로 한 줄 (10-23) */
+  .lrb { display: flex; align-items: center; gap: 6px; background: var(--bg); border-radius: 14px; padding: 4px 12px; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .15s; }
+  .lrb:focus-within { box-shadow: inset 0 0 0 2px var(--ok); }
+  .lrb label { font-size: 15px; color: var(--fg2); white-space: nowrap; }
+  .lrb .in { position: relative; flex: 1; min-width: 0; }
+  .lrb input { width: 100%; background: none; border: 0; outline: none; padding: 8px 0; text-align: right; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .lrb input.has-x { padding-right: 28px; }
+  .lr .lrb .in .nx { right: 0; }
+  .lrb .u { font-size: 14px; color: var(--fg3); }
+  .frow .nx, .lrb .in .nx { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: none; }
+  .frow .nx.on, .lrb .nx.on { display: grid; }
   .frow.col { flex-direction: column; align-items: stretch; gap: 8px; }
   .ml { display: flex; gap: 6px; margin: 6px 0 4px; }
   .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
@@ -1184,7 +1193,9 @@ function subscribe() {
 
 // ── 렌더
 const KIND = { feed: '수유', diaper: '기저귀', sleep: '잠', temp: '체온' };
-const FEED = { formula: '분유', breast: '모유', pumped: '유축' };
+const FEED = { formula: '분유', breast: '모유', pumped: '유축 수유' };   // 유축 = 짜 둔 모유를 젖병으로 먹인 것 (10-23 이름 바꿈, 짜 놓기만 한 양과 헷갈리지 않게)
+// 모유 = 왼쪽·오른쪽 분 (10-23). min 은 합계로 같이 둔다 (옛 기록·통계 호환)
+const breastText = d => d.l != null || d.r != null ? [d.l ? '왼 ' + d.l + '분' : '', d.r ? '오 ' + d.r + '분' : ''].filter(Boolean).join(' · ') : (d.min ? d.min + '분' : '');
 let avatarById = {};   // user_id → 이미지 URL (profiles.avatar_url, 없으면 첫 글자)
 const CHAR = { dad: 'img/아빠-2g-b.png', mom: 'img/엄마-2g-b.png' };   // 프로필은 카카오 사진이 아니라 캐릭터 (09-27 사장님)
 const charOf = id => { const v = avatarById[id] || ''; return v === 'char:mom' ? 'mom' : v === 'char:dad' ? 'dad' : (id === baby.created_by ? 'dad' : 'mom'); };   // 기본: 만든 사람=아빠, 합류=엄마
@@ -1192,7 +1203,7 @@ const avatarSrc = id => CHAR[charOf(id)];
 const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
 function detailOf(l) {
   const d = l.detail || {};
-  if (l.kind === 'feed') return `${FEED[d.type] || '수유'} ${d.type === 'breast' ? (d.min ? d.min + '분' : '') : (d.ml ? d.ml + 'ml' : '')}`.trim();
+  if (l.kind === 'feed') return `${FEED[d.type] || '수유'} ${d.type === 'breast' ? breastText(d) : (d.ml ? d.ml + 'ml' : '')}`.trim();
   if (l.kind === 'diaper') return [d.pee && '소변', d.poo && '대변'].filter(Boolean).join(' + ') || '기저귀';
   if (l.kind === 'sleep') return l.ended_at ? `→ ${hhmm(l.ended_at)} 깸 · ${dur(l.at, l.ended_at)}` : `자는 중 · ${dur(l.at)}`;
   if (l.kind === 'temp') return `${d.c ?? '—'}℃`;
@@ -1742,7 +1753,7 @@ const BABY_STAGES = [
   // 10-22 사장님: 2개월 단위 → 1개월 단위. 짝수 달 = 기존 확정본, 홀수 달 = 새로(미지, 1개월단위-1022). 색은 짝 달 계열 변주(A안)
   // ?r=n = 그림을 같은 이름으로 바꿀 때 폰에 남은 옛 그림 대신 새로 받게 (10-12 머리 교체가 폰에서 안 바뀜)
   { from: 0, to: 0, img: 'img/아기-단계-01.webp', bg: ['#e5b3b6', '#e7bcbe', '#e8c2c3'], lab: '#9b4a57', size: 260 },   // 크림 속싸개 + 분홍
-  { from: 1, to: 1, img: 'img/아기-단계-m1.webp', bg: ['#e4b1b4', '#e4b5b7', '#e8babc'], lab: '#9a3f4c', size: 260 },   // 더스티 로즈 우주복, 엎드려 턱만 살짝 (1-C)
+  { from: 1, to: 1, img: 'img/아기-단계-m1.webp?r=2', bg: ['#e4b1b4', '#e4b5b7', '#e8babc'], lab: '#9a3f4c', size: 260 },   // 엎드려 턱만 살짝, 기저귀만 찬 신생아 (1-D = 1-C 옷만 바꿈, 10-23. 배경 같아 카드색 유지)
   { from: 2, to: 2, img: 'img/아기-단계-23.webp', bg: ['#c7bbde', '#ccc0de', '#d3c7e1'], lab: '#5e3b91', size: 300 },   // 노랑 우주복 + 라벤더, 첫 웃음 (누운 자세라 크게)
   { from: 3, to: 3, img: 'img/아기-단계-m3.webp', bg: ['#c5b5d3', '#ccc1da', '#cebfd8'], lab: '#5d4181', size: 300 },   // 마리골드 우주복 + 라벤더, 바운서에서 소리 내어 웃기 (3-D)
   { from: 4, to: 4, img: 'img/아기-단계-45.webp', bg: ['#ecc8ae', '#ebc9b4', '#eacbb6'], lab: '#a3532a', size: 270 },   // 세이지 우주복 + 피치, 발끝 잡기 (10-01 사장님 A130)
@@ -1958,7 +1969,7 @@ function nowTime() { const d = new Date(); return `${pad(d.getHours())}:${pad(d.
 // 시트 안 숫자 칸마다 X 붙이기 — 칸을 감싸지 않고 옆에 붙여서 이미 잡은 포커스·키보드를 안 놓침 (10-23)
 const NX_SVG = '<svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg>';
 new MutationObserver(() => {
-  for (const inp of $('sheet').querySelectorAll('.frow > input[type=number]:not(.has-x)')) {
+  for (const inp of $('sheet').querySelectorAll('.frow > input[type=number]:not(.has-x), .lrb .in > input[type=number]:not(.has-x)')) {
     const x = document.createElement('button');
     x.type = 'button'; x.className = 'bf-x nx'; x.setAttribute('aria-label', '지우기'); x.innerHTML = NX_SVG;
     const upd = () => x.classList.toggle('on', document.activeElement === inp && inp.value !== '');
@@ -1978,10 +1989,12 @@ function openSheet(kind, log) {
   if (kind === 'feed') {
     const type = d.type || localStorage.getItem('bb-feedtype') || 'formula';
     const lastMl = +(localStorage.getItem('bb-ml') || 60);
+    const lastBr = log ? null : logs.filter(l => l.kind === 'feed' && l.detail?.type === 'breast').sort((a, b) => +new Date(b.at) - +new Date(a.at))[0];   // 다음엔 반대쪽부터 물리게 지난번 보여 주기
     body = `<div class="seg" id="feed-type">${Object.entries(FEED).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === type ? 'on' : ''}">${v}</button>`).join('')}</div>
       <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml"><button type="button" data-add="0" class="clr">지우기</button>${[5, 10, 20, 50].map(v => `<button type="button" data-add="${v}">+${v}</button>`).join('')}</div>
       <div class="frow"><label>양 (ml)</label><input type="number" inputmode="numeric" id="f-ml" value="${d.ml || lastMl}"></div></div>
-      <div id="feed-min" class="${type === 'breast' ? '' : 'hidden'}"><div class="frow"><label>시간 (분)</label><input type="number" inputmode="numeric" id="f-min" value="${d.min || 15}"></div></div>`;
+      <div id="feed-min" class="${type === 'breast' ? '' : 'hidden'}"><div class="lr"><div class="lrb"><label for="f-l">왼쪽</label><div class="in"><input type="number" inputmode="numeric" id="f-l" placeholder="0" value="${d.l ?? (d.r == null && d.min ? d.min : '')}"></div><span class="u">분</span></div>
+        <div class="lrb"><label for="f-r">오른쪽</label><div class="in"><input type="number" inputmode="numeric" id="f-r" placeholder="0" value="${d.r ?? ''}"></div><span class="u">분</span></div></div>${lastBr ? `<div class="foot" style="margin:2px 0 6px">지난번 ${breastText(lastBr.detail)}</div>` : ''}</div>`;
   } else if (kind === 'diaper') {
     body = `<div class="seg" id="dp-type">
       <button type="button" data-v="pee" class="${d.pee && !d.poo ? 'on' : ''}">소변</button>
@@ -2048,7 +2061,7 @@ async function saveSheet() {
   const detail = {}; let ended_at = editing ? editing.ended_at : null;
   if (kind === 'feed') {
     detail.type = $('feed-type').querySelector('.on').dataset.v;
-    if (detail.type === 'breast') detail.min = +$('f-min').value || 0; else { detail.ml = +$('f-ml').value || 0; localStorage.setItem('bb-ml', detail.ml); }
+    if (detail.type === 'breast') { const l = $('f-l').value, r = $('f-r').value; detail.l = l === '' ? null : +l; detail.r = r === '' ? null : +r; detail.min = (detail.l || 0) + (detail.r || 0); } else { detail.ml = +$('f-ml').value || 0; localStorage.setItem('bb-ml', detail.ml); }
     localStorage.setItem('bb-feedtype', detail.type);
   } else if (kind === 'diaper') { const v = $('dp-type').querySelector('.on').dataset.v; detail.pee = v !== 'poo'; detail.poo = v !== 'pee'; }
   else if (kind === 'temp') { detail.c = +$('f-c').value || null; if (!detail.c) { $('f-c').focus(); return toast('체온을 적어 주세요'); } }
@@ -2195,7 +2208,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.08 · 10-23';
+const VER = 'v1.09 · 10-23';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
