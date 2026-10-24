@@ -661,11 +661,13 @@
   .lrb .u { font-size: 14px; color: var(--fg3); }
   .frow .nx, .lrb .in .nx { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: none; }
   .frow .nx.on, .lrb .nx.on { display: grid; }
+  .frow.col .nx { top: auto; bottom: 20px; transform: none; }   /* 메모 칸 X (10-23) — 라벨이 위에 있는 줄이라 칸 높이 가운데에 */
   .frow.col { flex-direction: column; align-items: stretch; gap: 8px; }
   .ml { display: flex; gap: 6px; margin: 6px 0 4px; }
   .ml button { flex: 1; padding: 12px 0; border-radius: 999px; background: var(--bg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg2); }
   .ml button.on { background: var(--card2); color: var(--fg); }
   .ml button.clr { flex: 1.1; color: var(--fg2); font-size: 14px; }
+  .ml button.clr svg { display: block; margin: 0 auto; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }   /* 리셋 = 아이콘만 (10-23) */
   /* 시트 안 선택 표시 = 그 항목 색으로 채움 (v0.16, 사장님 "선택된건지 잘 모르겠음") */
   .sheet { --c: var(--ok); --on-fg: #0b0b0d; }
   :root[data-theme="light"] .sheet { --on-fg: #fff; }
@@ -1951,7 +1953,7 @@ function render() {
       const m = Math.round((t - prev) / 60000), h = Math.floor(m / 60), mm = m % 60; return h ? `${h}시간${mm ? ' ' + mm + '분' : ''}` : `${mm}분`; };
     const listLogs = [...dayLogs].reverse().concat(carry.reverse());   // 최신순 (v0.14, 사장님 "최신순으로") — 원형 보기·합계는 그대로
     rows.innerHTML = listLogs.map((l, i) => `<button type="button" class="row ${l.kind} ${i === listLogs.length - 1 ? 'last' : ''}" data-id="${l.id}">
-      <span class="tc"><span class="t">${hhmm(l.at)}</span>${l.kind === 'feed' && gapOf(l) ? `<span class="gap">${gapOf(l)}</span>` : ''}${localDay(l.at) < day ? `<span class="gap">${md(new Date(localDay(l.at) + 'T00:00'))}부터</span>` : ''}</span><span class="rl"></span>
+      <span class="tc"><span class="t">${hhmm(l.at)}</span>${l.kind === 'feed' && gapOf(l) ? `<span class="gap">텀 ${gapOf(l)}</span>` : ''}${localDay(l.at) < day ? `<span class="gap">${md(new Date(localDay(l.at) + 'T00:00'))}부터</span>` : ''}</span><span class="rl"></span>
       <span class="d"><b>${esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
       <span class="w">${avatar(l.user_id)}</span></button>`).join('');
     rows.insertAdjacentHTML('beforeend', sumHtml);
@@ -1969,7 +1971,7 @@ function nowTime() { const d = new Date(); return `${pad(d.getHours())}:${pad(d.
 // 시트 안 숫자 칸마다 X 붙이기 — 칸을 감싸지 않고 옆에 붙여서 이미 잡은 포커스·키보드를 안 놓침 (10-23)
 const NX_SVG = '<svg viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8"/></svg>';
 new MutationObserver(() => {
-  for (const inp of $('sheet').querySelectorAll('.frow > input[type=number]:not(.has-x), .lrb .in > input[type=number]:not(.has-x)')) {
+  for (const inp of $('sheet').querySelectorAll('.frow > input[type=number]:not(.has-x), .lrb .in > input[type=number]:not(.has-x), .frow > input.wide:not(.has-x)')) {
     const x = document.createElement('button');
     x.type = 'button'; x.className = 'bf-x nx'; x.setAttribute('aria-label', '지우기'); x.innerHTML = NX_SVG;
     const upd = () => x.classList.toggle('on', document.activeElement === inp && inp.value !== '');
@@ -1991,7 +1993,7 @@ function openSheet(kind, log) {
     const lastMl = +(localStorage.getItem('bb-ml') || 60);
     const lastBr = log ? null : logs.filter(l => l.kind === 'feed' && l.detail?.type === 'breast').sort((a, b) => +new Date(b.at) - +new Date(a.at))[0];   // 다음엔 반대쪽부터 물리게 지난번 보여 주기
     body = `<div class="seg" id="feed-type">${Object.entries(FEED).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === type ? 'on' : ''}">${v}</button>`).join('')}</div>
-      <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml"><button type="button" data-add="0" class="clr">지우기</button>${[5, 10, 20, 50].map(v => `<button type="button" data-add="${v}">+${v}</button>`).join('')}</div>
+      <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml"><button type="button" data-add="0" class="clr" aria-label="0으로 리셋"><svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 3.5v4.2h4.2"/></svg></button>${[5, 10, 20, 50].map(v => `<button type="button" data-add="${v}">+${v}</button>`).join('')}</div>
       <div class="frow"><label>양 (ml)</label><input type="number" inputmode="numeric" id="f-ml" value="${d.ml || lastMl}"></div></div>
       <div id="feed-min" class="${type === 'breast' ? '' : 'hidden'}"><div class="lr"><div class="lrb"><label for="f-l">왼쪽</label><div class="in"><input type="number" inputmode="numeric" id="f-l" placeholder="0" value="${d.l ?? (d.r == null && d.min ? d.min : '')}"></div><span class="u">분</span></div>
         <div class="lrb"><label for="f-r">오른쪽</label><div class="in"><input type="number" inputmode="numeric" id="f-r" placeholder="0" value="${d.r ?? ''}"></div><span class="u">분</span></div></div>${lastBr ? `<div class="foot" style="margin:2px 0 6px">지난번 ${breastText(lastBr.detail)}</div>` : ''}</div>`;
@@ -2208,7 +2210,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.09 · 10-23';
+const VER = 'v1.10 · 10-25';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
