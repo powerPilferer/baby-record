@@ -2058,8 +2058,12 @@ function atFromTime(hm, baseDay) { const [h, m] = hm.split(':').map(Number); con
 async function saveSheet() {
   const kind = $('sheet').dataset.kind;
   const baseDay = editing ? localDay(editing.at) : day;
-  const at = atFromTime($('f-at').value || nowTime(), baseDay);
-  if (!editing && at > Date.now() + 60000) at.setDate(at.getDate() - 1);   // 새벽에 "어제 23:50" 을 적는 경우
+  let at = atFromTime($('f-at').value || nowTime(), baseDay);
+  if (editing) {   // 고칠 땐 자정을 넘나들 수 있게: 전날·그날·다음날 중 원래 시각에서 가장 가까운 쪽 (미래는 제외). 10-27 사장님 "12시 넘으면 전날로 돌아갈 수가 없다"
+    const o = +new Date(editing.at), lim = Date.now() + 60000;
+    const c = [-1, 0, 1].map(k => { const d = new Date(at); d.setDate(d.getDate() + k); return d; }).filter(d => +d <= lim).sort((x, y) => Math.abs(x - o) - Math.abs(y - o));
+    if (c.length) at = c[0];
+  } else if (at > Date.now() + 60000) at.setDate(at.getDate() - 1);   // 새벽에 "어제 23:50" 을 적는 경우
   const detail = {}; let ended_at = editing ? editing.ended_at : null;
   if (kind === 'feed') {
     detail.type = $('feed-type').querySelector('.on').dataset.v;
@@ -2067,7 +2071,7 @@ async function saveSheet() {
     localStorage.setItem('bb-feedtype', detail.type);
   } else if (kind === 'diaper') { const v = $('dp-type').querySelector('.on').dataset.v; detail.pee = v !== 'poo'; detail.poo = v !== 'pee'; }
   else if (kind === 'temp') { detail.c = +$('f-c').value || null; if (!detail.c) { $('f-c').focus(); return toast('체온을 적어 주세요'); } }
-  else if (kind === 'sleep') { const e = $('f-end').value; if (e) { const ed = atFromTime(e, baseDay); if (ed < at) ed.setDate(ed.getDate() + 1); ended_at = ed.toISOString(); } else ended_at = null; }
+  else if (kind === 'sleep') { const e = $('f-end').value; if (e) { const ed = atFromTime(e, baseDay); if (ed < at) ed.setDate(ed.getDate() + 1); if (+ed > Date.now() + 60000) { $('f-end').focus(); return toast('깬 시각이 아직 안 왔어요'); } ended_at = ed.toISOString(); } else ended_at = null; }   // 미래 깬 시각 막기 (10-27 사장님 "미래로 가는 건 말이 안 되니까")
   const row = { baby_id: baby.id, user_id: editing ? editing.user_id : me.id, kind, at: at.toISOString(), ended_at, detail, note: $('f-note').value.trim() };   // 고칠 땐 원래 쓴 사람 유지
   try {
     if (editing) await db.updLog(editing.id, row); else await db.addLog(row);
@@ -2210,7 +2214,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.10 · 10-25';
+const VER = 'v1.11 · 10-27';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
