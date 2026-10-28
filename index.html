@@ -1015,6 +1015,8 @@ async function makeThumb(blob) {   // 336×420(화면 168px의 2배) JPEG ≈ 20
 let photoPaths = {};    // day → 비공개 저장소 diary-photos 안 경로 (baby_days.photo)
 const PHOTO_ON = true;
 let day = dstr(new Date());
+let seenToday = day;   // 화면을 켜 둔 채 자정이 지나면 '오늘'을 보던 사람은 새 오늘로 넘긴다 (10-29 사장님 "다음날 바로 눌렀더니 전날 새벽으로 기록")
+function rollDay() { const t = dstr(new Date()); if (t === seenToday) return false; const was = day === seenToday; seenToday = t; if (was) day = t; return was; }
 let channel = null;
 
 // ── 데이터 계층 (mock 은 메모리)
@@ -1984,6 +1986,7 @@ new MutationObserver(() => {
 }).observe($('sheet'), { childList: true, subtree: true });
 
 function openSheet(kind, log) {
+  if (!log && rollDay()) render();   // 새 기록은 날짜도 지금 기준
   editing = log || null;
   const d = (log && log.detail) || {};
   const t = log ? hhmm(log.at) : nowTime();
@@ -2055,7 +2058,9 @@ function closeSheet() { $('dim').classList.add('hidden'); $('sheet').classList.a
   sh.addEventListener('touchend', end); sh.addEventListener('touchcancel', end);
 })();
 function atFromTime(hm, baseDay) { const [h, m] = hm.split(':').map(Number); const d = new Date(baseDay + 'T00:00'); d.setHours(h, m, 0, 0); return d; }
+let saving = false;   // 저장 버튼 두 번 눌림 막기 (10-28 사장님 "실수로 두번 저장될때 대비")
 async function saveSheet() {
+  if (saving) return;
   const kind = $('sheet').dataset.kind;
   const baseDay = editing ? localDay(editing.at) : day;
   let at = atFromTime($('f-at').value || nowTime(), baseDay);
@@ -2073,10 +2078,15 @@ async function saveSheet() {
   else if (kind === 'temp') { detail.c = +$('f-c').value || null; if (!detail.c) { $('f-c').focus(); return toast('체온을 적어 주세요'); } }
   else if (kind === 'sleep') { const e = $('f-end').value; if (e) { const ed = atFromTime(e, baseDay); if (ed < at) ed.setDate(ed.getDate() + 1); if (+ed > Date.now() + 60000) { $('f-end').focus(); return toast('깬 시각이 아직 안 왔어요'); } ended_at = ed.toISOString(); } else ended_at = null; }   // 미래 깬 시각 막기 (10-27 사장님 "미래로 가는 건 말이 안 되니까")
   const row = { baby_id: baby.id, user_id: editing ? editing.user_id : me.id, kind, at: at.toISOString(), ended_at, detail, note: $('f-note').value.trim() };   // 고칠 땐 원래 쓴 사람 유지
+  // 새 기록인데 같은 종류가 같은 시각(±1분)에 이미 있으면 한 번 묻는다 — 둘이 같이 적었거나 두 번 저장한 경우
+  const dup = !editing && logs.find(l => l.kind === kind && Math.abs(new Date(l.at) - at) < 60000);
+  if (dup && !confirm(`${hhmm(dup.at)}에 ${KIND[kind]} 기록이 이미 있어요.\n하나 더 저장할까요?`)) return;
+  saving = true; $('sh-save').disabled = true;
   try {
     if (editing) await db.updLog(editing.id, row); else await db.addLog(row);
     closeSheet(); render(); toast(editing ? '고쳤어요' : `${KIND[kind]} 기록했어요`);
   } catch (e) { alert('저장 실패: ' + e.message); }
+  finally { saving = false; $('sh-save').disabled = false; }
 }
 
 // ── 홈 이벤트
@@ -2084,6 +2094,7 @@ document.querySelector('.quick').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   const kind = b.dataset.kind;
   if (kind === 'sleep') {
+    if (saving) return; saving = true; setTimeout(() => saving = false, 1500);   // 잠 버튼 연타로 잠듦·깸이 연달아 찍히지 않게 (10-28)
     // 실패해도 조용히 멈추지 않게 (v0.25: 배우자가 누른 잠을 '지금 깸' 하면 서버 규칙에 막혀 먹통처럼 보였음)
     const open = logs.find(l => l.kind === 'sleep' && !l.ended_at);
     try {
@@ -2106,7 +2117,7 @@ const onPick = e => { const today = dstr(new Date()); const v = e.target.value |
   const to = v > today ? today : v < baby.birth_date ? baby.birth_date : v; if (to !== day) goDay(to); else e.target.value = day; };
 $('h-pick').addEventListener('change', onPick); $('h-pick').addEventListener('input', onPick);
 $('day-prev').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() - 1); goDay(dstr(d)); };
-$('day-today').onclick = () => { day = dstr(new Date()); render(); };   // 지난 날 보다가 한 번에 오늘로 (10-08 사장님)
+$('day-today').onclick = () => { rollDay(); day = dstr(new Date()); render(); };   // 지난 날 보다가 한 번에 오늘로 (10-08 사장님)
 $('day-next').onclick = () => { const d = new Date(day + 'T00:00'); d.setDate(d.getDate() + 1); day = dstr(d); render(); };
 $('note-in').addEventListener('input', () => $('note-btn').disabled = !$('note-in').value.trim());
 $('notes').addEventListener('click', async e => {
@@ -2214,7 +2225,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.11 · 10-27';
+const VER = 'v1.12 · 10-29';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2226,7 +2237,7 @@ async function checkUpdate() {
     if (m && m[1] !== VER) { toast('새 버전으로 바꿔요'); setTimeout(() => location.reload(), 600); }
   } catch (_) {}
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkUpdate(); resync(0); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (rollDay()) render(); checkUpdate(); resync(0); } });
 window.addEventListener('pageshow', e => { if (e.persisted) resync(0); });   // 사파리가 페이지를 얼려뒀다 되살릴 때
 setTimeout(checkUpdate, 4000); setInterval(checkUpdate, 30 * 60000);
 $('open-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; fillSettings(); show('s-settings'); };
