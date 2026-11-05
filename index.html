@@ -639,6 +639,10 @@
   .sheet h3 { margin: 0 0 14px; font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
   .sheet h3 { display: flex; align-items: center; gap: 8px; }
   .sheet h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+  .sheet h3 .sd { margin-left: auto; font-size: 14px; font-weight: 500; color: var(--fg2); letter-spacing: -.01em; }   /* 어느 날에 들어가는지 (11-06 사장님 "날짜도 표기해줘야 명확히 알듯") */
+  .sheet h3 .sd.past { height: 28px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid #666; color: #666; font-size: 14px; font-weight: 600; }   /* 지난 날도 같은 알약 — 테두리·글씨만 회색, 다크 #666 · 라이트 #999 (11-06 사장님) */
+  :root[data-theme="light"] .sheet h3 .sd.past { border-color: #999; color: #999; }
+  .sheet h3 .sd.today { height: 28px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--ok) 16%, var(--card)); color: var(--ok); font-size: 14px; font-weight: 600; }   /* 오늘은 홈 날짜 줄의 '오늘' 알약과 같게 (11-06 사장님) */
   .sheet h3.feed { --c: var(--feed); } .sheet h3.diaper { --c: var(--diaper); } .sheet h3.sleep { --c: var(--sleep); } .sheet h3.temp { --c: var(--temp); }
   .seg { display: flex; background: var(--bg); border-radius: 999px; padding: 4px; gap: 4px; margin-bottom: 14px; }
   .seg button { flex: 1; padding: 10px 0; border-radius: 999px; font-weight: 600; color: var(--fg2); }
@@ -2007,15 +2011,16 @@ function openSheet(kind, log) {
       <button type="button" data-v="both" class="${d.pee && d.poo ? 'on' : (!log ? 'on' : '')}">둘 다</button></div>`;
   } else if (kind === 'sleep') {
     body = `<div class="frow"><label>깬 시각</label><input type="time" id="f-end" value="${log && log.ended_at ? hhmm(log.ended_at) : ''}"></div>
-      <div class="foot" style="margin:0 0 4px">비워두면 "자는 중"으로 남아요</div>`;
+      <div class="foot" style="margin:0 0 4px">${!log && day !== dstr(new Date()) ? '지난 날 잠은 깬 시각까지 적어 주세요' : '비워두면 "자는 중"으로 남아요'}</div>`;
   } else if (kind === 'temp') {
     body = `<div class="frow"><label>체온 (℃)</label><input type="number" inputmode="decimal" step="0.1" id="f-c" placeholder="36.8" value="${d.c || ''}"></div>`;
   }
-  $('sheet').innerHTML = `<h3 class="${kind}">${KIND[kind]} ${log ? '고치기' : ''}</h3>${body}
-    <div class="frow"><label>${kind === 'sleep' ? '잠든 시각' : '시각'}</label><input type="time" id="f-at" value="${t}"></div>
+  $('sheet').innerHTML = `<h3 class="${kind}">${KIND[kind]} ${log ? '고치기' : ''}<span class="sd" id="sh-date"></span></h3>${kind === 'sleep' ? '' : body}
+    <div class="frow"><label>${kind === 'sleep' ? '잠든 시각' : '시각'}</label><input type="time" id="f-at" value="${t}"></div>${kind === 'sleep' ? body : ''}
     <div class="frow col"><label>메모</label><input class="wide" id="f-note" maxlength="60" placeholder="트림 안 시킴, 조금 보챔…" value="${esc(log ? log.note : '')}"></div>
     <div class="acts">${log ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">${log ? '저장' : '기록'}</button></div>`;
   $('sheet').dataset.kind = kind;
+  showSheetDate(); $('f-at').addEventListener('input', showSheetDate); $('f-at').addEventListener('change', showSheetDate);
   $('dim').classList.remove('hidden'); $('sheet').classList.remove('hidden');
   if (kind === 'temp' && !log) $('f-c').focus();   // 바로 숫자 키보드
   // 세그먼트·ml 칩
@@ -2058,10 +2063,7 @@ function closeSheet() { $('dim').classList.add('hidden'); $('sheet').classList.a
   sh.addEventListener('touchend', end); sh.addEventListener('touchcancel', end);
 })();
 function atFromTime(hm, baseDay) { const [h, m] = hm.split(':').map(Number); const d = new Date(baseDay + 'T00:00'); d.setHours(h, m, 0, 0); return d; }
-let saving = false;   // 저장 버튼 두 번 눌림 막기 (10-28 사장님 "실수로 두번 저장될때 대비")
-async function saveSheet() {
-  if (saving) return;
-  const kind = $('sheet').dataset.kind;
+function sheetAt() {
   const baseDay = editing ? localDay(editing.at) : day;
   let at = atFromTime($('f-at').value || nowTime(), baseDay);
   if (editing) {   // 고칠 땐 자정을 넘나들 수 있게: 전날·그날·다음날 중 원래 시각에서 가장 가까운 쪽 (미래는 제외). 10-27 사장님 "12시 넘으면 전날로 돌아갈 수가 없다"
@@ -2069,6 +2071,19 @@ async function saveSheet() {
     const c = [-1, 0, 1].map(k => { const d = new Date(at); d.setDate(d.getDate() + k); return d; }).filter(d => +d <= lim).sort((x, y) => Math.abs(x - o) - Math.abs(y - o));
     if (c.length) at = c[0];
   } else if (at > Date.now() + 60000) at.setDate(at.getDate() - 1);   // 새벽에 "어제 23:50" 을 적는 경우
+  return at;
+}
+function showSheetDate() {   // 시트 제목 옆에 이 기록이 들어갈 날짜 — 오늘이 아니면 보라로
+  const el = $('sh-date'); if (!el) return; const d = sheetAt(), today = dstr(new Date()), ds = dstr(d);
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  el.textContent = ds === today ? '오늘' : `${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일${ds === dstr(y) ? ' · 어제' : ''}`;
+  el.classList.toggle('past', ds !== today); el.classList.toggle('today', ds === today);
+}
+let saving = false;   // 저장 버튼 두 번 눌림 막기 (10-28 사장님 "실수로 두번 저장될때 대비")
+async function saveSheet() {
+  if (saving) return;
+  const kind = $('sheet').dataset.kind;
+  const at = sheetAt();
   const detail = {}; let ended_at = editing ? editing.ended_at : null;
   if (kind === 'feed') {
     detail.type = $('feed-type').querySelector('.on').dataset.v;
@@ -2076,7 +2091,7 @@ async function saveSheet() {
     localStorage.setItem('bb-feedtype', detail.type);
   } else if (kind === 'diaper') { const v = $('dp-type').querySelector('.on').dataset.v; detail.pee = v !== 'poo'; detail.poo = v !== 'pee'; }
   else if (kind === 'temp') { detail.c = +$('f-c').value || null; if (!detail.c) { $('f-c').focus(); return toast('체온을 적어 주세요'); } }
-  else if (kind === 'sleep') { const e = $('f-end').value; if (e) { const ed = atFromTime(e, baseDay); if (ed < at) ed.setDate(ed.getDate() + 1); if (+ed > Date.now() + 60000) { $('f-end').focus(); return toast('깬 시각이 아직 안 왔어요'); } ended_at = ed.toISOString(); } else ended_at = null; }   // 미래 깬 시각 막기 (10-27 사장님 "미래로 가는 건 말이 안 되니까")
+  else if (kind === 'sleep') { const e = $('f-end').value; if (!e && !editing && dstr(at) !== dstr(new Date())) { $('f-end').focus(); return toast('깬 시각도 적어 주세요'); } if (e) { const ed = atFromTime(e, dstr(at)); if (ed < at) ed.setDate(ed.getDate() + 1); if (+ed > Date.now() + 60000) { $('f-end').focus(); return toast('깬 시각이 아직 안 왔어요'); } ended_at = ed.toISOString(); } else ended_at = null; }   // 미래 깬 시각 막기 (10-27 사장님 "미래로 가는 건 말이 안 되니까")
   const row = { baby_id: baby.id, user_id: editing ? editing.user_id : me.id, kind, at: at.toISOString(), ended_at, detail, note: $('f-note').value.trim() };   // 고칠 땐 원래 쓴 사람 유지
   // 새 기록인데 같은 종류가 같은 시각(±1분)에 이미 있으면 한 번 묻는다 — 둘이 같이 적었거나 두 번 저장한 경우
   const dup = !editing && logs.find(l => l.kind === kind && Math.abs(new Date(l.at) - at) < 60000);
@@ -2093,6 +2108,7 @@ async function saveSheet() {
 document.querySelector('.quick').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   const kind = b.dataset.kind;
+  if (kind === 'sleep' && day !== dstr(new Date())) return openSheet('sleep');   // 지난 날 화면에선 잠든·깬 시각을 적는 창 (11-06)
   if (kind === 'sleep') {
     if (saving) return; saving = true; setTimeout(() => saving = false, 1500);   // 잠 버튼 연타로 잠듦·깸이 연달아 찍히지 않게 (10-28)
     // 실패해도 조용히 멈추지 않게 (v0.25: 배우자가 누른 잠을 '지금 깸' 하면 서버 규칙에 막혀 먹통처럼 보였음)
@@ -2225,7 +2241,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.12 · 10-29';
+const VER = 'v1.13 · 11-06';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
