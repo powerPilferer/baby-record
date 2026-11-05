@@ -639,6 +639,7 @@
      .hidden(display:none)을 바로 붙이면 내려가는 게 안 보인다(사파리 overlay 미지원과 같은 함정) → .closing 으로 먼저 내리고 200ms 뒤에 숨김 */
   .sheet.in { animation: shIn .4s cubic-bezier(.32,.72,0,1); }
   .sheet.in-kb { animation: shFade .16s ease-out; }   /* 열자마자 키보드가 뜨는 시트(체온·성장 칸): 키보드가 올라오는 게 곧 움직임이라 시트는 제자리에서 나타남만 */
+  .sheet.kb { overflow-y: auto; overscroll-behavior: contain; padding-bottom: 12px; }   /* 키보드가 떠 있으면 시트를 키보드 위로 올리고(sheetFit), 넘치면 시트 안에서 스크롤 (11-06 사장님 "키보드가 팝업 내용을 덮어") */
   .dim.in, .dim.in-kb { animation: shFade .3s ease-out; }
   @keyframes shIn { from { transform: translateY(100%); } }
   @keyframes shFade { from { opacity: 0; } }
@@ -1535,7 +1536,7 @@ function openGrowthSheet(rec, focus) {
   const entry = !!focus, today = dstr(new Date());
   let target = entry ? (growth.find(r => r.day === today) || null) : rec;
   const val = (r, k) => r && r[GM[k].key] != null ? +r[GM[k].key] : '';
-  $('sheet').innerHTML = `<h3 class="grow" id="gs-title"></h3>
+  $('sheet').innerHTML = `<h3 class="grow"><span id="gs-title"></span><span class="sd" id="gs-date"></span></h3>
     <div class="frow"><label>날짜</label><input type="date" id="g-day" value="${entry ? today : rec.day}" max="${today}" style="width:170px"></div>
     <div class="frow${focus === 'w' ? ' focus' : ''}"><label>몸무게 <small style="color:var(--fg3)">kg</small></label><input type="number" inputmode="decimal" step="0.01" id="g-w" placeholder="3.52"></div>
     <div class="frow${focus === 'l' ? ' focus' : ''}"><label>키 <small style="color:var(--fg3)">cm</small></label><input type="number" inputmode="decimal" step="0.1" id="g-l" placeholder="51.5"></div>
@@ -1548,6 +1549,8 @@ function openGrowthSheet(rec, focus) {
     $('sh-save').textContent = entry && !r ? '기록' : '저장';
     $('g-foot').textContent = entry && r ? '이날 적어둔 값이에요. 바꾸거나 빈칸을 채워주세요' : '재지 않은 칸은 비워두세요'; };
   fill(target);
+  const pill = () => { if ($('g-day').value) datePill($('gs-date'), $('g-day').value); };   // 기록 시트와 같은 날짜 알약 (11-06 사장님)
+  pill(); $('g-day').addEventListener('change', pill); $('g-day').addEventListener('input', pill);
   if (entry) $('g-day').addEventListener('change', () => { target = growth.find(r => r.day === $('g-day').value) || null; fill(target); });
   $('sheet').dataset.kind = 'growth';
   shOpen(); $('dim').onclick = closeSheet; $('sh-cancel').onclick = closeSheet;
@@ -2066,6 +2069,16 @@ function backOn() { if (_RM.matches) return; const R = document.documentElement;
 function backOff() { const R = document.documentElement; if (!R.classList.contains('sh-on')) return; R.classList.remove('sh-drag'); R.style.setProperty('--bkd', '.2s'); R.style.setProperty('--bk', '1'); }
 function backDone() { const R = document.documentElement; R.classList.remove('sh-on', 'sh-drag'); }
 addEventListener('scroll', () => { if (document.documentElement.classList.contains('sh-on')) backSet(); }, { passive: true });   // 키보드가 화면을 밀어 올려도 알약이 제자리
+// 키보드 위로 시트 올리기: iOS는 키보드가 화면 아래를 덮을 뿐 fixed 시트를 밀어 주지 않는다 → 보이는 영역(visualViewport) 바닥에 시트를 붙인다
+const _VV = window.visualViewport;
+function sheetFit() {
+  const sh = $('sheet'), kb = _VV && !sh.classList.contains('hidden') ? Math.max(0, Math.round(innerHeight - _VV.height - _VV.offsetTop)) : 0;
+  sh.classList.toggle('kb', kb > 40); sh.style.bottom = kb > 40 ? kb + 'px' : ''; sh.style.maxHeight = kb > 40 ? (_VV.height - 12) + 'px' : '';
+  const a = document.activeElement; if (kb > 40 && sh.contains(a) && a.matches('input, textarea')) { const r = a.getBoundingClientRect(), sr = sh.getBoundingClientRect();
+    if (r.bottom > sr.bottom - 8) sh.scrollTop += r.bottom - sr.bottom + 16; else if (r.top < sr.top + 8) sh.scrollTop -= sr.top - r.top + 16; }   // 고른 칸이 보이게
+}
+_VV?.addEventListener('resize', sheetFit); _VV?.addEventListener('scroll', sheetFit);
+$('sheet').addEventListener('focusin', () => setTimeout(sheetFit, 60));
 function shOpen() {
   const sh = $('sheet'), dm = $('dim'); clearTimeout(_shT); cancelAnimationFrame(_shRaf);
   const was = !sh.classList.contains('hidden') && !sh.classList.contains('closing');
@@ -2081,7 +2094,7 @@ $('sheet').addEventListener('animationend', e => { if (e.target === $('sheet')) 
 function closeSheet(now) {
   const sh = $('sheet'), dm = $('dim'); editing = null; clearTimeout(_shT); cancelAnimationFrame(_shRaf);
   const done = () => { dm.classList.add('hidden'); sh.classList.add('hidden'); sh.classList.remove('closing', 'in', 'in-kb'); dm.classList.remove('closing', 'in', 'in-kb');
-    sh.style.transform = ''; sh.style.transition = ''; dm.style.opacity = ''; dm.style.transition = ''; backDone(); };
+    sh.style.transform = ''; sh.style.transition = ''; dm.style.opacity = ''; dm.style.transition = ''; sh.classList.remove('kb'); sh.style.bottom = ''; sh.style.maxHeight = ''; sh.scrollTop = 0; backDone(); };
   if (now === true || _RM.matches || sh.classList.contains('hidden')) return done();
   if (sh.classList.contains('closing')) return;
   backOff();
@@ -2098,6 +2111,7 @@ function closeSheet(now) {
   const sh = $('sheet'); let y0 = 0, t0 = 0, dy = 0, drag = false, vy = 0, lastY = 0, lastT = 0;
   sh.addEventListener('touchstart', e => {
     if (e.target.closest('input, textarea, select, button, label, .seg, .ml, .photo-pick, .ai-log, form')) { drag = false; return; }
+    if (sh.scrollTop > 0) { drag = false; return; }   // 키보드 위로 올라가 시트 안을 스크롤 중이면 끌어내리지 않음
     drag = true; y0 = lastY = e.touches[0].clientY; t0 = lastT = e.timeStamp; dy = 0; vy = 0; sh.style.transition = 'none';
   }, { passive: true });
   sh.addEventListener('touchmove', e => {
@@ -2128,7 +2142,10 @@ function sheetAt() {
   return at;
 }
 function showSheetDate() {   // 시트 제목 옆에 이 기록이 들어갈 날짜 — 오늘이 아니면 보라로
-  const el = $('sh-date'); if (!el) return; const d = sheetAt(), today = dstr(new Date()), ds = dstr(d);
+  const el = $('sh-date'); if (el) datePill(el, dstr(sheetAt()));
+}
+function datePill(el, ds) {   // 제목 옆 날짜 알약 — 오늘 = 초록 "오늘", 지난 날 = 회색 테두리 날짜 (기록·성장 시트 공용)
+  const today = dstr(new Date()), d = new Date(ds + 'T00:00');
   const y = new Date(); y.setDate(y.getDate() - 1);
   el.textContent = ds === today ? '오늘' : `${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일${ds === dstr(y) ? ' · 어제' : ''}`;
   el.classList.toggle('past', ds !== today); el.classList.toggle('today', ds === today);
@@ -2295,7 +2312,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.14 · 11-06';
+const VER = 'v1.15 · 11-06';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
