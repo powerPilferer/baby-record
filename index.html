@@ -639,18 +639,21 @@
      .hidden(display:none)을 바로 붙이면 내려가는 게 안 보인다(사파리 overlay 미지원과 같은 함정) → .closing 으로 먼저 내리고 200ms 뒤에 숨김 */
   .sheet.in { animation: shIn .4s cubic-bezier(.32,.72,0,1); }
   .sheet.in-kb { animation: shFade .16s ease-out; }   /* 열자마자 키보드가 뜨는 시트(체온·성장 칸): 키보드가 올라오는 게 곧 움직임이라 시트는 제자리에서 나타남만 */
-  .sheet.kb { overflow-y: auto; overscroll-behavior: contain; padding-bottom: 12px; }   /* 키보드가 떠 있으면 시트를 키보드 위로 올리고(sheetFit), 넘치면 시트 안에서 스크롤 (11-06 사장님 "키보드가 팝업 내용을 덮어") */
+  .sheet.kb { overflow-y: auto; overscroll-behavior: contain; }   /* 키보드가 떠 있으면 시트를 키보드 위로 올리고, 넘치면 시트 안에서 스크롤 (11-06 사장님 "키보드가 팝업 내용을 덮어") */
+  /* 키보드와 한 덩어리로 (11-06 모선, 사장님 "키보드만 위로 올라오는 모션이 있어서 어색해. 팝업도 같이"): 키보드 높이만큼은 transform 이 아니라 translate 로 —
+     열고 닫는 transform(올라옴·내려감·끌기)과 따로 놀아 서로 끊지 않는다. 곡선은 iOS 키보드 곡선 근사 (.38,.7,.125,1), 길이는 키보드 스프링이 자리 잡는 .5s(역산 자료 기준, 실기기에서 이 숫자 하나만 맞추면 된다) */
+  .sheet { translate: 0 0; transition: translate .5s cubic-bezier(.38,.7,.125,1); }
   .dim.in, .dim.in-kb { animation: shFade .3s ease-out; }
   @keyframes shIn { from { transform: translateY(100%); } }
   @keyframes shFade { from { opacity: 0; } }
-  .sheet.closing { transform: translateY(100%); transition: transform .2s cubic-bezier(.32,.72,0,1); }   /* 눌러서 닫는 거라 첫 프레임부터 움직여야 한다 — ease-in은 60ms에 15px뿐이라 굼떴다 */
+  .sheet.closing { transform: translateY(100%); transition: transform .2s cubic-bezier(.32,.72,0,1), translate .2s cubic-bezier(.32,.72,0,1); }   /* 눌러서 닫는 거라 첫 프레임부터 움직여야 한다 — ease-in은 60ms에 15px뿐이라 굼떴다 */
   .sheet.closing * { pointer-events: none; }   /* 내려가는 중 한 번 더 누른 손가락은 시트가 삼킨다(두 번 저장·밑 탭바 눌림 방지) */
   .dim.closing { opacity: 0; transition: opacity .2s ease-out; pointer-events: none; }
   html.sh-on .screen:not(.hidden), html.sh-on #tabs, html.sh-on .gear-fab:not(.hidden) { transform: scale(var(--bk, 1)); transform-origin: var(--bko); transition: transform var(--bkd, .4s) cubic-bezier(.32,.72,0,1); }
   html.sh-on.sh-drag .screen:not(.hidden), html.sh-on.sh-drag #tabs, html.sh-on.sh-drag .gear-fab:not(.hidden) { transition: none; }
   /* 변형된 화면 안의 fixed 알약은 화면 상자 기준이 되므로 그만큼 되돌려 놓는다(화면과 같이 물러남) */
   html.sh-on #s-home header .who, html.sh-on #s-stats header .who, html.sh-on #s-growth #g-pill { top: calc(var(--sat) + 12px - var(--bkT, 0px)); left: calc(16px - var(--bkL, 0px)); }
-  @media (prefers-reduced-motion: reduce) { .sheet.in, .sheet.in-kb, .dim.in, .dim.in-kb { animation: none; } .sheet.closing, .dim.closing { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .sheet.in, .sheet.in-kb, .dim.in, .dim.in-kb { animation: none; } .sheet, .sheet.closing, .dim.closing { transition: none; } }
   .sheet::before { content: ""; display: block; width: 40px; height: 5px; border-radius: 3px; background: var(--fg3); opacity: .45; margin: 0 auto 14px; }
   .sheet h3 { margin: 0 0 14px; font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
   .sheet h3 { display: flex; align-items: center; gap: 8px; }
@@ -2069,16 +2072,69 @@ function backOn() { if (_RM.matches) return; const R = document.documentElement;
 function backOff() { const R = document.documentElement; if (!R.classList.contains('sh-on')) return; R.classList.remove('sh-drag'); R.style.setProperty('--bkd', '.2s'); R.style.setProperty('--bk', '1'); }
 function backDone() { const R = document.documentElement; R.classList.remove('sh-on', 'sh-drag'); }
 addEventListener('scroll', () => { if (document.documentElement.classList.contains('sh-on')) backSet(); }, { passive: true });   // 키보드가 화면을 밀어 올려도 알약이 제자리
-// 키보드 위로 시트 올리기: iOS는 키보드가 화면 아래를 덮을 뿐 fixed 시트를 밀어 주지 않는다 → 보이는 영역(visualViewport) 바닥에 시트를 붙인다
-const _VV = window.visualViewport;
-function sheetFit() {
-  const sh = $('sheet'), kb = _VV && !sh.classList.contains('hidden') ? Math.max(0, Math.round(innerHeight - _VV.height - _VV.offsetTop)) : 0;
-  sh.classList.toggle('kb', kb > 40); sh.style.bottom = kb > 40 ? kb + 'px' : ''; sh.style.maxHeight = kb > 40 ? (_VV.height - 12) + 'px' : '';
-  const a = document.activeElement; if (kb > 40 && sh.contains(a) && a.matches('input, textarea')) { const r = a.getBoundingClientRect(), sr = sh.getBoundingClientRect();
-    if (r.bottom > sr.bottom - 8) sh.scrollTop += r.bottom - sr.bottom + 16; else if (r.top < sr.top + 8) sh.scrollTop -= sr.top - r.top + 16; }   // 고른 칸이 보이게
+// 키보드 위로 시트 올리기: iOS는 키보드가 화면 아래를 덮을 뿐 fixed 시트를 밀어 주지 않는다 → 보이는 영역(visualViewport) 바닥에 시트를 붙인다 (v1.15)
+// 키보드와 같이 움직이기 (11-06 모선): iOS는 키보드 높이를 늦게 알려 준다(주소창이 아래면 키보드가 다 올라온 뒤에야).
+//  그래서 칸에 포커스가 가는 그 순간 — 키보드가 막 움직이기 시작할 때 — 지난번 키보드 높이(처음이면 화면 높이의 42%)로 바로 같이 출발하고,
+//  실제 높이가 오면 가던 자리에서 부드럽게 고쳐 잡는다(CSS 전환은 도중에 목표가 바뀌어도 그 자리에서 이어 간다). 칸을 떠나면 그 순간 같이 내려간다.
+const _VV = window.visualViewport, _TR = CSS.supports('translate', '0 1px');
+const _KBIN = 'textarea, input:not([type=time]):not([type=date]):not([type=datetime-local]):not([type=month]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=button]):not([type=submit]):not([inputmode=none])';
+let _kbT = 0, _kbWaitT = 0, _kbTallT = 0, _kbDownAt = 0, _kbTallP = false;
+const kbNow = () => _VV ? Math.max(0, Math.round(innerHeight - _VV.height - _VV.offsetTop)) : 0;
+const kbIn = () => { const a = document.activeElement; return a && $('sheet').contains(a) && a.matches(_KBIN) ? a : null; };
+const kbKey = a => 'bb-kb-' + (/decimal|numeric|tel/.test(a.getAttribute('inputmode') || '') || a.type === 'number' || a.type === 'tel' ? 'num' : 'text');   // 숫자판·글자판은 높이가 달라 따로 기억
+function kbGuess(a) {   // 이 판을 처음 띄울 때: 다른 판 높이를 알면 거기서 ±44(글자판 위 추천 단어 줄), 아무것도 모르면 화면 높이의 42%
+  const k = kbKey(a), g = +localStorage.getItem(k); if (g > 40) return g;
+  const o = +localStorage.getItem(k === 'bb-kb-num' ? 'bb-kb-text' : 'bb-kb-num'); if (o > 40) return k === 'bb-kb-num' ? o - 44 : o + 44;
+  return Math.round(innerHeight * .42);
 }
-_VV?.addEventListener('resize', sheetFit); _VV?.addEventListener('scroll', sheetFit);
-$('sheet').addEventListener('focusin', () => setTimeout(sheetFit, 60));
+function kbY(sh, y) { if (_TR) sh.style.translate = y ? `0 ${-y}px` : ''; else sh.style.bottom = y ? y + 'px' : ''; }   // 옛 사파리(translate 없음)는 v1.15처럼 bottom 으로 바로
+function kbShow() {   // 시트 안에서 스크롤하는 경우에만: 고른 칸이 보이게
+  const sh = $('sheet'), a = kbIn(); if (!a || !sh.classList.contains('kb')) return;
+  const r = a.getBoundingClientRect(), sr = sh.getBoundingClientRect();
+  const d = r.bottom > sr.bottom - 8 ? r.bottom - sr.bottom + 16 : r.top < sr.top + 8 ? -(sr.top - r.top + 16) : 0;
+  if (d) sh.scrollBy({ top: d, behavior: _RM.matches ? 'auto' : 'smooth' });
+}
+function kbPlace(T) {
+  const sh = $('sheet'); if (sh.classList.contains('hidden') || sh.classList.contains('closing')) return;
+  T = T > 40 ? T : 0; clearTimeout(_kbTallT);
+  const was = _kbTallP ? 0 : _kbT; _kbT = T; _kbTallP = false;   // 긴 시트가 올라가던 중에 실제 높이가 오면 처음 올라가는 것처럼 목표만 고친다
+  getComputedStyle(sh).translate;   // 방금 보이게 된 시트(체온 새 기록)도 0에서 출발하게 한 번 확정
+  const cs = getComputedStyle(sh), pad = Math.max(0, parseFloat(cs.paddingBottom) - 12);   // 아래 여백(홈 바 자리)은 키보드 뒤로 숨기고 12px만 남긴다
+  const clamped = !!sh.style.maxHeight;
+  if (!T) {   // 내려감
+    if (clamped) {   // 시트 안 스크롤 중이던 긴 시트: 위 끝은 그대로 둔 채 길이를 먼저 풀고(늘어난 아래는 아직 키보드 뒤) 같이 내려간다
+      sh.style.transition = 'none'; sh.classList.remove('kb'); sh.style.maxHeight = ''; sh.scrollTop = 0;
+      kbY(sh, Math.max(0, innerHeight - sh.offsetHeight - 12)); sh.offsetHeight; sh.style.transition = '';
+    }
+    sh.classList.remove('kb'); kbY(sh, 0); return;
+  }
+  const visH = innerHeight - T, H = sh.offsetHeight;
+  if (!clamped && H - pad <= visH - 12) { kbY(sh, T - pad); return; }   // 다 들어가는 시트: 키보드 윗면에 붙어 같이 올라간다
+  const fin = () => { sh.style.transition = 'none'; sh.classList.add('kb'); sh.style.maxHeight = (visH - 12 + pad) + 'px'; kbY(sh, T - pad); sh.offsetHeight; sh.style.transition = ''; kbShow(); };
+  if (clamped || was || _RM.matches || !_TR) return fin();   // 이미 떠 있는 키보드의 높이만 바뀐 경우(숫자판→글자판)
+  // 긴 시트: 위 끝이 12px에 닿을 만큼만 같이 올라가고(아래 끝은 내내 키보드 뒤라 안 보인다), 다 오른 뒤 길이를 줄여 시트 안 스크롤로 바꾼다
+  kbY(sh, Math.max(0, innerHeight - H - 12)); _kbTallP = true; _kbTallT = setTimeout(() => { _kbTallP = false; fin(); }, 520);
+}
+function kbSync() {   // visualViewport 가 알려 주는 실제 높이
+  const sh = $('sheet'); if (sh.classList.contains('hidden') || sh.classList.contains('closing')) return;
+  const m = kbNow(), a = kbIn();
+  if (a) { if (m > 40) { try { localStorage.setItem(kbKey(a), m); } catch (e) {} clearTimeout(_kbWaitT); if (Math.abs(m - _kbT) > 2) kbPlace(m); } return; }   // 칸에 있는데 0이면 아직 키보드가 안 온 것 — 출발한 자리 유지
+  if (m > 40 && performance.now() - _kbDownAt < 900) return;   // 내려가는 중에 늦게 온 옛 높이는 무시
+  if (Math.abs(m - _kbT) > 2) kbPlace(m);   // 칸 밖의 일(시각 고르는 휠 등): 늦게라도 부드럽게 맞춘다
+}
+_VV?.addEventListener('resize', kbSync); _VV?.addEventListener('scroll', kbSync);
+$('sheet').addEventListener('focusin', e => {
+  if (!e.target.matches(_KBIN)) return;
+  clearTimeout(_kbWaitT); const m = kbNow();
+  if (_kbT) { const g = kbGuess(e.target);   // 키보드는 떠 있고 칸만 옮김 — 숫자판→글자판처럼 높이가 바뀌는 칸이면 기억해 둔 높이로 같이 움직인다
+    if (m > 40 && Math.abs(m - _kbT) > 2) kbPlace(m); else if (g > 40 && Math.abs(g - _kbT) > 2) kbPlace(g); else kbShow(); return; }
+  kbPlace(m > 40 ? m : kbGuess(e.target));
+  _kbWaitT = setTimeout(() => { if (kbNow() <= 40 && kbIn()) kbPlace(0); }, 1200);   // 1.2초 지나도 키보드가 안 왔으면(블루투스 키보드 등) 내려놓는다
+});
+$('sheet').addEventListener('focusout', e => {
+  if (!e.target.matches(_KBIN)) return;
+  setTimeout(() => { if (kbIn() || !_kbT) return; clearTimeout(_kbWaitT); _kbDownAt = performance.now(); kbPlace(0); }, 0);   // 다른 칸으로 옮긴 거면 그대로
+});
 function shOpen() {
   const sh = $('sheet'), dm = $('dim'); clearTimeout(_shT); cancelAnimationFrame(_shRaf);
   const was = !sh.classList.contains('hidden') && !sh.classList.contains('closing');
@@ -2094,7 +2150,8 @@ $('sheet').addEventListener('animationend', e => { if (e.target === $('sheet')) 
 function closeSheet(now) {
   const sh = $('sheet'), dm = $('dim'); editing = null; clearTimeout(_shT); cancelAnimationFrame(_shRaf);
   const done = () => { dm.classList.add('hidden'); sh.classList.add('hidden'); sh.classList.remove('closing', 'in', 'in-kb'); dm.classList.remove('closing', 'in', 'in-kb');
-    sh.style.transform = ''; sh.style.transition = ''; dm.style.opacity = ''; dm.style.transition = ''; sh.classList.remove('kb'); sh.style.bottom = ''; sh.style.maxHeight = ''; sh.scrollTop = 0; backDone(); };
+    sh.style.transform = ''; sh.style.transition = ''; dm.style.opacity = ''; dm.style.transition = ''; sh.classList.remove('kb'); sh.style.bottom = ''; sh.style.translate = ''; sh.style.maxHeight = ''; sh.scrollTop = 0;
+    _kbT = 0; _kbTallP = false; clearTimeout(_kbWaitT); clearTimeout(_kbTallT); backDone(); };
   if (now === true || _RM.matches || sh.classList.contains('hidden')) return done();
   if (sh.classList.contains('closing')) return;
   backOff();
@@ -2103,6 +2160,7 @@ function closeSheet(now) {
   if (dragged) { sh.style.transition = 'none'; sh.offsetHeight; }
   sh.style.transition = ''; sh.style.transform = ''; dm.style.opacity = ''; dm.style.transition = '';
   sh.classList.remove('in-kb'); dm.classList.remove('in', 'in-kb'); sh.classList.add('closing'); dm.classList.add('closing');
+  if (_kbT) { _kbT = 0; clearTimeout(_kbWaitT); clearTimeout(_kbTallT); sh.style.translate = ''; const a = kbIn(); if (a) a.blur(); }   // 키보드 높이도 같은 200ms에 풀고 키보드도 지금 내린다 → 시트가 키보드 속으로 같이 가라앉는다
   _shT = setTimeout(done, 210);
 }
 // ── 시트 끌어내려 닫기 (v0.16, 사장님 "드래그로 닫히진 않아"): 손잡이·빈 곳에서 아래로 끌면 따라오고,
@@ -2125,7 +2183,8 @@ function closeSheet(now) {
     if (!drag) return; drag = false;
     const fast = dy > 30 && vy > .5;   // 짧게 튕겨 내려도 닫힘
     sh.style.transition = 'transform .2s ease-out'; $('dim').style.transition = 'opacity .2s';
-    if (dy > 100 || fast) { sh.style.transform = 'translateY(110%)'; $('dim').style.opacity = '0'; backOff(); setTimeout(() => { $('dim').style.transition = ''; closeSheet(true); }, 200); }
+    if (dy > 100 || fast) { if (_kbT) { _kbT = 0; clearTimeout(_kbWaitT); clearTimeout(_kbTallT); sh.style.transition = 'transform .2s ease-out, translate .2s ease-out'; sh.style.translate = ''; kbIn()?.blur(); }   // 키보드와 같이
+      sh.style.transform = 'translateY(110%)'; $('dim').style.opacity = '0'; backOff(); setTimeout(() => { $('dim').style.transition = ''; closeSheet(true); }, 200); }
     else { sh.style.transform = ''; $('dim').style.opacity = ''; { const R = document.documentElement; R.classList.remove('sh-drag'); R.style.setProperty('--bkd', '.2s'); R.style.setProperty('--bk', '.97'); } setTimeout(() => { sh.style.transition = ''; $('dim').style.transition = ''; }, 200); }
   };
   sh.addEventListener('touchend', end); sh.addEventListener('touchcancel', end);
@@ -2312,7 +2371,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.15 · 11-06';
+const VER = 'v1.16 · 11-06';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
