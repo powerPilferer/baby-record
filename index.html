@@ -361,7 +361,8 @@
   .tabs button.on, :root[data-theme="light"] .tabs button.on { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
   :root[data-theme="light"] .tabs button.on { background: color-mix(in srgb, var(--ok) 14%, transparent); }
   /* ── 일지 달력 ── */
-  .cal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .cal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }   /* minmax(0,…): 칸 글이 길어도 세 칸이 화면 폭을 넘지 않게 (11-11 사장님 "다이어리가 화면에 딱 안 맞네" — 아이폰이 한글 낱말을 안 끊어 칸이 넓어졌음) */
+  .cal .d { min-width: 0; } .cal .d .tx, .cal .d .rv { overflow-wrap: anywhere; }
   .cal .d { aspect-ratio: 1 / 1.1; border-radius: 16px; background: var(--card); padding: 12px 11px 11px; display: flex; flex-direction: column; text-align: left; position: relative; }
   .cal .d.future { opacity: .35; }
   .cal .d.ahead .n { opacity: .55; }   /* 앞날: 열려 있되 숫자만 살짝 흐리게 (10-09 사장님) */
@@ -2079,7 +2080,10 @@ addEventListener('scroll', () => { if (document.documentElement.classList.contai
 const _VV = window.visualViewport, _TR = CSS.supports('translate', '0 1px');
 const _KBIN = 'textarea, input:not([type=time]):not([type=date]):not([type=datetime-local]):not([type=month]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=button]):not([type=submit]):not([inputmode=none])';
 let _kbT = 0, _kbWaitT = 0, _kbTallT = 0, _kbDownAt = 0, _kbTallP = false;
-const kbNow = () => _VV ? Math.max(0, Math.round(innerHeight - _VV.height - _VV.offsetTop)) : 0;
+const kbNow = () => _VV ? Math.max(0, Math.round(innerHeight - _VV.height - (_TR ? 0 : _VV.offsetTop))) : 0;   // 키보드 높이 그 자체 (11-08: 화면 밀림은 kbPan이 따로 받는다)
+// 화면 밀림 상쇄 (11-08 사장님 "수유 ml 누르면 팝업이 잠깐 올라갔다 내려와"): iOS는 아래쪽 칸을 누르면 칸을 보이려고 화면 전체를 위로 민다(offsetTop).
+//  시트도 따라 밀려 '같이 올라감 + 화면 밀림'이 겹쳐 넘쳤다가 돌아왔다 → 밀린 만큼을 bottom 으로 즉시 되돌려, 보이는 자리는 키보드 높이만큼만 오른다
+function kbPan() { if (!_TR || !_VV) return; const sh = $('sheet'), o = sh.classList.contains('hidden') ? 0 : Math.max(0, Math.round(_VV.offsetTop)); sh.style.bottom = o ? -o + 'px' : ''; }
 const kbIn = () => { const a = document.activeElement; return a && $('sheet').contains(a) && a.matches(_KBIN) ? a : null; };
 const kbKey = a => 'bb-kb-' + (/decimal|numeric|tel/.test(a.getAttribute('inputmode') || '') || a.type === 'number' || a.type === 'tel' ? 'num' : 'text');   // 숫자판·글자판은 높이가 달라 따로 기억
 function kbGuess(a) {   // 이 판을 처음 띄울 때: 다른 판 높이를 알면 거기서 ±44(글자판 위 추천 단어 줄), 아무것도 모르면 화면 높이의 42%
@@ -2116,7 +2120,7 @@ function kbPlace(T) {
   kbY(sh, Math.max(0, innerHeight - H - 12)); _kbTallP = true; _kbTallT = setTimeout(() => { _kbTallP = false; fin(); }, 520);
 }
 function kbSync() {   // visualViewport 가 알려 주는 실제 높이
-  const sh = $('sheet'); if (sh.classList.contains('hidden') || sh.classList.contains('closing')) return;
+  const sh = $('sheet'); kbPan(); if (sh.classList.contains('hidden') || sh.classList.contains('closing')) return;
   const m = kbNow(), a = kbIn();
   if (a) { if (m > 40) { try { localStorage.setItem(kbKey(a), m); } catch (e) {} clearTimeout(_kbWaitT); if (Math.abs(m - _kbT) > 2) kbPlace(m); } return; }   // 칸에 있는데 0이면 아직 키보드가 안 온 것 — 출발한 자리 유지
   if (m > 40 && performance.now() - _kbDownAt < 900) return;   // 내려가는 중에 늦게 온 옛 높이는 무시
@@ -2371,7 +2375,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.16 · 11-06';
+const VER = 'v1.17 · 11-11';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
