@@ -757,6 +757,37 @@
   .toast { position: fixed; left: 50%; bottom: calc(118px + var(--sab)); transform: translateX(-50%); background: var(--fg); color: var(--bg);
     padding: 10px 16px; border-radius: 999px; font-size: 16px; font-weight: 600; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
+
+  /* ── 성장 앨범 카드·전체 화면 (11-11 춘봉, 앨범 본체는 album/ 폴더 iframe) ── */
+  .alb-card { background: var(--card); border-radius: 16px; padding: 16px 16px 14px; margin: 4px 0 12px; }
+  :root:not([data-theme="light"]) .alb-card { box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .alb-head { display: flex; align-items: center; gap: 12px; }
+  .alb-ic { flex: none; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--mc, #f3d2e6); box-shadow: 0 0 0 1px rgba(226,85,127,.25); }
+  .alb-ic img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.32); transform-origin: 50% 56%; display: block; }
+  .alb-head b { display: block; font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
+  .alb-head span { display: block; font-size: 13px; color: var(--fg2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .alb-tx { margin: 12px 0 0; font-size: 14px; color: var(--fg2); line-height: 1.5; }
+  .alb-tx b { color: var(--fg); font-weight: 600; }
+  .alb-acts { display: flex; gap: 8px; margin-top: 14px; }
+  .alb-acts button { flex: 1; height: 44px; border-radius: 999px; background: var(--card2); font-size: 14px; font-weight: 600; color: var(--fg); transition: transform .12s, opacity .12s; white-space: nowrap; }
+  .alb-acts button.pri { background: var(--fg); color: var(--bg); }
+  .alb-acts button:active { transform: scale(.97); }
+  .alb-acts button:disabled { opacity: .38; }
+  .alb-acts button small { display: block; font-size: 10px; font-weight: 500; color: var(--fg3); line-height: 1; margin-top: 2px; }
+  .alb-acts button.pri small { color: var(--bg); opacity: .6; }
+  .alb-links { display: flex; justify-content: center; gap: 14px; margin-top: 12px; font-size: 13px; color: var(--fg3); }
+  .alb-links button { color: var(--fg2); font-weight: 500; padding: 4px 0; }
+  .alb-note { margin-top: 10px; text-align: center; font-size: 12px; color: var(--fg3); }
+  .alb-home { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; margin: 10px 0 2px; padding: 12px 14px 12px 12px; border-radius: 14px; background: var(--bg1); }
+  :root:not([data-theme="light"]) #s-home .h-panel .alb-home { background: #1a1a1f; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .alb-home:active { opacity: .8; }
+  .alb-home .alb-ic { width: 40px; height: 40px; }
+  .alb-home .tx { flex: 1; min-width: 0; }
+  .alb-home b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+  .alb-home span { display: block; font-size: 13px; color: var(--fg2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .alb-home svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--fg3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .album-wrap { position: fixed; inset: 0; z-index: 70; background: #0b0b0d; }
+  .album-wrap iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
 </style>
 </head>
 <body>
@@ -826,6 +857,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
     
   </header>
   <div class="h-panel">
+  <button type="button" id="album-home" class="alb-home hidden"></button>   <!-- 성장 앨범: 돌 30일 전부터 때가 되면 뜨는 카드 (11-11 춘봉, ?album=home|home:2|home:3 로 강제) -->
   <div class="daynav">
     <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="dn-mid"><div class="date-pick"><div class="date" id="h-date"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="date" id="h-pick" aria-label="날짜 고르기"></div><button type="button" class="today-chip hidden" id="day-today">오늘</button></div>
@@ -883,6 +915,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
   <header><div class="who" id="st-who"><img class="bf" src="img/아기-2g-원형.png" alt=""><span class="name st-name"></span><span class="dday st-dday"></span></div></header>
   <div class="stat-head"><h2>통계</h2><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></div>
   <div id="stats"></div>
+  <div id="album-stat"></div>   <!-- 성장 앨범 카드: 통계 맨 아래 늘 같은 자리 (11-11 춘봉) -->
 </section>
 
 <!-- 좌상단 고정 뒤로 (설정 화면) -->
@@ -935,6 +968,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
 <div id="sheet" class="sheet hidden"></div>
 <div id="dpage" class="dpage hidden"></div>
 <div id="phview" class="phview hidden"><img alt=""><p></p></div>
+<div id="album-wrap" class="album-wrap hidden"></div>   <!-- 성장 앨범 전체 화면(album/album.html iframe) — 열 때만 만든다 -->
 <div id="cropper" class="cropper hidden">
   <div class="cr-top"><button type="button" id="cr-cancel">취소</button><span>사진 맞추기</span><button type="button" id="cr-ok" class="ok">완료</button></div>
   <div class="cr-view" id="cr-view"><img id="cr-img" alt="" draggable="false"><div class="cr-mask"></div></div>
@@ -1412,6 +1446,7 @@ function bars(series, color, fmt, unit) {                         // series: [{l
   return `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
 }
 function renderStats() {
+  renderAlbumCard();   // 성장 앨범 카드 — 통계 맨 아래 늘 같은 자리 (11-11)
   $('st-who').querySelector('.bf').src = babyFace(); $('st-who').querySelector('.st-name').textContent = baby.name;
   $('st-who').querySelector('.st-dday').textContent = 'D+' + dayNo(dstr(new Date()));
   for (const b of $('stat-range').children) b.classList.toggle('on', +b.dataset.v === statRange);
@@ -1990,6 +2025,7 @@ function render() {
   $('notes').innerHTML = dn.length ? dn.map(n => `<div class="note ${n.user_id === me.id ? 'mine' : ''}"><span class="who">${avatar(n.user_id)}</span><span class="tx">${esc(n.text)}</span><span class="tm">${hhmm(n.created_at)}</span>${n.user_id === me.id ? `<button type="button" class="nx" data-id="${n.id}" aria-label="지우기">✕</button>` : ''}</div>`).join('')
     : `<div class="empty" style="padding:10px 0 4px">${day === today ? '오늘 서로에게 한 줄' : '남긴 말이 없어요'}</div>`;
   $('noteform').classList.toggle('hidden', day !== today);
+  renderAlbumHome();   // 성장 앨범 카드 (11-11)
 }
 setInterval(() => { if (!$('s-home').classList.contains('hidden')) render(); }, 30000);
 
@@ -2375,7 +2411,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.17 · 11-11';
+const VER = 'v1.18 · 11-11';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2634,6 +2670,91 @@ function mock() {
     { id: 'n1', day: dstr(new Date()), user_id: 'u-mom', text: '새벽 두 번 봐줘서 고마워. 오후엔 내가 볼게', created_at: T(7, 25) },
   ];
 }
+// ═══ 성장(돌) 앨범 (11-11 춘봉, 출시 리허설) — 카드 두 곳 + album/album.html 전체 화면 ═══
+// 상태는 폰(localStorage)에만: { preview:{cover,coverName,asOf,pages,at}, reserved:{date,cover,coverName,at}, made:{…}, seenAt }. 출시 땐 서버(예약·완성 알림·결제)로.
+// 규칙(출시준비-1022/구독-요금제-메모.md 돌 앨범 절): 예약 = 돌 30일 전부터, 받을 날 = 예약 다음 날~돌 당일, 돌 뒤 무료 다시 만들기 1번, 인앱 9,900원.
+const ALB_Q = new URLSearchParams(location.search).get('album') || '';   // ?album=home|home:2|home:3 (홈 카드 강제) · ?album=real (로컬 실데이터)
+const albKey = () => 'bb-album-' + (baby?.id || 'x');
+const albState = () => { try { return JSON.parse(localStorage.getItem(albKey()) || '{}'); } catch (_) { return {}; } };
+const albSave = patch => { const s = { ...albState(), ...patch }; localStorage.setItem(albKey(), JSON.stringify(s)); return s; };
+const albFirst = () => (+baby.birth_date.slice(0, 4) + 1) + baby.birth_date.slice(4);                       // 첫돌 = 다음 해 같은 날
+const albOpenDay = () => { const d = new Date(albFirst() + 'T00:00'); d.setDate(d.getDate() - 30); return dstr(d); };   // 예약 열리는 날
+const albDotKo = s => { const d = new Date(s + 'T00:00'); return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`; };
+const albMdKo = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() + 1}월 ${d.getDate()}일`; };
+const ALB_COVER = { walk: '첫걸음', photo: '사진', quilt: '열세 칸', diary: '일기장' };
+const albIcon = `<span class="alb-ic" style="--mc:#f3d2e6"><img src="img/아기-단계-12.webp?r=2" alt=""></span>`;
+function albHomeStage() {   // 홈 카드 3단계: 예약 열림 → 예약됨 → 나왔어요(본 뒤 2주면 사라짐)
+  if (ALB_Q.startsWith('home')) return { 'home': 'reserve', 'home:2': 'reserved', 'home:3': 'done' }[ALB_Q] || 'reserve';
+  const s = albState(), t = dstr(new Date());
+  if (s.made && (!s.seenAt || Date.now() - s.seenAt < 14 * 86400000)) return 'done';
+  if (s.reserved) return 'reserved';
+  if (t >= albOpenDay() && t <= albFirst()) return 'reserve';
+  return '';
+}
+function renderAlbumHome() {
+  const el = $('album-home'), st = albHomeStage(); el.classList.toggle('hidden', !st); if (!st) return;
+  const s = albState(), chev = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
+  const tx = st === 'reserve' ? [`첫돌이 한 달 남았어요`, `${baby.name}의 첫 해를 앨범으로 · 예약하기`]
+    : st === 'reserved' ? [`앨범을 예약했어요`, `${albMdKo(s.reserved?.date || albFirst())} 아침에 완성돼요 · 표지 ${ALB_COVER[s.reserved?.cover] || '첫걸음'}`]
+    : [`앨범이 나왔어요`, `${baby.name}의 첫 해 · ${s.made?.pages || 36}쪽 · 보기`];
+  el.innerHTML = `${albIcon}<span class="tx"><b>${esc(tx[0])}</b><span>${esc(tx[1])}</span></span>${chev}`;
+  el.onclick = () => { if (st === 'reserve') openAlbum('reserve'); else if (st === 'done') { albSave({ seenAt: albState().seenAt || Date.now() }); openAlbum('view', s.made); } else goTab('s-stats'); };
+}
+function renderAlbumCard() {
+  const s = albState(), t = dstr(new Date()), first = albFirst(), left = Math.round((new Date(first + 'T00:00') - new Date(t + 'T00:00')) / 86400000);
+  const cur = s.made || s.preview, head = `<div class="alb-head">${albIcon}<div><b>성장 앨범</b><span>첫돌 ${albDotKo(first)} · ${left > 0 ? 'D-' + left : left === 0 ? '오늘 첫돌' : 'D+' + (-left)}</span></div></div>`;
+  let body;
+  if (cur) {
+    const isMade = !!s.made;
+    body = `<p class="alb-tx"><b>${isMade ? '완성판' : '미리 만든 판'}</b> · ${albMdKo(cur.asOf)}까지의 기록 · ${cur.pages}쪽 · 표지 ${ALB_COVER[cur.cover] || '첫걸음'}${cur.coverName && cur.coverName !== baby.name ? ` · 이름 "${esc(cur.coverName)}"` : ''}${!isMade && s.reserved ? `<br><b>예약</b> · ${albMdKo(s.reserved.date)} 아침에 완성돼요 · 그날까지의 기록으로 다시 만들어져요` : ''}</p>
+      <div class="alb-acts"><button type="button" class="pri" data-a="view">앨범 보기</button><button type="button" data-a="pdf">PDF 저장</button><button type="button" disabled>가족 링크<small>준비 중</small></button></div>
+      <div class="alb-links"><button type="button" data-a="cover">표지·이름 바꾸기</button><span>·</span><button type="button" data-a="remake">${isMade ? '돌 뒤 다시 만들기' : '지금까지로 다시 만들기'}</button></div>`;
+  } else if (s.reserved) {
+    body = `<p class="alb-tx"><b>예약했어요</b> · ${albMdKo(s.reserved.date)} 아침에 완성돼요 · 표지 ${ALB_COVER[s.reserved.cover] || '첫걸음'}<br>그날까지의 기록과 사진이 들어가요.</p>
+      <div class="alb-acts"><button type="button" data-a="cover">표지·날짜 바꾸기</button><button type="button" data-a="preview">지금까지로 미리 만들어 보기</button></div>`;
+  } else {
+    const open = t >= albOpenDay();
+    body = `<p class="alb-tx">첫 해의 기록과 사진을 앨범 한 권으로 엮어요 — 표지, 한 달 펼침면 열세 장, 1년 숫자, 성장 곡선, 기념일, 가족 한마디.<br>${open ? '<b>지금 예약할 수 있어요.</b> 받을 날 아침에 완성돼요.' : `돌 한 달 전(${albMdKo(albOpenDay())})부터 예약할 수 있어요.`}</p>
+      <div class="alb-acts">${open ? '<button type="button" class="pri" data-a="reserve">앨범 예약하기</button>' : ''}<button type="button" ${open ? '' : 'class="pri"'} data-a="preview">지금까지로 미리 만들어 보기</button></div>
+      <div class="alb-note">출시 땐 9,900원 · 지금은 리허설이라 결제 없이 만들어요</div>`;
+  }
+  const el = $('album-stat'); el.innerHTML = `<div class="alb-card">${head}${body}</div>`;
+  el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === 'view') openAlbum('view', cur); else if (a === 'pdf') openAlbum('view', { ...cur, autoPdf: true });
+    else if (a === 'cover') openAlbum(s.reserved && !cur ? 'reserve' : 'make', cur || s.reserved);
+    else if (a === 'remake') openAlbum('make', cur); else if (a === 'reserve') openAlbum('reserve'); else openAlbum('make');
+  });
+}
+// 앨범 입력: 태어난 날부터의 기록 전부(앱은 평소 30일치만 들고 있다) + 다이어리 사진 원본 서명 주소. 사진·기록은 폰 안에서만 조립되고 밖으로 나가지 않는다
+async function albumInput() {
+  let all = logs;
+  if (!MOCK) {
+    all = []; const since = new Date(baby.birth_date + 'T00:00').toISOString();
+    for (let from = 0; ; from += 1000) { const { data } = await sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at').range(from, from + 999); all.push(...(data || [])); if (!data || data.length < 1000) break; }
+    await signPhotos();
+  }
+  const days = {}; for (const d of new Set([...Object.keys(diaries), ...Object.keys(photoPaths)])) days[d] = { diary: diaries[d] || '', photo: photos[d] || null };
+  const members = Object.keys(nickById).map(id => ({ user_id: id, role: charOf(id) === 'mom' ? '엄마' : '아빠' }));
+  return { baby: { id: baby.id, name: baby.name, birth_date: baby.birth_date, sex: baby.sex || 'm', photo_url: baby.photo_url || '' }, members, days, logs: all, growth, notes, checks: Object.values(checks), today: dstr(new Date()) };
+}
+let _albFrame = null;
+async function openAlbum(mode, prev) {   // mode: make(지금까지로) · reserve(예약) · view(만든 것 보기)
+  const wrap = $('album-wrap'); wrap.classList.remove('hidden'); wrap.innerHTML = '<iframe title="성장 앨범" allow="fullscreen"></iframe>';
+  const f = _albFrame = wrap.firstChild;
+  const input = (MOCK && ALB_Q === 'real') ? null : await albumInput();
+  f.addEventListener('load', () => f.contentWindow.albumStart({ mode, input, src: (MOCK && ALB_Q === 'real') ? 'real' : '', theme: document.documentElement.dataset.theme || 'dark', first: albFirst(), cover: prev?.cover, coverName: prev?.coverName, autoPdf: !!prev?.autoPdf }));
+  f.src = 'album/album.html';
+}
+function closeAlbum() { const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.innerHTML = ''; _albFrame = null; if (!$('s-stats').classList.contains('hidden')) renderAlbumCard(); if (!$('s-home').classList.contains('hidden')) renderAlbumHome(); }
+addEventListener('message', e => {
+  if (e.origin !== location.origin || !e.data || e.data.t !== 'album') return;
+  const m = e.data;
+  if (m.act === 'close') closeAlbum();
+  else if (m.act === 'made') { const rec = { cover: m.cover, coverName: m.coverName, asOf: m.asOf, pages: m.pages, at: Date.now() }; const s = albState(); if (s.made || (s.reserved && m.asOf >= s.reserved.date)) albSave({ made: rec, reserved: null }); else albSave({ preview: rec }); }
+  else if (m.act === 'reserved') { albSave({ reserved: { date: m.date, cover: m.cover, coverName: m.coverName, at: Date.now() } }); closeAlbum(); toast(`${albMdKo(m.date)} 아침에 완성돼요`); }
+});
+
 boot();
 </script>
 </body>
