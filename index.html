@@ -414,7 +414,7 @@
   .dpage:has(.dp-text:focus) .dp-info { display: none; }
   /* 주 1장 사진 (10-15 사장님 "주 한장으로 우선") — 공책에 테이프로 붙인 폴라로이드 */
   .dp-ph { margin: 16px 26px 0; align-self: flex-start; position: relative; padding: 8px 8px 22px; background: #fff; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.12); transform: rotate(-2deg); }
-  .dp-ph img { display: block; width: 168px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 2px; }
+  .dp-ph img { display: block; width: auto; height: auto; max-width: 210px; max-height: 210px; min-width: 120px; min-height: 96px; object-fit: cover; border-radius: 2px; }   /* 세로 168×210 · 가로 210×168 — 사진 모양 그대로 (11-12) */
   .dp-ph::before { content: ""; position: absolute; top: -9px; left: 50%; width: 64px; height: 20px; margin-left: -32px; background: rgba(240, 220, 170, .7); transform: rotate(3deg); }
   .dp-ph .wk { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: var(--hand), cursive; font-size: 13px; color: #8a8790; }
   .dp-ph .rm { position: absolute; right: -10px; top: -10px; width: 28px; height: 28px; border-radius: 50%; background: var(--card2); color: var(--fg2); font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
@@ -753,6 +753,10 @@
   .cr-mask { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.62); pointer-events: none; outline: 1.5px solid rgba(255,255,255,.55); outline-offset: -1px; }
   .cr-zoom { display: flex; align-items: center; gap: 12px; width: min(320px, calc(100vw - 32px)); margin-top: 22px; color: #999; font-size: 19px; }
   .cr-zoom input { flex: 1; accent-color: #fff; }
+  .cr-ori { display: flex; gap: 4px; margin-top: 22px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.1); }   /* 다이어리 사진 세로·가로 (11-12 사장님) */
+  .cr-ori.hidden { display: none; }
+  .cr-ori button { min-width: 76px; padding: 9px 16px; border-radius: 999px; color: #aaa; font-size: 15px; font-weight: 600; }
+  .cr-ori button.on { background: #fff; color: #111; }
   .cr-hint { color: #777; font-size: 13px; margin-top: 12px; text-align: center; }
   .toast { position: fixed; left: 50%; bottom: calc(118px + var(--sab)); transform: translateX(-50%); background: var(--fg); color: var(--bg);
     padding: 10px 16px; border-radius: 999px; font-size: 16px; font-weight: 600; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
@@ -972,6 +976,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
 <div id="cropper" class="cropper hidden">
   <div class="cr-top"><button type="button" id="cr-cancel">취소</button><span>사진 맞추기</span><button type="button" id="cr-ok" class="ok">완료</button></div>
   <div class="cr-view" id="cr-view"><img id="cr-img" alt="" draggable="false"><div class="cr-mask"></div></div>
+  <div class="cr-ori hidden" id="cr-ori"><button type="button" data-o="port">세로</button><button type="button" data-o="land">가로</button></div>
   <div class="cr-zoom"><span>−</span><input type="range" id="cr-zoom" min="0" max="100" value="0"><span>+</span></div>
   <div class="cr-hint">끌어서 옮기고, 두 손가락이나 슬라이더로 확대·축소</div>
 </div>
@@ -1066,9 +1071,10 @@ let photos = {};        // day → 그 주 사진 보기 주소(서명, 7일) �
 let thumbs = {};        // day → 썸네일 주소. 달력·공책은 썸네일, 크게 볼 때만 원본 (10-22 전송량 1/10)
 const thumbPath = p => p.replace(/\.jpg$/, '.t.jpg');
 async function makeThumb(blob) {   // 336×420(화면 168px의 2배) JPEG ≈ 20~30KB
-  const bm = await createImageBitmap(blob), c = document.createElement('canvas'); c.width = 336; c.height = 420;
-  const r = Math.max(336 / bm.width, 420 / bm.height), w = bm.width * r, h = bm.height * r;
-  c.getContext('2d').drawImage(bm, (336 - w) / 2, (420 - h) / 2, w, h);
+  const bm = await createImageBitmap(blob), L = bm.width > bm.height, TW = L ? 420 : 336, TH = L ? 336 : 420;   // 가로 사진은 420×336 (11-12)
+  const c = document.createElement('canvas'); c.width = TW; c.height = TH;
+  const r = Math.max(TW / bm.width, TH / bm.height), w = bm.width * r, h = bm.height * r;
+  c.getContext('2d').drawImage(bm, (TW - w) / 2, (TH - h) / 2, w, h);
   return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('썸네일 실패')), 'image/jpeg', .78)); }
 let photoPaths = {};    // day → 비공개 저장소 diary-photos 안 경로 (baby_days.photo)
 const PHOTO_ON = true;
@@ -1300,7 +1306,7 @@ const phGroup = d => PHOTO_WEEKLY ? weekOf(d) : d;   // 사진 한 장이 차지
 const weekPhotoDay = d => Object.keys({ ...photos, ...photoPaths }).find(x => phGroup(x) === phGroup(d));
 function framePhoto(file) {                                        // 폴라로이드 틀(4:5)에 맞춰 확대·이동 → 1024×1280 JPEG (10-15 사장님 "프로필처럼 프레임")
   return new Promise((res, rej) => { const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => cropPhoto(img, { ratio: 1.25, rect: true, out: 1024 }).then(v => { URL.revokeObjectURL(url); res(v); }, e => { URL.revokeObjectURL(url); rej(e); });
+    img.onload = () => cropPhoto(img, { ratio: img.naturalWidth > img.naturalHeight ? .8 : 1.25, rect: true, out: 1024, orient: true }).then(v => { URL.revokeObjectURL(url); res(v); }, e => { URL.revokeObjectURL(url); rej(e); });
     img.onerror = () => rej(new Error('이미지를 읽을 수 없어요')); img.src = url; });
 }
 const stampOf = d => (baby?.birth_date && d === (+baby.birth_date.slice(0, 4) + 1) + baby.birth_date.slice(4)) ? '첫돌' : (MILESTONES[dayNo(d)] || '');
@@ -2327,14 +2333,20 @@ function squareJpeg(file) {
   });
 }
 function cropPhoto(img, o = {}) {                                   // o.ratio = 세로/가로, o.rect = 네모 틀(다이어리 사진, 10-15), o.out = 내보낼 가로 px
-  const ratio = o.ratio || 1, OUT = o.out || 512;
+  const OUT = o.out || 512;
   return new Promise((res, rej) => {
     const box = $('cropper'), view = $('cr-view'), el = $('cr-img'), zoom = $('cr-zoom');
-    view.style.aspectRatio = String(1 / ratio); view.classList.toggle('rect', !!o.rect);
+    let ratio = o.ratio || 1, V, VH, base, s, tx, ty;
+    view.classList.toggle('rect', !!o.rect);
     box.classList.remove('hidden'); el.src = img.src;
-    const V = view.clientWidth, VH = view.clientHeight;          // 틀 가로·세로
-    const base = Math.max(V / img.naturalWidth, VH / img.naturalHeight);   // 틀을 꽉 채우는 최소 배율
-    let s = base, tx = (V - img.naturalWidth * base) / 2, ty = (VH - img.naturalHeight * base) / 2;
+    const ori = $('cr-ori'); ori.classList.toggle('hidden', !o.orient);
+    const fit = () => {   // 틀 비율에 맞춰 처음 자리(꽉 채움·가운데)로
+      view.style.aspectRatio = String(1 / ratio); V = view.clientWidth; VH = view.clientHeight;          // 틀 가로·세로
+      base = Math.max(V / img.naturalWidth, VH / img.naturalHeight);   // 틀을 꽉 채우는 최소 배율
+      s = base; tx = (V - img.naturalWidth * base) / 2; ty = (VH - img.naturalHeight * base) / 2;
+      ori.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.o === 'land') === (ratio < 1)));
+    };
+    fit();
     const MAXZ = 4;
     const clamp = () => { s = Math.min(Math.max(s, base), base * MAXZ); const w = img.naturalWidth * s, h = img.naturalHeight * s; tx = Math.min(0, Math.max(V - w, tx)); ty = Math.min(0, Math.max(VH - h, ty)); };
     const draw = () => { clamp(); el.style.width = img.naturalWidth * s + 'px'; el.style.height = img.naturalHeight * s + 'px'; el.style.transform = `translate(${tx}px, ${ty}px)`; zoom.value = Math.round((s / base - 1) / (MAXZ - 1) * 100); };
@@ -2356,11 +2368,13 @@ function cropPhoto(img, o = {}) {                                   // o.ratio =
     view.addEventListener('pointerdown', onDown); view.addEventListener('pointermove', onMove); view.addEventListener('pointerup', onUp); view.addEventListener('pointercancel', onUp);
     const onZoom = () => zoomAt(base * (1 + (MAXZ - 1) * zoom.value / 100), V / 2, VH / 2);
     zoom.addEventListener('input', onZoom);
+    ori.onclick = e => { const b = e.target.closest('button'); if (!b) return; const r = b.dataset.o === 'land' ? .8 : 1.25; if (r !== ratio) { ratio = r; fit(); draw(); } };   // 세로 4:5 ↔ 가로 5:4 (11-12 사장님)
     const done = ok => {
       view.removeEventListener('pointerdown', onDown); view.removeEventListener('pointermove', onMove); view.removeEventListener('pointerup', onUp); view.removeEventListener('pointercancel', onUp); zoom.removeEventListener('input', onZoom);
       box.classList.add('hidden'); el.src = '';
       if (!ok) return rej(new Error('취소'));
-      const c = document.createElement('canvas'); c.width = OUT; c.height = Math.round(OUT * ratio); const g = c.getContext('2d');
+      const W = o.orient && ratio < 1 ? Math.round(OUT * 1.25) : OUT;   // 가로 사진은 긴 변을 세로 사진과 같게(1280×1024)
+      const c = document.createElement('canvas'); c.width = W; c.height = Math.round(W * ratio); const g = c.getContext('2d');
       g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
       g.drawImage(img, -tx / s, -ty / s, V / s, VH / s, 0, 0, c.width, c.height);   // 틀(원이면 외접 정사각) 영역
       c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', o.rect ? .8 : .86);
@@ -2411,7 +2425,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.18 · 11-11';
+const VER = 'v1.19 · 11-12';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
