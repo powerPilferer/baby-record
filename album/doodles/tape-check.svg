@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80"><defs>
+<filter id="c" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="131" result="w"/>
+<feDisplacementMap in="SourceGraphic" in2="w" scale="4.5" xChannelSelector="R" yChannelSelector="G" result="s"/>
+<feTurbulence type="fractalNoise" baseFrequency="1.1 0.55" numOctaves="3" seed="138" result="g"/>
+<feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.8 0 0 0 0.25" result="ga"/>
+<feComposite in="s" in2="ga" operator="in" result="m"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.9 0.4" numOctaves="2" seed="144" result="g2"/>
+<feColorMatrix in="g2" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 0.97 4.2 0 0 0 -2.75" result="tooth"/>
+<feComposite in="tooth" in2="m" operator="in" result="t2"/>
+<feComposite in="t2" in2="m" operator="over"/>
+</filter>
+<filter id="p" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="132" result="w"/>
+<feDisplacementMap in="SourceGraphic" in2="w" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="s"/>
+<feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="142" result="g"/>
+<feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2.4 0 0 0 -0.15" result="ga"/>
+<feComposite in="s" in2="ga" operator="in"/>
+</filter>
+<filter id="t" x="-5%" y="-10%" width="110%" height="120%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="133" result="w"/>
+<feDisplacementMap in="SourceGraphic" in2="w" scale="2" xChannelSelector="R" yChannelSelector="G" result="s"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.9 0.3" numOctaves="3" seed="136" result="g"/>
+<feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.5 0 0 0 0.35" result="ga"/>
+<feComposite in="s" in2="ga" operator="in"/>
+</filter>
+</defs><g filter="url(#t)"><clipPath id="t50"><path d="M18.0,23.7 L38.5,24.4 L59.0,23.3 L79.5,23.7 L100.0,23.8 L120.5,24.6 L141.0,23.8 L161.5,24.2 L182.0,23.4 L178.7,29.3 L184.0,34.7 L182.5,40.0 L184.2,45.3 L181.4,50.7 L182.0,56.0 L161.5,55.5 L141.0,55.6 L120.5,55.3 L100.0,55.5 L79.5,55.9 L59.0,56.1 L38.5,56.4 L18.0,56.2 L21.2,50.7 L20.4,45.3 L13.1,40.0 L21.9,34.7 L18.0,29.3Z"/></clipPath><g transform="rotate(-4 100 40)"><path d="M18.0,23.7 L38.5,24.4 L59.0,23.3 L79.5,23.7 L100.0,23.8 L120.5,24.6 L141.0,23.8 L161.5,24.2 L182.0,23.4 L178.7,29.3 L184.0,34.7 L182.5,40.0 L184.2,45.3 L181.4,50.7 L182.0,56.0 L161.5,55.5 L141.0,55.6 L120.5,55.3 L100.0,55.5 L79.5,55.9 L59.0,56.1 L38.5,56.4 L18.0,56.2 L21.2,50.7 L20.4,45.3 L13.1,40.0 L21.9,34.7 L18.0,29.3Z" fill="#fffaf0" opacity="0.97" /><g clip-path="url(#t50)" opacity="0.92"><rect x="10" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="26" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="42" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="58" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="74" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="90" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="106" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="122" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="138" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="154" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="170" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="186" y="0" width="8" height="80" fill="#4a7dcc" opacity="0.45"/><rect x="0" y="24" width="200" height="8" fill="#4a7dcc" opacity="0.45"/><rect x="0" y="40" width="200" height="8" fill="#4a7dcc" opacity="0.45"/><rect x="0" y="56" width="200" height="8" fill="#4a7dcc" opacity="0.45"/></g><path d="M18.0,23.7 L38.5,24.4 L59.0,23.3 L79.5,23.7 L100.0,23.8 L120.5,24.6 L141.0,23.8 L161.5,24.2 L182.0,23.4 L178.7,29.3 L184.0,34.7 L182.5,40.0 L184.2,45.3 L181.4,50.7 L182.0,56.0 L161.5,55.5 L141.0,55.6 L120.5,55.3 L100.0,55.5 L79.5,55.9 L59.0,56.1 L38.5,56.4 L18.0,56.2 L21.2,50.7 L20.4,45.3 L13.1,40.0 L21.9,34.7 L18.0,29.3Z" fill="none" stroke="#4a7dcc" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" /></g></g></svg>

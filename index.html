@@ -792,6 +792,10 @@
   .alb-home svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--fg3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .album-wrap { position: fixed; inset: 0; z-index: 70; background: #0b0b0d; }
   .album-wrap iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+  .album-wrap.bk { background: #ece2cf; }   /* 성장앨범 책은 늘 밝은 화면 — 뜨는 동안 어두운 바탕이 번쩍이지 않게 (11-17) */
+  .bk-mini { flex: none; position: relative; width: 34px; height: 46px; border-radius: 2px 6px 6px 2px; background: linear-gradient(90deg, #27594d 0, #27594d 14%, #2f6b5c 14%); box-shadow: 2px 2px 0 #fbf5e8, 2px 2px 0 1px rgba(90,70,40,.2); }   /* 표지 축소판: 짙은 초록 + 노랑 밴드 + 흰 제목 두 줄 */
+  .bk-mini::before { content: ""; position: absolute; right: 4px; top: 0; bottom: 0; width: 2px; background: #f3c85a; }
+  .bk-mini::after { content: ""; position: absolute; left: 9px; top: 9px; width: 15px; height: 2px; border-radius: 1px; background: #fdfaf0; box-shadow: 0 5px 0 #fdfaf0; }
 </style>
 </head>
 <body>
@@ -861,7 +865,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
     
   </header>
   <div class="h-panel">
-  <button type="button" id="album-home" class="alb-home hidden"></button>   <!-- 성장 앨범: 돌 30일 전부터 때가 되면 뜨는 카드 (11-11 춘봉, ?album=home|home:2|home:3 로 강제) -->
+  <button type="button" id="album-home" class="alb-home hidden"></button>   <!-- 옛 돌 앨범 예약 카드 — 11-17부터 숨김(성장앨범 책으로 바뀜) -->
   <div class="daynav">
     <button type="button" id="day-prev" aria-label="어제"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="dn-mid"><div class="date-pick"><div class="date" id="h-date"></div><svg class="dd" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg><input type="date" id="h-pick" aria-label="날짜 고르기"></div><button type="button" class="today-chip hidden" id="day-today">오늘</button></div>
@@ -919,15 +923,14 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
   <header><div class="who" id="st-who"><img class="bf" src="img/아기-2g-원형.png" alt=""><span class="name st-name"></span><span class="dday st-dday"></span></div></header>
   <div class="stat-head"><h2>통계</h2><span class="seg mini" id="stat-range"><button type="button" data-v="7">7일</button><button type="button" data-v="30">30일</button></span></div>
   <div id="stats"></div>
-  <div id="album-stat"></div>   <!-- 성장 앨범 카드: 통계 맨 아래 늘 같은 자리 (11-11 춘봉) -->
+  <div id="album-stat"></div>   <!-- 성장앨범 책 카드: 통계 맨 아래 늘 같은 자리 (11-11 춘봉, 11-17 책으로) -->
 </section>
 
 <!-- 좌상단 고정 뒤로 (설정 화면) -->
 <button type="button" class="gear-fab back-fab hidden" id="close-settings" aria-label="뒤로"><svg viewBox="0 0 24 24" class="chev"><path d="M15 5l-7 7 7 7"/></svg></button>
 
 <!-- 우상단 고정 설정 -->
-<!-- 우상단: 자온 AI 비서 (v0.32 버튼만, 기능은 준비 중) -->
-<button type="button" class="gear-fab ai-fab hidden" id="open-ai" aria-label="부엉쌤에게 물어보기"><img src="img/부엉쌤-A.png" alt=""></button>
+<!-- 부엉쌤(AI 비서) 버튼은 11-17 삭제 — 사장님 "사용안할거라서" -->
 <button type="button" class="gear-fab hidden" id="open-settings" aria-label="설정"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
 
 <!-- 하단 탭 -->
@@ -972,7 +975,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
 <div id="sheet" class="sheet hidden"></div>
 <div id="dpage" class="dpage hidden"></div>
 <div id="phview" class="phview hidden"><img alt=""><p></p></div>
-<div id="album-wrap" class="album-wrap hidden"></div>   <!-- 성장 앨범 전체 화면(album/album.html iframe) — 열 때만 만든다 -->
+<div id="album-wrap" class="album-wrap hidden"></div>   <!-- 성장앨범 책 전체 화면(book/index.html iframe) — 열 때만 만든다 -->
 <div id="cropper" class="cropper hidden">
   <div class="cr-top"><button type="button" id="cr-cancel">취소</button><span>사진 맞추기</span><button type="button" id="cr-ok" class="ok">완료</button></div>
   <div class="cr-view" id="cr-view"><img id="cr-img" alt="" draggable="false"><div class="cr-mask"></div></div>
@@ -1051,7 +1054,7 @@ const TABBED = ['s-home', 's-diary', 's-growth', 's-stats'];
 const show = id => {
   const sp = $('splash'); if (sp && !sp.classList.contains('out')) { sp.classList.add('out'); setTimeout(() => sp.remove(), 320); }
   for (const s of document.querySelectorAll('section.screen')) s.classList.toggle('hidden', s.id !== id);
-  $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id)); $('open-ai').classList.toggle('hidden', !TABBED.includes(id));
+  $('tabs').classList.toggle('hidden', !TABBED.includes(id)); $('open-settings').classList.toggle('hidden', !TABBED.includes(id));
   $('close-settings').classList.toggle('hidden', id !== 's-settings');
   for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === id);
   window.scrollTo(0, 0); requestAnimationFrame(() => updPill());   // 이미 맨 위면 scroll 이벤트가 안 와서 알약이 남던 것
@@ -2425,7 +2428,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.19 · 11-12';
+const VER = 'v1.20 · 11-17';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2504,48 +2507,8 @@ function openBabySheet() {
     } catch (e) { alert('저장 실패: ' + e.message); }
   };
 }
-// ── 부엉쌤 AI 비서 (v0.32, 10-19 자온→부엉쌤) — 채팅만. 기록은 안 보냄(사장님 10-01), 보내는 건 질문·최근 대화·생후 일수·이름
-// 서버: supabase/functions/baby-ask (Claude Opus 5.5, 키는 서버 비밀값). 대화는 이 폰에만 저장(bb-ai-chat)
-const AI_URL = SB_URL + '/functions/v1/baby-ask';
-let aiLog = (() => { try { return JSON.parse(localStorage.getItem('bb-ai-chat') || '[]'); } catch (_) { return []; } })();
-let aiBusy = false;
-const aiSave = () => { try { localStorage.setItem('bb-ai-chat', JSON.stringify(aiLog.slice(-60))); } catch (_) {} };
-function aiRender() {
-  const box = $('ai-log'); if (!box) return;
-  box.innerHTML = (aiLog.length ? '' : `<div class="ai-hello"><img class="full" src="img/부엉쌤-전신.webp" alt=""><p class="who">새벽 수유 때도 깨어 있는 부엉쌤이에요</p><p>${esc(baby.name)}에 대해 궁금한 걸 물어보세요.<br><small>예: 트림을 잘 안 해요 · 분유 텀이 짧아요 · 딸꾹질이 잦아요</small></p></div>`)
-    + aiLog.map(m => `<div class="ai-msg ${m.role}">${m.role === 'assistant' ? '<img src="img/부엉쌤-A.png" alt="">' : ''}<div class="ai-bub">${esc(m.text)}</div></div>`).join('')
-    + (aiBusy ? '<div class="ai-msg assistant"><img src="img/부엉쌤-A.png" alt=""><div class="ai-bub ai-dots"><i></i><i></i><i></i></div></div>' : '');
-  box.scrollTop = box.scrollHeight;
-}
-async function aiSend() {
-  const inp = $('ai-in'); const q = inp.value.trim(); if (!q || aiBusy) return;
-  const history = aiLog.slice(-20).map(m => ({ role: m.role, text: m.text }));
-  aiLog.push({ role: 'user', text: q, at: Date.now() }); inp.value = ''; aiBusy = true; aiSave(); aiRender();
-  let answer;
-  try {
-    if (MOCK) { await new Promise(r => setTimeout(r, 700)); answer = '(목업 답변) 실제 앱에서는 부엉쌤이 답해요. 트림은 수유 중간과 끝에 아기를 세워 안고 등을 쓸어 주면 도움이 돼요.'; }
-    else {
-      const { data: { session } } = await sb.auth.getSession();
-      const r = await fetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + (session?.access_token || '') },
-        body: JSON.stringify({ question: q, history, ageDays: dayNo(dstr(new Date())) - 1, babyName: baby.name }) });
-      const j = await r.json().catch(() => ({}));
-      answer = j.answer || ('⚠ ' + (j.error || `연결 실패 (${r.status})`));
-    }
-  } catch (e) { answer = '⚠ 연결에 실패했어요. 잠시 뒤 다시 물어봐 주세요.'; }
-  aiBusy = false; aiLog.push({ role: 'assistant', text: answer, at: Date.now() }); aiSave(); aiRender();
-}
-function openAi() {
-  $('sheet').innerHTML = `<div class="ai-head"><h3 class="grow"><img src="img/부엉쌤-A.png" alt="">부엉쌤에게 물어보기</h3>${aiLog.length ? '<button type="button" class="ai-new" id="ai-new">새 대화</button>' : ''}</div>
-    <div class="ai-log" id="ai-log"></div>
-    <form class="ai-form" id="ai-form"><textarea id="ai-in" rows="1" maxlength="1000" placeholder="궁금한 걸 적어 주세요"></textarea><button type="submit" aria-label="보내기"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
-    <p class="ai-note">부엉쌤은 진단을 하지 않아요. 열·호흡·처짐 같은 걱정되는 증상은 바로 소아과나 119에 물어보세요.</p>`;
-  $('sheet').dataset.kind = 'ai'; shOpen(); $('dim').onclick = closeSheet;
-  aiRender();
-  $('ai-form').onsubmit = e => { e.preventDefault(); aiSend(); };
-  $('ai-in').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); aiSend(); } });
-  $('ai-in').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px'; });
-  if ($('ai-new')) $('ai-new').onclick = () => { if (!confirm('지금 대화를 지우고 새로 시작할까요?')) return; aiLog = []; aiSave(); openAi(); };
-}
+// 부엉쌤 AI 비서는 11-17 삭제(사장님 "사용안할거라서"). 남은 대화 기록도 지운다 — 서버 함수 baby-ask는 따로 정리
+try { localStorage.removeItem('bb-ai-chat'); } catch (_) {}
 // 시트(팝업)가 떠 있으면 뒤 화면이 스크롤되지 않게 — 모든 시트 공통 (10-19 부엉쌤 → 10-22 사장님 "모든 설정 팝업이 떴을 때는 뒤 화면 스크롤 안 돼").
 // 시트 안에서 스크롤 가능한 칸(대화 목록·긴 입력칸 등)이 그 방향으로 더 갈 수 있을 때만 허용, 가로 끌기는 그대로 둠.
 // body를 묶지 않는다(v0.74 교훈). 시트·딤 자신의 터치만 다룬다 — 공책 가드와 같은 방식
@@ -2563,8 +2526,6 @@ function openAi() {
   }, { passive: false });
   dim.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 })();
-$('open-ai').addEventListener('touchend', e => { e.preventDefault(); _tabHandled = Date.now(); openAi(); }, { passive: false });
-$('open-ai').onclick = () => { if (Date.now() - _tabHandled < 500) return; openAi(); };
 $('close-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; show('s-home'); };
 $('char-seg').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -2684,90 +2645,62 @@ function mock() {
     { id: 'n1', day: dstr(new Date()), user_id: 'u-mom', text: '새벽 두 번 봐줘서 고마워. 오후엔 내가 볼게', created_at: T(7, 25) },
   ];
 }
-// ═══ 성장(돌) 앨범 (11-11 춘봉, 출시 리허설) — 카드 두 곳 + album/album.html 전체 화면 ═══
-// 상태는 폰(localStorage)에만: { preview:{cover,coverName,asOf,pages,at}, reserved:{date,cover,coverName,at}, made:{…}, seenAt }. 출시 땐 서버(예약·완성 알림·결제)로.
-// 규칙(출시준비-1022/구독-요금제-메모.md 돌 앨범 절): 예약 = 돌 30일 전부터, 받을 날 = 예약 다음 날~돌 당일, 돌 뒤 무료 다시 만들기 1번, 인앱 9,900원.
-const ALB_Q = new URLSearchParams(location.search).get('album') || '';   // ?album=home|home:2|home:3 (홈 카드 강제) · ?album=real (로컬 실데이터)
-const albKey = () => 'bb-album-' + (baby?.id || 'x');
-const albState = () => { try { return JSON.parse(localStorage.getItem(albKey()) || '{}'); } catch (_) { return {}; } };
-const albSave = patch => { const s = { ...albState(), ...patch }; localStorage.setItem(albKey(), JSON.stringify(s)); return s; };
-const albFirst = () => (+baby.birth_date.slice(0, 4) + 1) + baby.birth_date.slice(4);                       // 첫돌 = 다음 해 같은 날
-const albOpenDay = () => { const d = new Date(albFirst() + 'T00:00'); d.setDate(d.getDate() - 30); return dstr(d); };   // 예약 열리는 날
-const albDotKo = s => { const d = new Date(s + 'T00:00'); return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`; };
-const albMdKo = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() + 1}월 ${d.getDate()}일`; };
-const ALB_COVER = { walk: '첫걸음', photo: '사진', quilt: '열세 칸', diary: '일기장' };
-const albIcon = `<span class="alb-ic" style="--mc:#f3d2e6"><img src="img/아기-단계-12.webp?r=2" alt=""></span>`;
-function albHomeStage() {   // 홈 카드 3단계: 예약 열림 → 예약됨 → 나왔어요(본 뒤 2주면 사라짐)
-  if (ALB_Q.startsWith('home')) return { 'home': 'reserve', 'home:2': 'reserved', 'home:3': 'done' }[ALB_Q] || 'reserve';
-  const s = albState(), t = dstr(new Date());
-  if (s.made && (!s.seenAt || Date.now() - s.seenAt < 14 * 86400000)) return 'done';
-  if (s.reserved) return 'reserved';
-  if (t >= albOpenDay() && t <= albFirst()) return 'reserve';
-  return '';
+// ═══ 성장앨범 책 (11-17 춘봉) — 통계 맨 아래 카드 → book/index.html 전체 화면(iframe) ═══
+// 매일 쌓이는 책: 펼침 한 면 = 하루(왼쪽 사진, 오른쪽 일기), 아래에 가족 댓글. 옛 돌 앨범(album/ 폴더, 예약·미리 만들기)은 더 부르지 않는다 — 코드는 index.bak-1117-book.html
+const BOOK_Q = new URLSearchParams(location.search).get('book') || '';   // 목업 확인용: ?book=nocm (댓글 표가 아직 없을 때) · ?book=empty (기록 없는 책)
+function bookMockDays() {   // 목업(?mock)엔 일기·사진이 없어 책에 넣을 날을 지어낸다 — 사진 자리는 앱 캐릭터 그림
+  const day = off => { const d = new Date(); d.setDate(d.getDate() - off); return dstr(d); };
+  const tx = ['목욕하고 나서 한참을 웃었다.\n아빠 목소리가 들리면 그쪽으로 고개를 돌린다.', '새벽 수유 두 번.\n그래도 아침엔 방긋.', '오늘은 소아과 다녀온 날.\n몸무게가 또 늘었다. 주사는 씩씩하게 맞고 집에 와서 한참 잤다.\n\n저녁엔 엄마 품에서 떨어지지 않으려고 해서 둘이 번갈아 안고 밥을 먹었다. 이런 날도 지나고 보면 그리울 거라고, 서로 말해 줬다.\n\n잘 자, 우리 콩이.', '첫 산책. 바람이 좋았다.', '', '손을 한참 들여다본다.\n자기 손인 줄 아는 걸까.', '할머니가 다녀가셨다.\n콩이 안고 한참을 계셨다.', '낮잠을 세 시간이나 잤다.', '옹알이가 늘었다.', '집에 온 첫날.'];
+  const ph = ['img/아기-단계-01.webp', 'img/아기-단계-m1.webp', '', 'img/아기-단계-12.webp', 'img/아기-단계-01.webp', '', 'img/아기-단계-m1.webp', '', 'img/아기-단계-12.webp', 'img/아기-단계-01.webp'];
+  const stk = ['🛁', '🍼', '🏥|💉', '', '', '', '', '', '', '👶'], offs = [0, 1, 2, 4, 5, 7, 8, 10, 13, 16];
+  return offs.map((o, i) => ({ day: day(o), diary: tx[i], sticker: stk[i], photo: !!ph[i], url: ph[i] ? '../' + ph[i] : '' })).filter(d => d.day >= baby.birth_date);
 }
-function renderAlbumHome() {
-  const el = $('album-home'), st = albHomeStage(); el.classList.toggle('hidden', !st); if (!st) return;
-  const s = albState(), chev = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
-  const tx = st === 'reserve' ? [`첫돌이 한 달 남았어요`, `${baby.name}의 첫 해를 앨범으로 · 예약하기`]
-    : st === 'reserved' ? [`앨범을 예약했어요`, `${albMdKo(s.reserved?.date || albFirst())} 아침에 완성돼요 · 표지 ${ALB_COVER[s.reserved?.cover] || '첫걸음'}`]
-    : [`앨범이 나왔어요`, `${baby.name}의 첫 해 · ${s.made?.pages || 36}쪽 · 보기`];
-  el.innerHTML = `${albIcon}<span class="tx"><b>${esc(tx[0])}</b><span>${esc(tx[1])}</span></span>${chev}`;
-  el.onclick = () => { if (st === 'reserve') openAlbum('reserve'); else if (st === 'done') { albSave({ seenAt: albState().seenAt || Date.now() }); openAlbum('view', s.made); } else goTab('s-stats'); };
+function bookDays() {       // 일기나 사진이 있는 날 전부 (사진 주소는 서명한 원본)
+  if (MOCK) return BOOK_Q === 'empty' ? [] : bookMockDays();
+  return [...new Set([...Object.keys(diaries), ...Object.keys(photoPaths)])].map(d => ({ day: d, diary: diaries[d] || '', sticker: stickers[d] || '', photo: !!photoPaths[d] && !!photos[d], url: photoPaths[d] ? (photos[d] || '') : '', thumb: photoPaths[d] ? (thumbs[d] || photos[d] || '') : '' })).filter(d => d.diary.trim() || d.photo);
 }
+function renderAlbumHome() { $('album-home').classList.add('hidden'); }   // 홈의 돌 앨범 예약 카드는 책 기획과 안 맞아 숨긴다 (11-17)
 function renderAlbumCard() {
-  const s = albState(), t = dstr(new Date()), first = albFirst(), left = Math.round((new Date(first + 'T00:00') - new Date(t + 'T00:00')) / 86400000);
-  const cur = s.made || s.preview, head = `<div class="alb-head">${albIcon}<div><b>성장 앨범</b><span>첫돌 ${albDotKo(first)} · ${left > 0 ? 'D-' + left : left === 0 ? '오늘 첫돌' : 'D+' + (-left)}</span></div></div>`;
-  let body;
-  if (cur) {
-    const isMade = !!s.made;
-    body = `<p class="alb-tx"><b>${isMade ? '완성판' : '미리 만든 판'}</b> · ${albMdKo(cur.asOf)}까지의 기록 · ${cur.pages}쪽 · 표지 ${ALB_COVER[cur.cover] || '첫걸음'}${cur.coverName && cur.coverName !== baby.name ? ` · 이름 "${esc(cur.coverName)}"` : ''}${!isMade && s.reserved ? `<br><b>예약</b> · ${albMdKo(s.reserved.date)} 아침에 완성돼요 · 그날까지의 기록으로 다시 만들어져요` : ''}</p>
-      <div class="alb-acts"><button type="button" class="pri" data-a="view">앨범 보기</button><button type="button" data-a="pdf">PDF 저장</button><button type="button" disabled>가족 링크<small>준비 중</small></button></div>
-      <div class="alb-links"><button type="button" data-a="cover">표지·이름 바꾸기</button><span>·</span><button type="button" data-a="remake">${isMade ? '돌 뒤 다시 만들기' : '지금까지로 다시 만들기'}</button></div>`;
-  } else if (s.reserved) {
-    body = `<p class="alb-tx"><b>예약했어요</b> · ${albMdKo(s.reserved.date)} 아침에 완성돼요 · 표지 ${ALB_COVER[s.reserved.cover] || '첫걸음'}<br>그날까지의 기록과 사진이 들어가요.</p>
-      <div class="alb-acts"><button type="button" data-a="cover">표지·날짜 바꾸기</button><button type="button" data-a="preview">지금까지로 미리 만들어 보기</button></div>`;
-  } else {
-    const open = t >= albOpenDay();
-    body = `<p class="alb-tx">첫 해의 기록과 사진을 앨범 한 권으로 엮어요 — 표지, 한 달 펼침면 열세 장, 1년 숫자, 성장 곡선, 기념일, 가족 한마디.<br>${open ? '<b>지금 예약할 수 있어요.</b> 받을 날 아침에 완성돼요.' : `돌 한 달 전(${albMdKo(albOpenDay())})부터 예약할 수 있어요.`}</p>
-      <div class="alb-acts">${open ? '<button type="button" class="pri" data-a="reserve">앨범 예약하기</button>' : ''}<button type="button" ${open ? '' : 'class="pri"'} data-a="preview">지금까지로 미리 만들어 보기</button></div>
-      <div class="alb-note">출시 땐 9,900원 · 지금은 리허설이라 결제 없이 만들어요</div>`;
-  }
-  const el = $('album-stat'); el.innerHTML = `<div class="alb-card">${head}${body}</div>`;
-  el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
-    const a = b.dataset.a;
-    if (a === 'view') openAlbum('view', cur); else if (a === 'pdf') openAlbum('view', { ...cur, autoPdf: true });
-    else if (a === 'cover') openAlbum(s.reserved && !cur ? 'reserve' : 'make', cur || s.reserved);
-    else if (a === 'remake') openAlbum('make', cur); else if (a === 'reserve') openAlbum('reserve'); else openAlbum('make');
-  });
+  const days = bookDays(), nd = days.filter(d => d.diary.trim()).length, np = days.filter(d => d.photo).length;
+  const el = $('album-stat');
+  el.innerHTML = `<div class="alb-card"><div class="alb-head"><span class="bk-mini" aria-hidden="true"></span><div><b>${esc(baby.name)}의 성장앨범</b><span>${days.length ? `일기 ${nd}편 · 사진 ${np}장` : '아직 빈 책이에요'}</span></div></div>
+    <p class="alb-tx">매일 쓴 일기와 사진이 책 한 권으로 쌓여요. 가족끼리 댓글도 남길 수 있어요.</p>
+    <div class="alb-acts"><button type="button" class="pri" data-a="open">책 펼쳐 보기</button></div></div>`;
+  el.querySelector('[data-a]').onclick = openBook;
 }
-// 앨범 입력: 태어난 날부터의 기록 전부(앱은 평소 30일치만 들고 있다) + 다이어리 사진 원본 서명 주소. 사진·기록은 폰 안에서만 조립되고 밖으로 나가지 않는다
-async function albumInput() {
-  let all = logs;
+// 가족 댓글 — 서버 표 baby_comments (스키마-v1.20-댓글.sql, 가족만 읽기·쓰기, 내 댓글만 지우기). 표가 아직 없으면 list 가 실패하고 책은 '댓글 준비 중'으로 뜬다
+const _bkMock = [];   // 목업: 메모리에서 흉내 (앱을 새로 고치면 사라진다)
+function bookApi() {
+  const cols = 'id, day, user_id, text, created_at';
+  if (MOCK) {
+    if (!_bkMock.length && BOOK_Q !== 'nocm') { const ds = bookMockDays(), t = (d, h, m) => { const x = new Date(d + 'T00:00'); x.setHours(h, m); return x.toISOString(); };
+      if (ds[0]) _bkMock.push({ id: 'm1', day: ds[0].day, user_id: 'u-mom', text: '오늘 표정 진짜 최고였어. 자꾸 다시 보게 돼', created_at: t(ds[0].day, 21, 12) }, { id: 'm2', day: ds[0].day, user_id: 'u-dad', text: '퇴근하고 여기부터 펼쳐 봤어. 내일 목욕은 아빠가!', created_at: t(ds[0].day, 22, 40) });
+      if (ds[2]) _bkMock.push({ id: 'm3', day: ds[2].day, user_id: 'u-mom', text: '주사 맞고도 씩씩했던 날', created_at: t(ds[2].day, 20, 5) }); }
+    return { list: async () => { if (BOOK_Q === 'nocm') throw new Error('relation "baby_comments" does not exist'); return _bkMock.slice(); },
+      add: async (day, text) => { const r = { id: 'm' + Date.now(), day, user_id: me.id, text, created_at: new Date().toISOString() }; _bkMock.push(r); return r; },
+      del: async id => { const i = _bkMock.findIndex(r => r.id === id && r.user_id === me.id); if (i < 0) throw new Error('내 댓글만 지울 수 있어요'); _bkMock.splice(i, 1); } };
+  }
+  return { list: async () => { const { data, error } = await sb.from('baby_comments').select(cols).eq('baby_id', baby.id).order('created_at'); if (error) throw error; return data || []; },
+    add: async (day, text) => { const { data, error } = await sb.from('baby_comments').insert({ baby_id: baby.id, day, user_id: me.id, text }).select(cols).single(); if (error) throw error; return data; },
+    del: async id => { const { error } = await sb.from('baby_comments').delete().eq('id', id).eq('user_id', me.id); if (error) throw error; } };
+}
+async function openBook() {
+  const wrap = $('album-wrap'); wrap.classList.remove('hidden'); wrap.classList.add('bk'); wrap.innerHTML = '<iframe title="성장앨범" allow="fullscreen"></iframe>';
+  const f = wrap.firstChild;
+  let all = logs;                                            // 숫자 장: 태어난 날부터의 기록 전부(앱은 평소 30일치만 들고 있다). 책 안에서만 더하고 밖으로 나가지 않는다
   if (!MOCK) {
-    all = []; const since = new Date(baby.birth_date + 'T00:00').toISOString();
-    for (let from = 0; ; from += 1000) { const { data } = await sb.from('baby_logs').select('*').eq('baby_id', baby.id).gte('at', since).order('at').range(from, from + 999); all.push(...(data || [])); if (!data || data.length < 1000) break; }
-    await signPhotos();
+    try { await signPhotos(); } catch (_) {}                 // 사진 원본·썸네일 서명 주소 (실패해도 책은 글만으로 열린다)
+    try { all = []; const since = new Date(baby.birth_date + 'T00:00').toISOString();
+      for (let from = 0; ; from += 1000) { const { data } = await sb.from('baby_logs').select('kind, at, ended_at, detail').eq('baby_id', baby.id).gte('at', since).order('at').range(from, from + 999); all.push(...(data || [])); if (!data || data.length < 1000) break; } } catch (_) { all = logs; }
   }
-  const days = {}; for (const d of new Set([...Object.keys(diaries), ...Object.keys(photoPaths)])) days[d] = { diary: diaries[d] || '', photo: photos[d] || null };
-  const members = Object.keys(nickById).map(id => ({ user_id: id, role: charOf(id) === 'mom' ? '엄마' : '아빠' }));
-  return { baby: { id: baby.id, name: baby.name, birth_date: baby.birth_date, sex: baby.sex || 'm', photo_url: baby.photo_url || '' }, members, days, logs: all, growth, notes, checks: Object.values(checks), today: dstr(new Date()) };
+  const ids = Object.keys(nickById).sort((a, b) => (a === baby.created_by ? -1 : 0) - (b === baby.created_by ? -1 : 0));
+  const members = ids.slice(0, 5).map(id => ({ id, name: nickById[id] || (charOf(id) === 'mom' ? '엄마' : '아빠'), img: '../' + avatarSrc(id) }));   // 표지 얼굴은 아기 + 가족 5 = 최대 6명
+  const input = { baby: { name: baby.name, birth_date: baby.birth_date }, days: bookDays(), members, me: me.id, api: bookApi(), logs: all.slice().sort((a, b) => a.at < b.at ? -1 : 1), growth, checks: Object.values(checks), today: dstr(new Date()) };
+  f.addEventListener('load', () => { try { f.contentWindow.bookStart(input); } catch (e) { closeBook(); toast('성장앨범을 열지 못했어요'); } });
+  f.src = 'book/index.html';
 }
-let _albFrame = null;
-async function openAlbum(mode, prev) {   // mode: make(지금까지로) · reserve(예약) · view(만든 것 보기)
-  const wrap = $('album-wrap'); wrap.classList.remove('hidden'); wrap.innerHTML = '<iframe title="성장 앨범" allow="fullscreen"></iframe>';
-  const f = _albFrame = wrap.firstChild;
-  const input = (MOCK && ALB_Q === 'real') ? null : await albumInput();
-  f.addEventListener('load', () => f.contentWindow.albumStart({ mode, input, src: (MOCK && ALB_Q === 'real') ? 'real' : '', theme: document.documentElement.dataset.theme || 'dark', first: albFirst(), cover: prev?.cover, coverName: prev?.coverName, autoPdf: !!prev?.autoPdf }));
-  f.src = 'album/album.html';
-}
-function closeAlbum() { const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.innerHTML = ''; _albFrame = null; if (!$('s-stats').classList.contains('hidden')) renderAlbumCard(); if (!$('s-home').classList.contains('hidden')) renderAlbumHome(); }
-addEventListener('message', e => {
-  if (e.origin !== location.origin || !e.data || e.data.t !== 'album') return;
-  const m = e.data;
-  if (m.act === 'close') closeAlbum();
-  else if (m.act === 'made') { const rec = { cover: m.cover, coverName: m.coverName, asOf: m.asOf, pages: m.pages, at: Date.now() }; const s = albState(); if (s.made || (s.reserved && m.asOf >= s.reserved.date)) albSave({ made: rec, reserved: null }); else albSave({ preview: rec }); }
-  else if (m.act === 'reserved') { albSave({ reserved: { date: m.date, cover: m.cover, coverName: m.coverName, at: Date.now() } }); closeAlbum(); toast(`${albMdKo(m.date)} 아침에 완성돼요`); }
-});
+function closeBook() { const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.classList.remove('bk'); wrap.innerHTML = ''; }
+addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.t === 'book' && e.data.act === 'close') closeBook(); });
 
 boot();
 </script>

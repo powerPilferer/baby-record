@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ece2cf">
+<title>성장앨범</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poor+Story&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <button type="button" class="back" id="btn-back" aria-label="통계로 돌아가기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 id="ttl-h"><span class="nm" id="ttl"></span><span>의 성장앨범</span><img src="doodles/sprout.svg" alt=""></h1>
+  </header>
+
+  <!-- 첫 화면: 닫힌 책. 누르면 표지가 열리며 가장 최근 날이 펼쳐진다 -->
+  <section id="cover" class="cover" aria-label="닫힌 책">
+    <p class="cv-logo" id="cv-logo" aria-hidden="true"><span class="l1" id="cv-l1"></span><span class="l2">성장앨범</span></p>
+    <button type="button" class="cbook" id="cbook">
+      <span class="cb-shadow" aria-hidden="true"></span>
+      <span class="cb-ribbon" aria-hidden="true"></span>
+      <span class="cb-back" aria-hidden="true"></span>
+      <span class="cb-pages" aria-hidden="true"></span>
+      <span class="cb-cover" id="cb-cover">
+        <span class="cb-front" id="cb-front"></span>   <!-- 표지 구성은 book.js drawCover 가 안(?design=a|b|c)에 따라 채운다 -->
+        <span class="cb-in" aria-hidden="true"></span>
+      </span>
+    </button>
+    <div class="cv-info" id="cv-info"><p class="tt" id="cv-tt"></p><p class="st" id="cv-st"></p><p class="hint">책을 누르면 가장 최근 날이 펼쳐져요</p></div>
+  </section>
+
+  <div id="view-book" class="view">
+    <!-- 펼친 책: 왼쪽 쪽 = 사진, 오른쪽 쪽 = 날짜·일기. 펼침 한 면 = 하루 -->
+    <section id="book" class="book" aria-live="polite" aria-roledescription="펼친 책">
+      <div class="half hl" id="hl"></div>
+      <div class="half hr" id="hr"></div>
+      <div class="sheet" id="sheet" hidden><div class="face front" id="front"></div><div class="face back" id="back"></div></div>
+      <div class="spine" aria-hidden="true"></div>
+      <!-- 책갈피: 책 오른쪽 위 모서리에 끼운 캐릭터 책갈피. 누르면 아래로 길게 열려 장(일기·사진·숫자·성장)을 고른다 -->
+      <span class="bm-head" aria-hidden="true"><img src="../img/아기-2g-전신-누끼.png" alt=""></span>
+      <div class="bm" id="bm" hidden>
+        <div class="bm-list" id="bm-list" role="menu"></div>
+        <button type="button" class="bm-tog" id="bm-tog" aria-haspopup="menu" aria-expanded="false" aria-controls="bm-list" aria-label="책갈피 — 장 고르기"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button>
+      </div>
+    </section>
+
+    <nav class="bar" id="bar" aria-label="쪽 이동">
+      <button type="button" class="chip" id="btn-month" aria-haspopup="dialog">
+        <span id="lb-month">11월</span>
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>
+      </button>
+      <span class="folio" id="folio"></span>
+      <button type="button" class="chip ghost" id="btn-today">오늘 쪽
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+      </button>
+    </nav>
+
+    <!-- 책 아래: 긴 일기 이어 읽기 + 가족 댓글 -->
+    <section class="under" aria-label="이 날의 글과 댓글">
+      <div class="under-scroll" id="under"></div>
+      <form class="cm-form" id="cm-form" autocomplete="off">
+        <img src="../img/아빠-2g-b.png" alt="아빠" width="32" height="32">
+        <input type="text" id="cm-input" placeholder="이 날에 한마디 남기기" aria-label="댓글 쓰기" maxlength="200" enterkeyhint="send">
+        <button type="submit" id="cm-send" disabled>남기기</button>
+      </form>
+    </section>
+  </div>
+
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet-ui" id="sheet-mo" role="dialog" aria-modal="true" aria-labelledby="mo-title" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <header>
+    <h2 id="mo-title">쪽 찾기</h2>
+    <p>날짜를 누르면 그날이 펼쳐져요</p>
+    <button type="button" class="x" data-close aria-label="닫기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+  </header>
+  <div class="mo-list" id="mo-list"></div>
+</section>
+
+<script src="book.js"></script>
+</body>
+</html>

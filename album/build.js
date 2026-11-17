@@ -1,4 +1,6 @@
-// 돌 앨범 — 데이터 → 쪽 HTML (춘봉 2026-11-11)
+// 돌 앨범 — 데이터 → 스토리 컷 HTML (춘봉 2026-11-11 · 11-12 폰 전용 스토리형으로 교체)
+// ⚠ 11-12: 정사각 쪽·펼침면·PDF 는 폐기. 화면에 쓰는 건 build().phone(컷 목록·성장 곡선)과 coverP 뿐이다.
+//   아래 정사각 쪽 문자열(monthPages 의 left/right·statsPg·growthPg·msPg·famPg·cover·fit)은 값 계산과 한 몸이라 이번엔 남겼다 — 다음 정리 후보.
 // 시안/돌앨범-1022/실데이터-1111/만들기.py 를 그대로 JS 로 옮긴 것. 규칙·문구·순서를 바꾸지 않는다(같은 데이터면 같은 그림).
 // 입력 D = { baby{name,birth_date,sex,photo_url}, members[{user_id,role('엄마'|'아빠'|'가족')}], days{day:{diary,photo(url)}}, logs[], growth[], notes[], checks[], today, cover, coverName, img(그림 폴더 URL) }
 window.AlbumBuild = (function () {
@@ -22,6 +24,22 @@ window.AlbumBuild = (function () {
   const WD = '월화수목금토일';
   const ITEM_LABEL = { hepb1: 'B형간염 1차', hepb2: 'B형간염 2차', hepb3: 'B형간염 3차', bcg: 'BCG', chk1: '1차 영유아검진', chk2: '2차 영유아검진', dtap1: 'DTaP 1차', ipv1: '폴리오 1차', hib1: 'Hib 1차', pcv1: '폐렴구균 1차', rota1: '로타 1차' };
   const FIRST_RE = /처음|첫/;
+  // 사진첩 타일 색(11-12b): 기록 색(흰 글자)과 달 색(먹 글자)을 번갈아 — 한 판 여섯 장이 모두 다른 색. 전부 앨범에 이미 있는 색
+  const TILE_C = [['var(--ok)', '#fff'], ['#c7bbde', '#2c2b33'], ['var(--diaper)', '#3d2e00'], ['var(--temp)', '#fff'], ['#ebc1e2', '#2c2b33'], ['var(--feed)', '#fff'],
+                  ['var(--sleep)', '#fff'], ['#ecc8ae', '#2c2b33'], ['#b6ded7', '#2c2b33'], ['var(--ms)', '#fff'], ['#c0d5ee', '#2c2b33'], ['#f1e1bd', '#2c2b33']];
+  // 상세 화면(그 카드 색 전체 화면 + 괘선 위 손글씨)에서 본문 대비 4.5:1 을 지키는 바탕: 흰 글자 카드는 카드 색에 검정을 조금씩 섞어 4.6:1 이 될 때까지만 깊게 한다(먹 글자 카드는 그대로도 넉넉)
+  const TILE_HEX = { 'var(--ok)': '#2f9e63', 'var(--diaper)': '#e8b10e', 'var(--temp)': '#d4554d', 'var(--feed)': '#3b7bd4', 'var(--sleep)': '#7565cf', 'var(--ms)': '#e2557f' };
+  const rgbOf = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), lumOf = c => { const [r, g, b] = c.map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * r + .7152 * g + .0722 * b; };
+  const ratio = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  const deep = (c, f) => { let bg = rgbOf(TILE_HEX[c] || c); const fg = rgbOf(f.length === 4 ? '#' + [...f.slice(1)].map(ch => ch + ch).join('') : f), base = bg;
+    for (let t = 0; t <= .5 && ratio(bg, fg) < 4.6; t += .02) bg = base.map(v => Math.round(v * (1 - t)));
+    return '#' + bg.map(v => v.toString(16).padStart(2, '0')).join(''); };
+  const polar = r => 'M' + [...Array(72)].map((_, i) => { const a = i / 72 * Math.PI * 2, q = r(a); return (50 + q * Math.cos(a)).toFixed(1) + ' ' + (50 + q * Math.sin(a)).toFixed(1); }).join('L') + 'Z';
+  const STK = [polar(() => 40), polar(a => 39.5 / Math.pow(Math.pow(Math.abs(Math.cos(a)), 4) + Math.pow(Math.abs(Math.sin(a)), 4), .25) * .93), polar(a => 37.5 + 3.6 * Math.cos(3 * a + .6) + 1.8 * Math.sin(2 * a)), polar(a => 38.6 + 2.2 * Math.cos(10 * a))];
+  // 타일 이름: 일기에 '첫 OO'가 있으면 그 말, 아니면 일기 첫 마디(13자까지, 넘으면 낱말에서 끊고 …). 일기가 없으면 빈 값 → 날짜가 이름이 된다
+  const tileName = s => { const t = String(s || '').split('\n')[0].replace(/\p{Extended_Pictographic}|[️‍]/gu, '').replace(/\s+/g, ' ').trim(); if (!t) return '';
+    const m = t.match(/첫\s?(?!번|째)[가-힣]{2,4}(?=[\s.,!?~…]|$)/); if (m) return m[0].replace(/(.{3,})[을를]$/, '$1');
+    const c = t.split(/[.!?~…,。]/)[0].trim(); if (c.length <= 13) return c; const cut = c.slice(0, 13), sp = cut.lastIndexOf(' '); return (sp > 5 ? cut.slice(0, sp) : cut.slice(0, 12)) + '…'; };
   const Z3 = -1.8808, Z97 = 1.8808;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const pad = n => String(n).padStart(2, '0');
@@ -81,6 +99,7 @@ window.AlbumBuild = (function () {
     const summarize = ls => { const f = ls.filter(l => l.kind === 'feed'), s = ls.filter(l => l.kind === 'sleep' && l.end), dp = ls.filter(l => l.kind === 'diaper');
       return { feed: f.length, feed_days: kindDays(ls, 'feed'), ml: feedSum(ls), sleep_h: sleepHours(ls), sleep_days: kindDays(ls, 'sleep'), sleep_n: s.length, diaper: dp.length, diaper_days: kindDays(ls, 'diaper'), poo: dp.filter(l => l.det.poo).length, temp: ls.filter(l => l.kind === 'temp').length }; };
     const ISSUES = [];
+    const PH = { months: [], ms: [] };   // 폰 세로 전체 화면 장면(11-12)용 — 정사각 쪽과 같은 값을 그대로 담아 둔다
 
     // ── 달 나누기 (태어난 날 기준 한 달씩, 오늘까지 온 달만)
     const months = [];
@@ -136,6 +155,7 @@ window.AlbumBuild = (function () {
       </div>
       <div class="folio"><span>${D_(M.s).getFullYear()}. ${D_(M.s).getMonth() + 1} — ${D_(M.e).getMonth() + 1}</span><span>${pno + 1}</span></div>
     </article>`;
+      PH.months.push({ all: rng.filter(d => oneLine(DAYS[d].diary) || DAYS[d].photo).map(d => ({ ...DAYS[d], d })), i: M.i, st, label, nd: ddays.length, np: pdays.length, rngTxt, dpTxt, cap1, cap2, S, wk, wd, items, photos: photos.map(x => ({ d: x.d, src: photoOf(x.d), cap: firstLine(x.diary, 24) })) });
       return `<section class="spread two" data-page="month-${M.i}">${left}${right}</section>`;
     }
 
@@ -287,7 +307,9 @@ window.AlbumBuild = (function () {
         const sub = [gg.length ? `<b>${W(gg[gg.length - 1].weight_kg)}kg</b>` : '', gl.length ? `${g(gl[gl.length - 1].length_cm)}cm` : '', fromLogs ? '그날 기록' : ''].filter(Boolean).join(' · ');
         msRows += `<li><div class="dot" style="--mc:${st.bg[1]}">${img}</div><div class="d">${lab}<small>${fmtD(d)} · ${wd}</small></div><div class="t" data-clamp="2"><div class="tx">${esc(txt)}</div><span>${sub}</span></div></li>\n`;
         if (!src) ISSUES.push(`${lab}(${fmtD(d, false)}) 사진이 아직 없어 그 달 캐릭터로 대체`);
+        PH.ms.push({ lab, big, img, mc: st.bg[1], date: `${fmtD(d)} · ${wd}`, txt, sub, yet: false });
       } else {
+        PH.ms.push({ lab, big, img, mc: st.bg[1], date: `${fmtD(d)} · ${wd}`, txt: '', sub: '', yet: true });
         msRows += `<li style="opacity:.42"><div class="dot${big}" style="--mc:${st.bg[1]}">${img}</div><div class="d">${lab}<small>${fmtD(d)} · ${wd}</small></div><div class="t"></div></li>\n`;
       }
     }
@@ -326,7 +348,227 @@ ${says}        <div class="say wide"><div class="av" style="background:#e8e2f5">
     const stats2 = statsPg.replace('PNO', String(pno)); pno += 1;
     const growth2 = growthPg.replace('PNO', String(pno)), ms2 = msPg.replace('PNO', String(pno + 1)); pno += 2;
     const pages = coverHtml + monthHtml + stats2 + `<section class="spread two" data-page="growth">${growth2}${ms2}</section>` + famPg;
-    return { pages, issues: ISSUES, count: (pages.match(/<article/g) || []).length, first: FIRST, today: TODAY, dp: daysTotal };
+
+    // ══ 폰 세로 전체 화면 장면 (11-12 사장님 "폰에서는 어플처럼 전체 화면으로") ══
+    // 정사각 쪽과 같은 값·같은 문구를 폰 화면 비율로 다시 짠다. 장면 순서 = 쪽 순서(표지 / 달마다 두 장 / 숫자 / 성장 / 기념일 / 가족) → 장면 번호 = 쪽 번호.
+    function chartP(w, h) {   // 성장 곡선: 폰 화면 칸 크기에 맞춰 다시 그린다(824px 그림을 줄이면 글자가 5px 가 된다)
+      const x0 = 4, x1 = w - 4, y0 = 26, y1 = h - 42, R = v => v.toFixed(1);
+      const xt2 = t => x0 + t / span * (x1 - x0), xs2 = d => xt2(days(BIRTH, d));
+      const ys2 = v => y1 - (v - wmin) / (wmax - wmin) * (y1 - y0), yl2 = v => y1 - (v - lmin) / (lmax - lmin) * (y1 - y0);
+      const bp = 'M' + band.map(([t, lo]) => `${R(xt2(t))} ${R(ys2(lo))}`).join(' L') + ' L' + [...band].reverse().map(([t, , hi]) => `${R(xt2(t))} ${R(ys2(hi))}`).join(' L') + ' Z';
+      const wl = hasW ? 'M' + W_PTS.map(([d, v]) => `${R(xs2(d))} ${R(ys2(v))}`).join(' L') : '';
+      const wa = hasW ? wl + ` L${R(xs2(W_PTS[W_PTS.length - 1][0]))} ${y1} L${R(xs2(W_PTS[0][0]))} ${y1} Z` : '';
+      const ll = hasL ? 'M' + L_PTS.map(([d, v]) => `${R(xs2(d))} ${R(yl2(v))}`).join(' L') : '';
+      const grid = [.25, .5, .75, 1].map(f => `<line x1="${x0}" y1="${R(y1 - (y1 - y0) * f)}" x2="${x1}" y2="${R(y1 - (y1 - y0) * f)}" stroke-dasharray="2 5"/>`).join('');
+      // 눈금 글자: 끝 글자("오늘 D+n")와 부딪히는 가운데 글자는 점만 남긴다
+      const endW = String(ticks[ticks.length - 1][1]).length * 6.4 + 8; let lastEnd = 30;
+      const tt = ticks.map(([t, lab], i) => { const x = xt2(t), half = String(lab).length * 5.6; const mid = i > 0 && i < ticks.length - 1;
+        if (mid && (x - half < lastEnd + 6 || x + half > x1 - endW)) return ''; if (mid) lastEnd = x + half;
+        return `<text x="${R(x)}" y="${h - 20}" text-anchor="${t === 0 ? 'start' : t === span ? 'end' : 'middle'}">${lab}</text>`; }).join('');
+      const td = ticks.filter(([t]) => t).map(([t]) => `<circle cx="${R(xt2(t))}" cy="${h - 7}" r="2"/>`).join('');
+      const ml = hasW ? msDates.filter(([n, dd]) => typeof n === 'number' && dd <= TODAY).map(([, dd]) => { const [d, v] = nearest(dd); const x = xs2(d); return x > x1 - 46 || x < x0 + 46 ? '' : `<text x="${R(x)}" y="${R(ys2(v) - 10)}" text-anchor="middle">${W(v)}</text>`; }).join('') : '';
+      // 처음·끝 점의 몸무게·키 글자: 위에 있는 선의 글자는 위로, 아래 선의 글자는 아래로 — 두 점이 붙어 있어도 겹치지 않는다
+      const lab = (yw, yl) => yw == null || yl == null ? [yw == null ? 0 : yw - 10, yl == null ? 0 : yl + 16] : yw <= yl ? [yw - 10, yl + 17] : [yw + 18, yl - 10];
+      const [wy0, ly0] = lab(hasW ? ys2(W_PTS[0][1]) : null, hasL ? yl2(L_PTS[0][1]) : null), [wy1, ly1] = lab(hasW ? ys2(wLast) : null, hasL ? yl2(lLast) : null);
+      return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${daysTotal}일 몸무게·키 성장 곡선">
+        <defs><linearGradient id="gwp" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2f9e63" stop-opacity=".16"/><stop offset="1" stop-color="#2f9e63" stop-opacity="0"/></linearGradient></defs>
+        <g stroke="rgba(69,68,77,.1)" stroke-width="1"><line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}"/>${grid}</g>
+        <path d="${bp}" fill="#2f9e63" opacity=".10"/>
+        ${hasW ? `<path d="${wa}" fill="url(#gwp)"/><path d="${wl}" fill="none" stroke="#2f9e63" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+        ${hasL ? `<path d="${ll}" fill="none" stroke="#3b7bd4" stroke-width="2" stroke-linecap="round" opacity=".85"/>` : ''}
+        <g fill="#fffdf6" stroke="#2f9e63" stroke-width="2.2">${W_PTS.map(([d, v], i) => `<circle cx="${R(xs2(d))}" cy="${R(ys2(v))}" r="${0 < i && i < W_PTS.length - 1 ? 2.8 : 4.2}"/>`).join('')}</g>
+        <g fill="#fffdf6" stroke="#3b7bd4" stroke-width="2">${L_PTS.map(([d, v]) => `<circle cx="${R(xs2(d))}" cy="${R(yl2(v))}" r="3.6"/>`).join('')}</g>
+        <g font-family="Pretendard Variable, Pretendard, sans-serif" font-size="11" font-weight="600" fill="#2f9e63">
+          ${hasW ? `<text x="${R(xs2(W_PTS[0][0]) + 6)}" y="${R(wy0)}" text-anchor="start">${W(W_PTS[0][1])}kg</text>${ml}<text x="${R(xs2(wLastD) - 4)}" y="${R(wy1)}" text-anchor="end">${W(wLast)}kg</text>` : ''}
+        </g>
+        <g font-family="Pretendard Variable, Pretendard, sans-serif" font-size="11" font-weight="600" fill="#3b7bd4">
+          ${hasL ? `<text x="${R(xs2(L_PTS[0][0]) + 8)}" y="${R(ly0)}">${g(L_PTS[0][1])}cm</text>${L_PTS.length > 1 ? `<text x="${R(xs2(lLastD) - 4)}" y="${R(ly1)}" text-anchor="end">${g(lLast)}cm</text>` : ''}` : ''}
+        </g>
+        <g font-family="Pretendard Variable, Pretendard, sans-serif" font-size="10.5" fill="#9a9aa3" letter-spacing=".04em">${tt}</g>
+        <g fill="#e2557f">${td}</g>
+      </svg>`;
+    }
+    function phoneScenes() {
+      // 컷 = { ch(챕터 이름 — 위 진행 막대 한 칸), name, dur(자동 넘김 ms, 0 = 멈춤), html }
+      const out = [], eye = t => `<div class="p-eye">${t}</div>`;
+      // 사진첩(11-13 정정 — 사장님: "기존에 작업햇던 모양이 1~12달의 파일칩이고 그걸 누르면 그달의 일기가 차트처럼 촤라락 되어 있는걸 말한거였어")
+      // 달 타일 열두 장(11-12b 타일 판 모양 그대로) → 누르면 그 달의 하루하루가 겹겹이 쌓인 카드. 하루 = 카드 하나: 일기 쓴 날 + 사진 있는 날 전부, 날짜순.
+      // '1달' = 태어난 날부터 한 달(첫째 달) … '12달' = 열두째 달(돌 당일 뒤 기록도 여기에 같이)
+      const BOOK = [], BKM = [...Array(12)].map((_, i) => ({ i, m: PH.months.find(x => x.i === i) || null, list: [], s: addMonths(BIRTH, i), e: addDays(addMonths(BIRTH, i + 1), -1) }));
+      for (const m of PH.months) for (const x of m.all) { const src = photoOf(x.d), dt = D_(x.d), nm = tileName(x.diary), [c, f] = TILE_C[BOOK.length % TILE_C.length], md = `${dt.getMonth() + 1}월 ${dt.getDate()}일`;
+        const p = { n: BOOK.length, mi: Math.min(11, m.i), d: x.d, src, name: nm || md, tag: nm ? `${fmtD(x.d, false)} · D+${DP(x.d)}` : `D+${DP(x.d)}`, date: `${fmtD(x.d)} · D+${DP(x.d)}`, head: `${md} ${'일월화수목금토'[dt.getDay()]}요일`, dn: `D+${DP(x.d)}`, diary: String(x.diary || '').replace(/‍/g, '').trim(), db: deep(c, f), lt: f === '#fff', alt: src ? `${md} 사진` : '', lab: `${md}${src ? ' 사진과 일기' : ' 일기'}`, c, f };
+        BOOK.push(p); BKM[p.mi].list.push(p); }
+      // 스티커: 사진 가운데(살짝 위)를 1.9배로 키워 둥근 모양으로 오리고 흰 테두리를 두른다(칼선 스티커). 얼굴 인식 없음. 모양 넷이 돌아가며 — 원·둥근 네모·조약돌·물결 테
+      const sticker = (src, i, pre) => { const p = STK[i % STK.length], id = `${pre}${i}`;
+        return `<svg class="stk" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="${id}"><path d="${p}"/></clipPath></defs><path d="${p}" fill="#fff" stroke="#fff" stroke-width="9" stroke-linejoin="round"/><image href="${esc(src)}" x="-45" y="-35" width="190" height="190" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id})"/></svg>`; };
+      const sc = (ch, name, dur, cls, attrs, inner) => out.push({ ch, name, dur, html: `<section class="psc ${cls}" ${attrs}><div class="p-in">${inner}</div></section>` });
+      out.push({ ch: '표지', name: '표지', dur: 6000, html: coverP(D, { NAME, BIRTH, FIRST, SEX, IMG, DAYS, roles }) });
+      for (const m of PH.months) {
+        const sty = `style="--ma:${m.st.bg[0]};--mb:${m.st.bg[1]};--mc:${m.st.bg[2]};--ml:${m.st.lab}"`, ch = `${m.i}개월`;
+        sc(ch, m.label, 5500, 'p-mo', `${sty} data-scene="month-${m.i}"`, `
+          <div class="p-mnum"><b>${m.i}</b><span>${m.label}</span></div>
+          <div class="p-range">${m.rngTxt} · ${m.dpTxt}</div>
+          <div class="p-cap"><em>이달의 ${esc(NAME)} <span class="sum">AI 요약 자리</span></em>${esc(m.cap1)}${m.cap2 ? `<span class="q">${esc(m.cap2)}</span>` : ''}</div>
+          <div class="p-art" data-art="mo" data-plx><img src="${IMG}${m.st.img}" alt="${m.i}개월 ${esc(NAME)}"></div>`);
+        const head = `<div class="p-mh"><b>${m.i}</b><span>${m.label}</span><i>${m.rngTxt}</i></div>`;
+        // 11-12b: 달마다 있던 폴라로이드 사진 컷은 '사진첩' 컷 하나로 모았다(아래 book). 옛 컷은 album.bak-1112b
+        const S = m.S;
+        sc(ch, `${m.label} · 일기`, Math.min(15000, 6000 + 1500 * m.items.length), 'p-mr' + (m.items.length ? '' : ' nod'), `${sty} data-scene="month-${m.i}-rec"`, `
+          ${head}
+          ${m.items.length ? `<div class="p-diary p-scroll" data-items='${esc(JSON.stringify(m.items))}'></div>` : ''}
+          <div class="p-mnums">
+            <div style="--c:var(--feed)"><em>수유</em><b class="num">${S.feed}<small>번</small></b><span>하루 ${f1(S.feed / Math.max(1, S.feed_days))}번 · 모두 ${f1(S.ml / 1000)}L</span></div>
+            <div style="--c:var(--sleep)"><em>잠</em><b class="num">${Math.round(S.sleep_h)}<small>시간</small></b><span>하루 ${hm(S.sleep_h / Math.max(1, S.sleep_days))}</span></div>
+            <div style="--c:var(--diaper)"><em>기저귀</em><b class="num">${S.diaper}<small>장</small></b><span>하루 ${f1(S.diaper / Math.max(1, S.diaper_days))}장</span></div>
+            <div style="--c:var(--ok)"><em>몸무게 · 키</em><b class="num">${m.wk}</b><span>${m.wd}</span></div>
+          </div>`);
+      }
+      // ── 숫자: 결산처럼 한 컷에 하나씩 크게
+      const momPct = Math.round(momN / Math.max(1, notes.length) * 100), dadPct = Math.round(dadN / Math.max(1, notes.length) * 100);
+      const CH_N = '숫자', eyeN = eye(`숫자로 본 ${daysTotal}일`);
+      sc(CH_N, `숫자로 본 ${daysTotal}일`, 5500, 'p-sti', 'data-scene="stats" data-ch="w"', `
+        ${eyeN}
+        <h2>${esc(NAME)}는<br>${daysTotal}일 동안<br><b>${nfmt(S.feed)}번</b> 먹고,<br><b>${Math.round(S.sleep_h / 24)}일</b>을 잤어요.</h2>
+        <p class="p-sm">${fmtD(BIRTH)} — ${fmtD(TODAY, false)}<br>엄마 아빠가 적은 ${daysTotal}일 (기록은 ${fmtD(logFirst, false)}부터)</p>`);
+      const big = (key, c, ic, n, unit, verb, l, viz, lg) => sc(CH_N, verb, 5500, 'p-num' + (key === 'diaper' ? ' ink' : ''), `style="--c:var(--${c})" data-scene="stat-${key}"${key === 'diaper' ? '' : ' data-ch="w"'}`, `
+        ${eyeN}
+        <div class="big"><b class="num" data-count="${n}">${nfmt(n)}</b><small>${unit}</small></div>
+        <div class="verb">${verb}</div>
+        <div class="viz">${viz}${lg ? `<i class="lg">${lg}</i>` : ''}</div>
+        <p class="l">${l}</p>
+        <img class="ic" src="${IMG}${ic}" alt="">
+        <div class="p-chips" role="tablist" aria-label="숫자 고르기">${[['feed', '수유'], ['sleep', '잠'], ['diaper', '기저귀'], ['diary', '일기']].map(([kk, t]) => `<button type="button" role="tab" data-go="stat-${kk}"${kk === key ? ' class="on" aria-selected="true"' : ''}>${t}</button>`).join('')}</div>`);
+      big('feed', 'feed', 'ic-feed.png', S.feed, '번', '먹었어요', `모두 <strong>${f1(S.ml / 1000)}L</strong> — 2L 생수 ${Math.round(S.ml / 2000)}병,<br>하루 ${f1(S.feed / Math.max(1, S.feed_days))}번`, `<div class="picto" aria-hidden="true">${picto(S.feed)}</div>`, '■ 하나 = 100번');
+      big('sleep', 'sleep', 'ic-sleep.png', Math.round(S.sleep_h), '시간', '잤어요', `기록한 날의 <strong>${Math.round(sleepPct)}%</strong> — 가장 길게 잔 잠은<br><strong>${longest ? hm(longest[0]) : '—'}</strong>${longest ? ` (${D_(lday).getMonth() + 1}월 ${D_(lday).getDate()}일)` : ''}`, `<div class="bar"><i style="--w:${Math.round(sleepPct)}%"></i></div>`, `잠 ${Math.round(sleepPct)}% · 깨어 있던 시간 ${100 - Math.round(sleepPct)}%`);
+      big('diaper', 'diaper', 'ic-diaper.png', S.diaper, '장', '기저귀를 갈았어요', `그중 응가 <strong>${S.poo}번</strong> — 하루 ${f1(S.diaper / Math.max(1, S.diaper_days))}장`, `<div class="picto" aria-hidden="true">${picto(S.diaper)}</div>`, '■ 하나 = 100장');
+      big('diary', 'temp', 'ic-diary.png', diaries.length, '편', '일기를 썼어요', `홈 한마디 <strong>${notes.length}개</strong> — 엄마 <strong>${momN}</strong> · 아빠 <strong>${dadN}</strong>${topword ? `<br>일기에 가장 자주 나온 말은 <strong>“${esc(topword[0])}”</strong>` : ''}`, `<div class="bar" style="background:rgba(212,85,77,.18)"><i style="--w:${momPct}%"></i></div>`, `한마디 엄마 ${momPct}% · 아빠 ${dadPct}%`);
+      sc(CH_N, '그리고', 6500, 'p-fact', 'data-scene="stat-facts"', `
+        ${eyeN}
+        <h2>그리고,<br>이런 날들이 있었어요.</h2>
+        <div class="p-facts">
+          <div><em>첫 검진</em><b>${chk ? fmtD(chk.done_on) : '—'}</b><span>${chk ? `D+${DP(chk.done_on)} · ${ITEM_LABEL[chk.item] || chk.item}` : '아직이에요'}</span></div>
+          <div><em>접종 ${shots.length}회</em><b>${lastShot ? fmtD(lastShot.done_on) : '—'}</b><span>${lastShot ? `D+${DP(lastShot.done_on)} · ${ITEM_LABEL[lastShot.item] || lastShot.item}` : '아직이에요'}</span></div>
+          <div><em>가장 길게 잔 잠</em><b>${longest ? fmtD(lday) : '—'}</b><span>${longest ? `D+${DP(lday)} · ${hm(longest[0])}` : ''}</span></div>
+          <div><em>사진</em><b>${photoDays}<small>장</small></b><span>체온 측정 ${S.temp}회</span></div>
+        </div>`);
+      sc('성장', '성장 곡선', 9000, 'p-gr', 'data-scene="growth"', `
+        ${eye('성장 곡선')}
+        <h2>${hasW ? `${W(W_PTS[0][1])}kg에서 ${W(wLast)}kg으로,` : '아직 몸무게 기록이 없어요,'}<br>${hasL ? `${g(L_PTS[0][1])}cm에서 ${g(lLast)}cm으로.` : '키도 곧 적어 주세요.'}</h2>
+        <p class="p-lead">옅은 띠는 같은 또래 ${sexWord}의 3~97% 범위예요. ${hasW ? `${esc(NAME)}${josa(NAME, '은', '는')} ${W_PTS.length}번 잰 몸무게 중 ${inband}번이 그 안에 있고, 지금은 또래 상위 ${Math.round(100 - wPct)}%예요.` : ''}</p>
+        <div class="p-chart" data-chart></div>
+        <div class="p-legend"><span style="--c:#2f9e63">몸무게</span><span style="--c:#3b7bd4">키</span><span class="band" style="--c:#2f9e63">또래 범위 (WHO 3~97%)</span></div>
+        <div class="p-pair">
+          <div><em>몸무게 · ${fmtD(wLastD, false)}</em><b class="num">${hasW ? W(wLast) : '—'}<small>kg</small></b><span>${hasW ? `태어날 때보다 <i>+${(wLast - W_PTS[0][1]).toFixed(2)}kg</i><br>또래 상위 ${Math.round(100 - wPct)}%` : ''}</span></div>
+          <div><em>키 · ${fmtD(lLastD, false)}</em><b class="num">${hasL ? g(lLast) : '—'}<small>cm</small></b><span>${hasL ? `태어날 때보다 <i>+${(lLast - L_PTS[0][1]).toFixed(1)}cm</i><br>또래 상위 ${Math.round(100 - lPct)}%` : ''}</span></div>
+        </div>`);
+      sc('기념일', '기념일', 9000, 'p-msc', 'data-scene="milestones"', `
+        ${eye('기념일')}
+        <h2>${KO_NUM[passed]} 번의 축하,<br>그날의 ${esc(NAME)}.</h2>
+        <ol class="p-ms">${PH.ms.map(r => `<li${r.yet ? ' class="yet"' : ''}><div class="dot${r.big}" style="--mc:${r.mc}">${r.img}</div><div class="b"><div class="d">${r.lab}<small>${r.date}</small></div>${r.yet ? '' : `<div class="tx">${esc(r.txt)}</div>${r.sub ? `<div class="sb">${r.sub}</div>` : ''}`}</div></li>`).join('')}</ol>`);
+      // ── 사진첩 화면: ① 달 타일 판(2열, 세로로 밀기) ② 달 타일을 누르면 그 달 카드 스택 ③ 카드를 누르면 story.js 가 그 카드 색으로 사진 + 일기 전문을 연다
+      phone.photos = BOOK;
+      {
+        const cardH = (x, j, n) => `<button type="button" class="bk-card${j === n - 1 ? ' last' : ''}${x.src ? '' : ' nop'}" data-photo="${x.n}" data-slot="day-${x.d}" style="--tc:${x.c};--tf:${x.f};--j:${j};--t:${Math.min(j, 4) * 10}px" aria-label="${esc(x.lab)} 보기"><b>${esc(x.name)}</b><small>${x.tag}</small>${x.src ? sticker(x.src, x.n, 'bks') : ''}${x.diary ? `<span class="dl">${esc(oneLine(x.diary))}</span>` : ''}</button>`;
+        const tileH = b => { const [c, f] = TILE_C[b.i % TILE_C.length], ph = b.list.filter(x => x.src), nd = b.list.filter(x => x.diary).length, rep = ph.find(x => FIRST_RE.test(x.diary)) || ph[0];
+          const cnt = !b.m ? '아직이에요' : b.list.length ? [nd ? `일기 ${nd}` : '', ph.length ? `사진 ${ph.length}` : ''].filter(Boolean).join(' · ') : '기록 없음';
+          return `<button type="button" class="p-tile" data-m="${b.i}"${b.m ? '' : ' disabled'} style="--tc:${c};--tf:${f}" aria-label="${b.i + 1}달, ${cnt}"><b>${b.i + 1}달</b><em>${fmtD(b.s, false)} — ${fmtD(b.e, false)}</em><small>${cnt.replace(' · ', '<br>')}</small>${b.m ? sticker(rep ? rep.src : IMG + STAGES[b.i].img, b.i, 'bkt') : ''}</button>`; };
+        out.push({ ch: '사진첩', name: '사진첩', dur: 0, pane: true, html: `<section class="pbk" data-scene="book">
+          <div class="bk-board">
+            <div class="bk-hd"><div class="p-eye">사진첩</div><h2>${esc(NAME)}의 열두 달</h2><p>달을 누르면 그 달의 일기와 사진이 펼쳐져요.</p></div>
+            <div class="bk-grid">${BKM.map(tileH).join('')}</div>
+          </div>
+          <div class="bk-month">
+            <div class="bk-top"><button type="button" class="bk-back" data-act="bkback" aria-label="열두 달로 돌아가기"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>열두 달</button></div>
+            <div class="bk-body">${BKM.filter(b => b.m).map(b => { const nd = b.list.filter(x => x.diary).length, np = b.list.filter(x => x.src).length; return `<div class="bk-stack" data-m="${b.i}" aria-label="${b.i + 1}달">
+              <div class="bk-h"><b>${b.i + 1}달</b><span>${b.m.rngTxt}</span><i>${[nd ? `일기 ${nd}` : '', np ? `사진 ${np}` : ''].filter(Boolean).join(' · ')}</i></div>
+              ${b.list.length ? b.list.map((x, j) => cardH(x, j, b.list.length)).join('') : `<p class="bk-none">이 달엔 일기도 사진도 없어요.<br>다이어리에 적으면 여기에 하루씩 쌓여요.</p>`}
+            </div>`; }).join('')}</div>
+          </div>
+        </section>` });
+      }
+      sc('가족', '가족 한마디', 7000, 'p-fm', 'data-scene="family"', `
+        ${eye(`${esc(NAME)}에게`)}
+        <h2>${daysTotal}일을 함께한 사람들이<br>한마디씩 남겼어요.</h2>
+        <div class="p-says">${['엄마', '아빠', '가족'].filter(r => roles.includes(r)).map(who => `<div class="p-say"><div class="av"><img src="${IMG}${AV[who] || '엄마-2g-b.png'}" alt=""></div><div><div class="who">${who}</div><div class="q" data-slot="say-${who}" style="color:var(--fg3)">앨범을 만들 때 적어요.</div></div></div>`).join('')}</div>`);
+      sc('가족', '마지막', 0, 'p-end', 'data-scene="end"', `
+        <div class="av"><img src="${IMG}왕관-남.png" alt=""></div>
+        <div class="who">기특일기가 돌아본 ${esc(NAME)}의 ${daysTotal}일 <span class="sum" style="margin-left:4px;vertical-align:1px;font-weight:400">AI 요약 자리</span></div>
+        <p class="q">${esc(wideTxt)}</p>
+        <div class="p-acts">
+          <button type="button" class="again" data-act="again"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v5h5"/></svg>다시 보기</button>
+          <div class="row"><button type="button" class="soon" data-act="img"><svg viewBox="0 0 24 24"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 20h14"/></svg><span>컷 이미지 저장<small>준비 중</small></span></button><button type="button" class="soon" data-act="share"><svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M6 11v7.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V11"/></svg><span>가족에게 공유<small>준비 중</small></span></button></div>
+        </div>
+        <div class="p-fol"><span>${esc(NAME)}의 첫 해 · ${BIRTH.slice(0, 4)} — ${FIRST.slice(0, 4)}</span><span class="wm"><i></i>기특일기</span></div>`);
+      const card = (go, bg, fg, pill, t, sub, img, cls) => `<button type="button" class="p-card ${cls || ''}" data-go="${go}" style="--bg:${bg};--fg:${fg}"><span class="pill">${pill}</span><b>${t}</b><span class="s">${sub}</span>${img ? `<img src="${IMG}${img}" alt="">` : ''}</button>`;
+      const cards = PH.months.map(m => card(`month-${m.i}`, m.st.bg[1], m.st.lab, `${m.i}개월 · ${m.rngTxt.replace(/^\d+\. /, '')}`, m.label, `일기 ${m.nd}편 · 사진 ${m.np}장`, m.st.img, 'mo')).join('')
+        + card('stats', 'var(--feed)', '#fff', '숫자', `${nfmt(S.feed)}번 먹고<br>${nfmt(Math.round(S.sleep_h))}시간 잤어요`, `수유 · 잠 · 기저귀 · 일기`, 'ic-feed.png', 'ic')
+        + card('growth', 'var(--ok)', '#fff', '성장 곡선', hasW ? `${W(W_PTS[0][1])}kg에서<br>${W(wLast)}kg으로` : '몸무게 · 키', `몸무게 ${W_PTS.length}번 · 키 ${L_PTS.length}번 쟀어요`, 'ic-growth.png', 'ic')
+        + card('milestones', MC[12], '#a91872', '기념일', `${KO_NUM[passed]} 번의 축하`, `50일 · 100일 · 200일 · 300일 · 첫돌`, CIMG[12], 'mo')
+        + card('family', '#efe4d2', '#5b4a3a', '가족 한마디', `${esc(NAME)}에게`, `${roles.join(' · ')}가 남겨요`, 'ic-diary.png', 'ic');
+      // 11-13: 목차 컷은 위 카테고리 메뉴가 대신한다 — 만들지 않는다(문자열만 남김)
+      const _idx = ({ ch: '표지', name: '목차', dur: 0, html: `<section class="psc p-idx" data-scene="index"><div class="p-in">
+        ${eye(`${fmtD(BIRTH)} — ${fmtD(TODAY, false)}`)}
+        <h2>${esc(NAME)}의 ${daysTotal}일,<br>어디부터 볼까요?</h2>
+        <div class="p-cards p-scroll">${cards}</div>
+        <button type="button" class="p-next" data-act="next">차례대로 보기<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div></section>` });
+      void _idx;
+      return out;
+    }
+    const phone = { photos: [], scenes: null, chart: chartP }; phone.scenes = phoneScenes();
+    return { phone, issues: ISSUES, count: phone.scenes.length, first: FIRST, today: TODAY, dp: daysTotal };
+  }
+
+  // ── 폰 세로 표지 4종: 정사각 표지와 같은 요소(아이브로우·제목·날짜 문장·도장·워드마크)를 세로 화면에 다시 앉힌다
+  function coverP(D, C) {
+    const { NAME, BIRTH, FIRST, SEX, IMG, DAYS, roles } = C;
+    const kind = D.cover || 'walk', b = D_(BIRTH), f = D_(FIRST);
+    const F = { name: esc(NAME), by: roles.length === 1 ? roles[0] : '엄마 · 아빠',
+      birthLong: `${b.getFullYear()}년 ${b.getMonth() + 1}월 ${b.getDate()}일`, firstLong: `${f.getFullYear()}년 ${f.getMonth() + 1}월 ${f.getDate()}일`,
+      birthDot: `${b.getFullYear()}. ${b.getMonth() + 1}. ${b.getDate()}`, firstDot: `${f.getFullYear()}. ${f.getMonth() + 1}. ${f.getDate()}`, objP: josa(NAME, '을', '를') };
+    const photo = D.baby.photo_url || '', NLEN = [...NAME].length;
+    const attrs = `data-scene="cover" data-sex="${SEX}" data-nband="${NLEN <= 3 ? 's' : NLEN == 4 ? 'm' : NLEN <= 6 ? 'l' : NLEN <= 8 ? 'xl' : 'xxl'}" data-photo="${photo ? 1 : 0}"`;
+    const stamp = window.__stamp ? window.__stamp(F.firstDot) : '';
+    const wm = '<span class="wm"><i></i>기특일기</span>';
+    if (kind === 'photo') return `<section class="psc p-cv p-cv2" ${attrs} data-ch="w">
+      ${photo ? `<div class="bg" data-slot="cover-photo"><img src="${esc(photo)}" alt="아기 대표 사진"></div>` : `<div class="bg fb"><img src="${IMG}아기-단계-89.webp" alt=""></div>`}
+      <div class="veil"></div>
+      <div class="p-in">
+        <div class="p-top"><span>첫 해 앨범 · First Year</span><span>First Birthday</span></div>
+        <h1><span class="nm">${F.name}의</span><br><b>첫 해</b></h1>
+        <div class="p-sub"><span class="dt">${F.birthDot}</span><i></i><span class="dt">${F.firstDot}</span></div>
+        <div class="p-fol"><span>${F.by}가 적은 365일</span>${wm}</div>
+      </div></section>`;
+    if (kind === 'quilt') {
+      const monthPhoto = m => { const s = addMonths(BIRTH, m), e = addDays(addMonths(BIRTH, m + 1), -1); const ds = Object.keys(DAYS).filter(d => s <= d && d <= e && DAYS[d].photo).sort(); if (!ds.length) return ''; const first = ds.find(d => FIRST_RE.test(DAYS[d].diary || '')); return DAYS[first || ds[Math.floor(ds.length / 2)]].photo; };
+      const tiles = CIMG.map((img, m) => { const url = PH_SLOTS.includes(m) ? monthPhoto(m) : ''; return url ? `<div class="tile ph" style="--mc:${MC[m]}"><img src="${esc(url)}" alt="${m}개월 사진"><small>${m}</small></div>` : `<div class="tile"><img src="${IMG}${img}" alt=""><small>${m}</small></div>`; }).join('');
+      return `<section class="psc p-cv p-cv3" ${attrs}><div class="p-in">
+        <div class="p-q"><div class="tile title"><div class="p-eye">첫 해 앨범 · First Year</div><h1><span class="nm">${F.name}의</span><br><b>열세 달</b></h1><div class="by">${F.by}가 적은 365일</div></div>${tiles}</div>
+        <div class="p-qf"><b>1st</b><span class="fb">First<br>Birthday</span><span class="dt">${F.birthDot}<br>${F.firstDot}</span>${wm}</div>
+      </div></section>`;
+    }
+    if (kind === 'diary') {
+      const FIMG = { '엄마': '엄마-2g-전신.png', '아빠': '아빠-2g-전신.png' };
+      const fam = roles.filter(r => FIMG[r]).concat(roles.filter(r => !FIMG[r])).slice(0, 6);
+      const mem = who => FIMG[who] ? `<div class="mem"><img src="${IMG}${FIMG[who]}" alt="${who} 캐릭터"><span>${who}</span></div>` : `<div class="mem ph" data-slot="family-${who}"><i></i><span>${who}</span></div>`;
+      return `<section class="psc p-cv p-cv5" ${attrs}><div class="p-in">
+        <div class="p-eye">첫 해 앨범 · First Year</div>
+        <h1><u><span class="nm">${F.name}의</span> <span class="rest">첫 해</span></u></h1>
+        <div class="p-sub">${F.birthLong}부터<br>${F.firstLong}까지, 삼백예순다섯 날</div>
+        <div class="p-polaw"><div class="pola" data-slot="cover-photo"><div class="tape"></div><div class="tape b"></div>
+          <div class="ph">${photo ? `<img src="${esc(photo)}" alt="아기 대표 사진">` : `<img src="${IMG}아기-단계-m9.webp" alt="">`}</div>
+          <div class="cap">첫돌, ${F.firstLong}</div></div></div>
+        <div class="p-famrow"><div><div class="ft">${F.name}${F.objP} 함께 키운 사람들</div><div class="fam">${fam.map(mem).join('')}</div></div><div class="stamp">${stamp}</div></div>
+        <div class="p-fol"><span>${F.by}가 적음</span>${wm}</div>
+      </div></section>`;
+    }
+    return `<section class="psc p-cv p-cv1" ${attrs}><div class="p-in">
+        <div class="p-eye">첫 해 앨범 · First Year</div>
+        <h1><span class="nm">${F.name}의</span><br><b>첫 해</b></h1>
+        <div class="p-art" data-art="cv" data-plx><img src="${IMG}아기-단계-12.webp" alt="케이크를 향해 첫걸음을 떼는 12개월 ${F.name}"><div class="p-badge">${stamp}</div></div>
+        <div class="p-mid"><span class="dt">${F.birthLong}</span>에 만나, <span class="dt">${F.firstLong}</span> 첫돌</div>
+        <div class="p-fol"><span>${F.by}가 적은 365일</span>${wm}</div>
+      </div></section>`;
   }
 
   // ── 표지 4종: 표지/표지.html 의 템플릿 마크업 그대로(①A·S1, ②, ③, ⑤-5). 변수는 DATA 7개 + 이름 길이 띠
@@ -422,10 +664,10 @@ ${says}        <div class="say wide"><div class="av" style="background:#e8e2f5">
   // 사진·그림 미리 받기 — 진행 콜백(n, total). 실패한 것도 센다(앨범은 빈 틀로 깨지지 않음)
   async function preload(urls, onStep) {
     const list = [...new Set(urls)]; let n = 0;
-    await Promise.all(list.map(u => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { n++; onStep && onStep(n, list.length); res(); }; im.src = u; })));
+    await Promise.all(list.map(u => new Promise(res => { const im = new Image(); let done = false; const fin = () => { if (done) return; done = true; n++; onStep && onStep(n, list.length); res(); }; im.onload = im.onerror = fin; setTimeout(fin, 10000); im.src = u; })));   // 한 장에 10초까지만 기다린다
     return list.length;
   }
   const photoUrls = D => { const s = new Set(); for (const d of Object.values(D.days || {})) if (d.photo) s.add(d.photo); if (D.baby.photo_url) s.add(D.baby.photo_url); return [...s]; };
 
-  return { build, cover, fit, preload, photoUrls, addMonths, addDays, fmtD, esc };
+  return { build, cover, coverP, fit, preload, photoUrls, addMonths, addDays, fmtD, esc };
 })();
