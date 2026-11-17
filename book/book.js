@@ -230,8 +230,8 @@ book.addEventListener('pointermove', e => {
 const release = e => {
   if (!drag || e.pointerId !== drag.id) return;
   const d = drag; drag = null;
-  if (!d.on) {                                                   // 탭: 오른쪽 쪽 = 다음 날, 왼쪽 쪽 = 앞 날
-    if (e.type === 'pointerup' && e.timeStamp - d.t0 < 400 && Math.abs(e.clientX - d.x0) < 8) { if (d.act) pageAct(d.act); else go(e.clientX >= d.S ? 1 : -1); }
+  if (!d.on) {                                                   // 끌지 않고 뗀 것(탭)
+    if (e.type === 'pointerup' && e.timeStamp - d.t0 < 400 && Math.abs(e.clientX - d.x0) < 8 && d.act) pageAct(d.act);   // 쪽 안의 단추(달 타일·사진·기념일)만 눌린다. 쪽을 눌러 넘기는 건 뺐다 — 책장은 끌어서만 넘긴다 (11-17 사장님)
     return;
   }
   const a = d.s[0], b = d.s[d.s.length - 1];

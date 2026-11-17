@@ -51,7 +51,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
 /* ── 펼친 책 ───────────────────────────── */
-.book { flex: none; position: relative; margin: 8px 10px 0; aspect-ratio: 373 / 300; perspective: calc(1900 * var(--u)); perspective-origin: 50% 46%; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+/* 책 크기는 폭·높이를 직접 준다. 전에는 '늘어난 폭 + aspect-ratio' 였는데, WebKit 이 세로 flex 안에서 좌우 여백(10px씩)을 빼지 않고 계산해 높이가 393/1.243 으로 커졌고(헤드리스 WebKit 실측 316 vs 300), 실제 아이폰에서는 같은 계산이 폭 쪽으로 나와 책이 오른쪽으로 20px 넘쳐 잘렸다 (11-17 실폰) */
+.book { flex: none; align-self: center; position: relative; width: calc(373 * var(--u)); height: calc(300 * var(--u)); margin: 8px 0 0; perspective: calc(1900 * var(--u)); perspective-origin: 50% 46%; touch-action: pan-y; user-select: none; -webkit-user-select: none;
   border-radius: calc(17 * var(--u)); background: color-mix(in srgb, var(--cv) 62%, #d9c7a6);   /* 펼친 책 가장자리 = 표지 색이 살짝 비친다 */ box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 calc(10 * var(--u)) calc(22 * var(--u)) rgba(90, 70, 40, .22), 0 1px 3px rgba(90, 70, 40, .3); }
 /* 쌓인 쪽 가장자리 */
 .book::before { content: ""; position: absolute; inset: calc(3 * var(--u)) calc(3 * var(--u)) calc(2.5 * var(--u)); border-radius: calc(15 * var(--u)); background: #f1e7d3; box-shadow: 0 0 0 1px rgba(90, 70, 40, .12); }
