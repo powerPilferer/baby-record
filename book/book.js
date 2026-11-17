@@ -194,8 +194,74 @@ function settle(T, m0 = 0, tap = false) {
 }
 function done(T) { anim = 0; idx = T === 1 ? tr.b : tr.a; rest(); if (pend) { const d = pend; pend = 0; requestAnimationFrame(() => go(d)); } }
 function jump(j) {
-  if (anim || drag || j === idx || j < 0 || j >= pages.length) return;
+  if (anim || drag || cdrag || j === idx || j < 0 || j >= pages.length) return;
+  if (Math.abs(j - idx) > 1) return flurry(j);                   // 멀리 갈 때는 촤라락
   v = 0; if (j > idx) { setup(idx, j, 0); settle(1, 0, true); } else { setup(j, idx, 1); settle(0, 0, true); }
+}
+
+/* ── 촤라락 (11-18 사장님: "한번에 멀리 이동할때는 책이 촤라락 넘어갔으면") ─────────────────────────────
+   건너뛰는 쪽 수에 따라 2~7장이 겹쳐 넘어간다. 첫 장 = 지금 보이던 쪽(진짜), 마지막 장 = 도착 쪽(진짜), 사이 장은 흐린 줄 종이(가벼운 빈 쪽).
+   장마다 같은 판판한 회전·같은 그늘 식. 사이 장은 빠른 날갯짓 곡선, 마지막 장만 한 장 넘김과 같은 TURN_EZ 540ms 로 내려앉는다. 전체 0.8~1.15초.
+   쌓임: 출발 쪽에 누운 동안은 먼저 넘어갈 장이 위, 도착 쪽에 누우면 나중에 온 장이 위. 넘어가는 동안 끌기·책갈피·단추는 anim 으로 막힌다. */
+const FL = [];                                                  // 사이 장 풀(처음 필요할 때 만든다)
+const blank = side => { const e = document.createElement('article'); e.className = 'pg fl ' + side; e.setAttribute('aria-hidden', 'true'); return e; };
+function flSheet(k) {
+  if (!FL[k]) {
+    const s = document.createElement('div'); s.className = 'sheet fls'; s.hidden = true; s.setAttribute('aria-hidden', 'true');
+    const f = document.createElement('div'), b = document.createElement('div'); f.className = 'face front'; b.className = 'face back';
+    const sf = mk('msh mf'), sb = mk('msh mb'), pf = blank('R'), pb = blank('L'); f.append(pf, sf); b.append(pb, sb); s.append(f, b);
+    book.insertBefore(s, book.querySelector('.spine'));
+    FL[k] = { s, f, b, sf, sb, pf, pb };
+  }
+  return FL[k];
+}
+const FLAP_EZ = bez(.42, 0, .3, 1), FLAP_MS = 400;              // 사이 장: 들림이 짧고 빨리 넘어가는 날갯짓
+function flurry(j) {
+  const fwd = j > idx, a = idx, dist = Math.abs(j - a);
+  if (REDUCED) { idx = j; return rest(); }
+  const n = Math.min(7, 1 + Math.ceil(Math.log2(dist)));        // 2쪽 → 2장, 3~4 → 3, 5~8 → 4, 9~16 → 5, 17~32 → 6, 33~ → 7
+  const T = Math.min(1150, 800 + (n - 2) * 70), gap = (T - TURN_MS) / (n - 1);
+  // 바닥: 앞으로면 왼쪽 = 지금 날, 오른쪽 = 도착 날 / 뒤로면 반대
+  const A = pg(a), J = pg(j);
+  hl.replaceChildren((fwd ? A : J).L, SH.l); hr.replaceChildren((fwd ? J : A).R, SH.r);
+  // 장 0 = 진짜 sheet(지금 보이던 쪽 + 빈 뒷면), 장 n-1 = 도착 쪽을 품은 장
+  const bl0 = flSheet(7).pb, br0 = flSheet(7).pf;                // 진짜 sheet 의 빈 면은 풀 8번째 장의 빈 쪽을 빌린다
+  if (fwd) { front.replaceChildren(A.R, SH.f); back.replaceChildren(bl0, SH.b); } else { front.replaceChildren(br0, SH.f); back.replaceChildren(A.L, SH.b); }
+  const L = [{ s: sheet, sf: SH.f, sb: SH.b }];
+  for (let k = 1; k < n; k++) { const q = flSheet(k - 1); q.f.replaceChildren(q.pf, q.sf); q.b.replaceChildren(q.pb, q.sb); L.push(q); }
+  const last = L[n - 1];
+  if (fwd) last.b.replaceChildren(J.L, last.sb); else last.f.replaceChildren(J.R, last.sf);
+  L.forEach((q, k) => { q.s.hidden = false; q.st = k * gap; q.d = k === n - 1 ? TURN_MS : FLAP_MS; q.ez = k === n - 1 ? TURN_EZ : FLAP_EZ; });
+  tr = { a: Math.min(a, j), b: Math.max(a, j), fl: L }; book.classList.add('turning', 'flurry');
+  const T0 = fwd ? 0 : 1, T1 = fwd ? 1 : 0;
+  const draw = ms => {
+    let first = null, lastT = null;
+    L.forEach((q, k) => {
+      const u = cl((ms - q.st) / q.d), tt = T0 + (T1 - T0) * q.ez(u), [f, bk] = shade(tt * Math.PI);
+      q.s.style.transform = `rotateY(${(-tt * 180).toFixed(3)}deg)`;
+      q.s.style.zIndex = ((fwd ? tt < .5 : tt > .5) ? 20 - k : 20 + k);   // 출발 쪽에선 먼저 갈 장이 위, 도착 쪽에선 나중 온 장이 위
+      const g = k && k < n - 1 ? 1.7 : 1;                         // 사이 장은 그늘을 조금 더 — 빈 종이끼리 겹쳐도 장마다 갈려 보이게
+      q.sf.style.opacity = Math.min(.8, f * g).toFixed(3); q.sb.style.opacity = Math.min(.8, bk * g).toFixed(3);
+      if (k === 0) first = tt; if (k === n - 1) lastT = tt;
+    });
+    const sf = shade(first * Math.PI), sl = shade(lastT * Math.PI);   // 출발 쪽 바닥 = 첫 장의 그림자, 도착 쪽 바닥 = 마지막 장의 그림자
+    const [rw, ro, lw, lo] = fwd ? [sl[2], sl[3], sf[4], sf[5]] : [sf[2], sf[3], sl[4], sl[5]];
+    SH.r.style.opacity = ro.toFixed(3); SH.r.style.transform = `scaleX(${rw.toFixed(4)})`;
+    SH.l.style.opacity = lo.toFixed(3); SH.l.style.transform = `scaleX(${lw.toFixed(4)})`;
+  };
+  draw(0);
+  const st = performance.now();
+  const step = now => {
+    const ms = now - st;
+    if (ms >= T) { flEnd(); idx = j; return rest(); }
+    draw(ms); anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+function flEnd() {
+  anim = 0; book.classList.remove('flurry');
+  FL.forEach(q => { q.s.hidden = true; q.s.style.transform = ''; q.s.style.zIndex = ''; q.f.replaceChildren(q.pf, q.sf); q.b.replaceChildren(q.pb, q.sb); });
+  sheet.style.zIndex = '';
 }
 const go = dir => { if (anim) { pend = dir; return; } if (dir < 0 && idx === 0) return closeBook(); jump(idx + dir); };   // 넘기는 중 한 번 더 누르면 이어서 한 장
 
@@ -561,6 +627,23 @@ $('bm-tog').addEventListener('click', () => bmOpen(!bm.classList.contains('open'
 $('bm-list').addEventListener('click', e => { const b = e.target.closest('button[data-ch]'); if (!b || closed) return; bmOpen(false); const c = CHS[b.dataset.ch]; if (chOf(idx) !== b.dataset.ch) jump(b.dataset.ch === 'diary' ? ND - 1 : c.at); });
 addEventListener('pointerdown', e => { if (bm.classList.contains('open') && !e.target.closest('#bm')) bmOpen(false); }, true);
 addEventListener('keydown', e => { if (e.key === 'Escape') bmOpen(false); });
+
+/* ── 사진 크게 보기 (11-18) — 일기 쪽 사진을 누르면 앱 다이어리처럼 크게. 넘기기 절과 따로 돈다 ─────────────────────────────
+   '누름' = 8px 안 움직이고 0.4초 안에 뗀 것. 끌다가 놓은 것, 넘어가는 중(.turning), 표지가 덮인 동안은 치지 않는다. */
+const pv = $('phview'); let pvAt = 0;
+function photoOpen() {
+  const p = pages[idx]; if (!p || p.kind || !p.photo || closed || anim || canim || book.classList.contains('turning')) return;
+  const d = new Date(p.day + 'T00:00'); pv.querySelector('img').src = p.url || p.sample; pv.querySelector('p').textContent = `D+${p.n} · ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  pv.hidden = false; pvAt = performance.now(); $('app').setAttribute('inert', '');
+}
+function photoClose() { if (pv.hidden) return; pv.hidden = true; pv.querySelector('img').src = ''; $('app').removeAttribute('inert'); }
+{ let dn = null;
+  book.addEventListener('pointerdown', e => { dn = e.target.closest && e.target.closest('#hl .frame .ph') ? { x: e.clientX, y: e.clientY, t: e.timeStamp, id: e.pointerId } : null; }, true);
+  addEventListener('pointerup', e => { const d = dn; dn = null; if (d && e.pointerId === d.id && e.timeStamp - d.t < 400 && Math.abs(e.clientX - d.x) < 8 && Math.abs(e.clientY - d.y) < 8) photoOpen(); }, true);
+  addEventListener('pointercancel', () => { dn = null; }, true); }
+pv.addEventListener('click', () => { if (performance.now() - pvAt > 350) photoClose(); });   // 여는 그 누름의 click 이 바로 닫지 않게
+pv.addEventListener('touchmove', e => e.preventDefault(), { passive: false });   // 뒤로 스크롤 안 새게
+addEventListener('keydown', e => { if (e.key === 'Escape') photoClose(); });
 
 /* ── 시작 ───────────────────────────── */
 // d = { baby:{name,birth_date}, days:[{day,diary,sticker,photo,url,thumb}], members:[{id,name,img}], me, api:{list,add,del}, logs, growth, checks, today }

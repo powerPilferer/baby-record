@@ -74,6 +74,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .book { z-index: 2; }                                                  /* 넘어가는 쪽이 원근으로 커질 때 아래 줄(쪽 찾기 칩) 밑으로 파고들지 않고 위로 지나간다 */
 .book.turning .msh, .book.turning .mcast { will-change: opacity, transform; }
 .cbook.cin-page .cb-in { background: none; box-shadow: none; }
+.book.flurry .spine { z-index: 40; }                                   /* 촤라락: 여러 장이 쌓여도 책등 선은 맨 위 (11-18) */
+.book.flurry .bm { z-index: 60; }                                      /* 책갈피는 한 장 넘길 때처럼 넘어가는 장들 위에 */
+.pg.fl.R { box-shadow: inset calc(-1 * var(--u)) 0 0 rgba(90, 70, 40, .16); } .pg.fl.L { box-shadow: inset calc(1 * var(--u)) 0 0 rgba(90, 70, 40, .16); }   /* 사이 장의 바깥 끝선 — 겹친 장이 한 장씩 읽히게 */
+.pg.fl::before { content: ""; position: absolute; left: 13%; right: 9%; top: 24%; bottom: 17%; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(24 * var(--u)), rgba(95, 110, 150, .14) calc(24 * var(--u)) calc(25 * var(--u))); }   /* 사이 장 = 흐린 줄 종이 */
+
 .cbook { touch-action: pan-y; }                                        /* 표지도 손가락으로 끌어 연다 — 가로 끌기는 페이지가 받는다 */        /* 표지 안쪽 = 펼친 책의 왼쪽 반 (book.js coverSpread) */
 /* 가운데 접힘 */
 .spine { position: absolute; left: 50%; top: calc(4 * var(--u)); bottom: calc(6 * var(--u)); width: 1px; margin-left: -.5px; z-index: 5; background: rgba(90, 70, 40, .28); pointer-events: none; }
@@ -444,3 +450,11 @@ body.flat .full { box-shadow: 0 1px 0 rgba(90, 70, 40, .16); }
   .view { display: block; } .book { break-inside: avoid; box-shadow: none; }
   .under, .under-scroll { overflow: visible; display: block; border-radius: 0; box-shadow: none; }
 }
+
+/* ── 사진 크게 보기 (11-18) — 앱 다이어리의 .phview 와 같은 값: 검은 바탕 90%, 사진은 모양 그대로 가운데, 아래 한 줄, 아무 데나 누르면 닫힘 ───────────────────────────── */
+.phview { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: calc(var(--sat) + 20px) 16px calc(var(--sab) + 20px); animation: pvIn .18s ease-out; }
+.phview img { max-width: 100%; max-height: calc(100% - 40px); border-radius: 6px; object-fit: contain; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+.phview p { color: rgba(255, 255, 255, .7); font-size: 13px; font-family: var(--ui); }
+@keyframes pvIn { from { opacity: 0; } }
+.frame .ph { cursor: zoom-in; }
+@media print { .phview { display: none !important; } }
