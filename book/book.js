@@ -20,7 +20,8 @@ if (Q.get('statusbar')) {   // 캡처 전용 — 상태바 자리가 비어 보�
 if (Q.get('safe')) { const [t, b] = Q.get('safe').split(','); document.documentElement.style.setProperty('--sim-sat', (+t || 0) + 'px'); document.documentElement.style.setProperty('--sim-sab', (+b || 0) + 'px'); }
 
 /* ── 낙서: 날짜로 정해지는 규칙 ───────────────────────────── */
-const AR = { bear: [160, 200], bottle: [110, 200], 'cloud-1': [220, 120], 'cloud-2': [150, 100], 'cloud-3': [240, 90], duck: [180, 150], 'flower-blossom': [130, 130], 'flower-daisy': [130, 200], 'flower-lavender': [90, 200], grass: [200, 90], heart: [140, 130], moon: [150, 170], rainbow: [220, 130], rattle: [140, 200], socks: [180, 170], sprout: [130, 140], star: [170, 150], sun: [180, 180] };
+const AR = { diaper: [185, 122], 'pillow-zzz': [173, 149], notebook: [161, 177], checkup: [151, 131],   /* 11-18 숫자 장 항목 그림(신화방) */
+  bear: [160, 200], bottle: [88, 204], 'cloud-1': [220, 120], 'cloud-2': [150, 100], 'cloud-3': [240, 90], duck: [180, 150], 'flower-blossom': [130, 130], 'flower-daisy': [130, 200], 'flower-lavender': [90, 200], grass: [200, 90], heart: [140, 130], moon: [132, 139], rainbow: [220, 130], rattle: [140, 200], socks: [180, 170], sprout: [130, 140], star: [170, 150], sun: [180, 180] };
 const TAPES = ['tape-check', 'tape-stripe', 'tape-plain', 'tape-dot'];
 const SKY = ['sun', 'cloud-1', 'cloud-2', 'moon', 'star', 'rainbow', 'cloud-3'];
 const SMALL = ['heart', 'star', 'cloud-2', 'flower-blossom', 'socks', 'bottle', 'rattle', 'sun', 'moon'];
@@ -558,11 +559,11 @@ function extraPages(d) {
   const hm = h => { const m = Math.round(h * 60); return m % 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m / 60}시간`; };
   const rows = [];
   if (feeds.length) rows.push(['bottle', `${num(feeds.length)}번`, ml ? `먹었어요 · 분유·유축 ${num(ml / 1000, 1)}L` : '먹었어요']);
-  if (dia.length) rows.push(['socks', `${num(dia.length)}장`, `기저귀를 갈았어요${dia.some(l => (l.detail || {}).poo) ? ` · 응가 ${num(dia.filter(l => (l.detail || {}).poo).length)}번` : ''}`]);
+  if (dia.length) rows.push(['diaper', `${num(dia.length)}장`, `기저귀를 갈았어요${dia.some(l => (l.detail || {}).poo) ? ` · 응가 ${num(dia.filter(l => (l.detail || {}).poo).length)}번` : ''}`]);
   if (sleeps.length) rows.push(['moon', `${num(Math.round(sleepH))}시간`, `잤어요 · ${num(sleeps.length)}번`]);
-  if (longest) rows.push(['star', hm(longest.h), `가장 길게 잔 잠 · ${md(lday(longest.at))}`]);
-  rows.push(['heart', `${num(days.filter(p => p.diary).length)}편`, `일기를 썼어요${ph.length ? ` · 사진 ${num(ph.length)}장` : ''}`]);
-  if (checks.length) rows.push(['sun', md(checks[0].done_on), `첫 접종·검진${checks.length > 1 ? ` · 지금까지 ${checks.length}번` : ''}`]);
+  if (longest) rows.push(['pillow-zzz', hm(longest.h), `가장 길게 잔 잠 · ${md(lday(longest.at))}`]);
+  rows.push(['notebook', `${num(days.filter(p => p.diary).length)}편`, `일기를 썼어요${ph.length ? ` · 사진 ${num(ph.length)}장` : ''}`]);
+  if (checks.length) rows.push(['checkup', md(checks[0].done_on), `첫 접종·검진${checks.length > 1 ? ` · 지금까지 ${checks.length}번` : ''}`]);
   if (rows.length > 1) { const k = Math.ceil(rows.length / 2); add('num', '숫자', '#f5d37a', [{ kind: 'nums', title: `숫자로 본 ${num(N)}일`, note: '기록표에 남긴 수유·잠·기저귀 기록을 더했어요. 끄는 걸 잊었거나 14시간 넘게 이어진 잠은 뺐어요.', N, L: rows.slice(0, k), R: rows.slice(k) }]); }
   // ── 성장: 몸무게 곡선 + 기념일
   const gw = (d.growth || []).filter(g => g.weight_kg != null).sort((a, b) => a.day < b.day ? -1 : 1), last = k => (d.growth || []).filter(g => g[k] != null).sort((a, b) => a.day < b.day ? -1 : 1);

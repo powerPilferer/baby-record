@@ -792,6 +792,8 @@
   .alb-home svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--fg3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .album-wrap { position: fixed; inset: 0; z-index: 70; background: #0b0b0d; }
   .album-wrap iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+  html.book-on, html.book-on body { overflow: hidden; overscroll-behavior: none; }   /* 11-18 사장님 "성장앨범 들어갔을때 뒤에 화면이 스크롤 되는듯" — 책이 떠 있는 동안 뒤 화면 고정 */
+  .album-wrap { overscroll-behavior: none; }
   .album-wrap.bk { background: #ece2cf; }   /* 성장앨범 책은 늘 밝은 화면 — 뜨는 동안 어두운 바탕이 번쩍이지 않게 (11-17) */
   .bk-mini { flex: none; position: relative; width: 34px; height: 46px; border-radius: 2px 6px 6px 2px; background: linear-gradient(90deg, #27594d 0, #27594d 14%, #2f6b5c 14%); box-shadow: 2px 2px 0 #fbf5e8, 2px 2px 0 1px rgba(90,70,40,.2); }   /* 표지 축소판: 짙은 초록 + 노랑 밴드 + 흰 제목 두 줄 */
   .bk-mini::before { content: ""; position: absolute; right: 4px; top: 0; bottom: 0; width: 2px; background: #f3c85a; }
@@ -2428,7 +2430,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
 }
-const VER = 'v1.22 · 11-18';
+const VER = 'v1.23 · 11-18';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2684,7 +2686,9 @@ function bookApi() {
     add: async (day, text) => { const { data, error } = await sb.from('baby_comments').insert({ baby_id: baby.id, day, user_id: me.id, text }).select(cols).single(); if (error) throw error; return data; },
     del: async id => { const { error } = await sb.from('baby_comments').delete().eq('id', id).eq('user_id', me.id); if (error) throw error; } };
 }
+let _bookY = 0;
 async function openBook() {
+  _bookY = scrollY; document.documentElement.classList.add('book-on'); document.body.style.position = 'fixed'; document.body.style.top = -_bookY + 'px'; document.body.style.left = '0'; document.body.style.right = '0';   // iOS: overflow 만으론 뒤가 끌려 움직임 → body 를 제자리에 못 박는다
   const wrap = $('album-wrap'); wrap.classList.remove('hidden'); wrap.classList.add('bk'); wrap.innerHTML = '<iframe title="성장앨범" allow="fullscreen" scrolling="no"></iframe>';   // scrolling=no: 아이폰이 iframe 을 안쪽 내용 폭만큼 넓히지 못하게
   const f = wrap.firstChild;
   let all = logs;                                            // 숫자 장: 태어난 날부터의 기록 전부(앱은 평소 30일치만 들고 있다). 책 안에서만 더하고 밖으로 나가지 않는다
@@ -2699,7 +2703,8 @@ async function openBook() {
   f.addEventListener('load', () => { try { f.contentWindow.bookStart(input); } catch (e) { closeBook(); toast('성장앨범을 열지 못했어요'); } });
   f.src = 'book/index.html';
 }
-function closeBook() { const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.classList.remove('bk'); wrap.innerHTML = ''; }
+function closeBook() { document.documentElement.classList.remove('book-on'); document.body.style.position = document.body.style.top = document.body.style.left = document.body.style.right = ''; scrollTo(0, _bookY);
+  const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.classList.remove('bk'); wrap.innerHTML = ''; }
 addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.t === 'book' && e.data.act === 'close') closeBook(); });
 
 boot();
