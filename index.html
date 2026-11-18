@@ -56,6 +56,7 @@
   @media (prefers-reduced-motion: reduce) { #splash .dots i { animation: none; opacity: .6; } }
   .onb { padding: 14vh 0 40px; max-width: 360px; margin: 0 auto; }
   #s-login .onb { text-align: center; padding-top: 18vh; }
+  #s-setup .onb { padding-top: clamp(24px, calc(48vh - 290px), 14vh); }   /* 첫 설정(이름·캐릭터 / 만들기·합류): 큰 화면은 전처럼 14vh, 화면이 낮을수록 위 여백을 줄여 내용을 올린다 (11-18 사장님) */
   .onb h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
   .onb > p, .onb > div > p:not(.msg) { color: var(--fg2); font-size: 15px; margin: 0 0 22px; }
   .family { display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
@@ -719,6 +720,18 @@
   .seg.mini button.on { background: var(--card); }
   .menu > .pick-row { flex-direction: column; align-items: stretch; gap: 12px; }
   .pick { display: flex; justify-content: center; gap: 28px; padding: 4px 0 6px; }
+  /* 캐릭터 고르기 (11-18): 예전 엄마·아빠 고르기와 같은 크기(72px)로 열 명을 한 줄에 — 옆으로 밀어 넘긴다. 여자형 다섯 → 남자형 다섯, 역할 이름·머리글 없음 */
+  .cgrid { display: flex; gap: clamp(6px, calc((100% - 301px) / 4), 18px); overflow-x: auto;   /* 간격은 폭에 맞춰: 넷이 다 보이고 다섯째가 살짝 잘려 보이게(옆으로 더 있다는 표시) */ overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -16px; padding: 8px 16px 10px; scroll-padding: 0 16px; }
+  .cgrid::-webkit-scrollbar { display: none; }
+  .cgrid button { flex: none; width: 72px; height: 72px; border-radius: 50%; padding: 0; position: relative; }
+  .cgrid button.gap { margin-left: 8px; }   /* 여자형과 남자형 사이 */
+  .cgrid button img { display: block; width: 100%; height: 100%; border-radius: 50%; transition: box-shadow .15s; }
+  .cgrid button.on img { box-shadow: 0 0 0 3px var(--card, var(--bg)), 0 0 0 5.5px var(--fg); }
+  .cgrid button.on::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 22px; height: 22px; border-radius: 50%; background: var(--fg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 15px no-repeat; box-shadow: 0 0 0 2px var(--card, var(--bg)); }
+  /* 처음 들어올 때 화면만: 같은 크기(72px)로 한 줄에 넷씩 아래로 나열 — 위아래 자리가 넉넉해서 (11-18 사장님). 설정은 가로 슬라이드 그대로 */
+  .card.form .cgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 72px)); justify-content: space-between; gap: 14px 8px; overflow: visible; margin: 2px 0 0; padding: 8px 2px 6px; }
+  .card.form .cgrid button.gap { margin-left: 0; }
+  .card.form .cgrid button { width: 100%; height: auto; aspect-ratio: 1; }   /* 아주 좁은 화면(320)에선 같이 줄어든다 */
   .pick button { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--fg3); font-size: 14px; font-weight: 500; }
   .pick button img { width: 72px; height: 72px; border-radius: 50%; opacity: .45; transition: opacity .15s, box-shadow .15s; }
   .pick button.on { color: var(--fg); }
@@ -826,18 +839,20 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
 <section id="s-setup" class="screen hidden">
   <div class="onb">
     <div id="setup-nick">
-      <h1 id="setup-title">표에 표시될 이름</h1>
-      <p>아빠, 엄마, 또는 부르는 이름</p>
+      <h1 id="setup-title">표에 표시될 이름과 캐릭터</h1>
+      <p>부르는 이름을 적고, 내 캐릭터를 하나 골라요</p>
       <div class="card form">
         <label for="nick">내 이름</label>
-        <input id="nick" maxlength="12" placeholder="예: 아빠" autocomplete="off">
+        <input id="nick" maxlength="12" placeholder="예: 아빠, 할머니" autocomplete="off">
+        <label>내 캐릭터 <small>나중에 설정에서 바꿀 수 있어요</small></label>
+        <div class="cgrid" id="setup-chars"></div>
       </div>
       <p class="msg" id="nick-msg"></p>
-      <button type="button" class="btn" id="nick-save">이 이름으로 할게요</button>
+      <button type="button" class="btn" id="nick-save">이렇게 할게요</button>
     </div>
     <div id="setup-baby" class="hidden">
       <h1>기특일기 시작하기</h1>
-      <p>먼저 만든 사람이 배우자를 초대해요</p>
+      <p>먼저 만든 사람이 가족을 초대해요</p>   <!-- 임시 문구 (11-18, 가족 여러 명 기준) -->
       <div class="card form">
         <label>아기 사진 <small>안 넣으면 기본 캐릭터</small></label>
         <div class="photo-pick"><img id="setup-photo" class="pv" src="img/아기-2g-원형.png" alt=""><button type="button" class="pbtn" id="setup-pick">사진 고르기</button><input type="file" id="setup-file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button type="button" class="pbtn ghost hidden" id="setup-photo-clear">기본 캐릭터로</button></div>
@@ -848,7 +863,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
       </div>
       <p class="msg" id="baby-msg"></p>
       <button type="button" class="btn" id="baby-create">새 기록표 만들기</button>
-      <div class="or">배우자가 이미 만들었다면</div>
+      <div class="or">가족이 이미 만들었다면</div>   <!-- 임시 문구 -->
       <div class="card form">
         <label for="join-code">초대 코드</label>
         <input id="join-code" class="code-in" maxlength="6" placeholder="6자리" autocomplete="off" autocapitalize="characters">
@@ -955,7 +970,7 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
   <div class="menu-title">나</div>
   <div class="menu">
     <div><span class="lab">내 이름</span><span class="v inl" id="nick-row"><span id="set-nick"></span><button type="button" class="pen" id="edit-nick" aria-label="이름 고치기"><svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M13.5 6.5l3 3"/></svg></button></span></div>
-    <div class="pick-row"><span class="lab">내 캐릭터</span><div class="pick" id="char-seg"><button type="button" data-v="dad"><img src="img/아빠-2g-b.png" alt=""><span>아빠</span></button><button type="button" data-v="mom"><img src="img/엄마-2g-b.png" alt=""><span>엄마</span></button></div></div>
+    <div class="pick-row"><span class="lab">내 캐릭터</span><div class="cgrid" id="char-seg"></div></div>   <!-- 열 명을 한 줄 가로 슬라이드로 (11-18 사장님: 역할 이름 없이 나열해 고르기, 예전 크기 그대로) -->
     <div><span class="lab">함께 적는 사람</span><span class="v" id="set-members"></span></div>
   </div>
   <div class="menu-title">화면</div>
@@ -1270,9 +1285,19 @@ const FEED = { formula: '분유', breast: '모유', pumped: '유축 수유' };  
 // 모유 = 왼쪽·오른쪽 분 (10-23). min 은 합계로 같이 둔다 (옛 기록·통계 호환)
 const breastText = d => d.l != null || d.r != null ? [d.l ? '왼 ' + d.l + '분' : '', d.r ? '오 ' + d.r + '분' : ''].filter(Boolean).join(' · ') : (d.min ? d.min + '분' : '');
 let avatarById = {};   // user_id → 이미지 URL (profiles.avatar_url, 없으면 첫 글자)
-const CHAR = { dad: 'img/아빠-2g-b.png', mom: 'img/엄마-2g-b.png' };   // 프로필은 카카오 사진이 아니라 캐릭터 (09-27 사장님)
-const charOf = id => { const v = avatarById[id] || ''; return v === 'char:mom' ? 'mom' : v === 'char:dad' ? 'dad' : (id === baby.created_by ? 'dad' : 'mom'); };   // 기본: 만든 사람=아빠, 합류=엄마
+// 캐릭터 10명 (11-18 사장님: 역할 이름 없이 여자·남자 두 줄로 나열해 고르기, 이름은 닉네임으로 따로). baby_members.avatar_url = 'char:f1' … 'char:m5'
+// f1·m1 은 처음부터 쓰던 엄마·아빠 그림 그대로. 옛 값 'char:mom' = f1, 'char:dad' = m1 로 읽는다(지금 쓰는 가족이 그대로 보이게)
+const CHAR = { f1: 'img/엄마-2g-b.png', f2: 'img/char-f2.png', f3: 'img/char-f3.png', f4: 'img/char-f4.png', f5: 'img/char-f5.png', m1: 'img/아빠-2g-b.png', m2: 'img/char-m2.png', m3: 'img/char-m3.png', m4: 'img/char-m4.png', m5: 'img/char-m5.png' };
+const CHAR_LIST = ['f1', 'f2', 'f3', 'f4', 'f5', 'm1', 'm2', 'm3', 'm4', 'm5'];   // 여자형 다섯 → 남자형 다섯
+const charKey = v => { const k = String(v || '').replace(/^char:/, ''); return k === 'mom' ? 'f1' : k === 'dad' ? 'm1' : CHAR[k] ? k : ''; };
+const charOf = id => charKey(avatarById[id]) || (id === baby.created_by ? 'm1' : 'f1');   // 값이 없는 옛 기록: 만든 사람 = m1, 합류 = f1 (전과 같은 그림)
 const avatarSrc = id => CHAR[charOf(id)];
+// 한 줄 가로 슬라이드. 처음 그릴 때만 만들고, 고를 때는 표시만 바꾼다(밀어 둔 자리가 그대로). center=true 면 고른 캐릭터가 보이게 그 자리로 미리 민다
+function charGrid(el, sel, center) {
+  if (!el.firstChild) el.innerHTML = CHAR_LIST.map((k, i) => `<button type="button" data-v="${k}" class="${i === 5 ? 'gap' : ''}" aria-label="캐릭터 ${i + 1}"><img src="${CHAR[k]}" alt=""></button>`).join('');
+  for (const b of el.children) { const on = b.dataset.v === sel; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
+  if (center) requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.on'); el.scrollLeft = b ? Math.max(0, b.offsetLeft - el.offsetLeft - (el.clientWidth - b.offsetWidth) / 2) : 0; }));
+}
 const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
 function detailOf(l) {
   const d = l.detail || {};
@@ -2428,9 +2453,9 @@ _who.onclick = () => { if (Date.now() - _tabHandled < 500) return; openBabySheet
 function fillSettings() {
   $('set-baby').textContent = `${baby.name} · ${baby.birth_date.replace(/-/g, '.')} ›`; $('set-code').textContent = baby.invite_code;
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
-  for (const b of $('char-seg').children) b.classList.toggle('on', b.dataset.v === charOf(me.id));
+  charGrid($('char-seg'), charOf(me.id), !_charKeep); _charKeep = false;
 }
-const VER = 'v1.23 · 11-18';
+const VER = 'v1.24 · 11-18';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2529,11 +2554,12 @@ try { localStorage.removeItem('bb-ai-chat'); } catch (_) {}
   dim.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 })();
 $('close-settings').onclick = () => { if (Date.now() - _tabHandled < 500) return; show('s-home'); };
+let _charKeep = false;
 $('char-seg').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
-  const v = 'char:' + b.dataset.v;
+  const v = 'char:' + b.dataset.v; if (charKey(v) === charOf(me.id) && avatarById[me.id]) return;
   if (!MOCK) { const { error } = await sb.from('baby_members').update({ avatar_url: v }).eq('baby_id', baby.id).eq('user_id', me.id); if (error) { toast('저장 실패: ' + error.message); return; } }
-  avatarById[me.id] = v; fillSettings(); render();
+  avatarById[me.id] = v; _charKeep = true; fillSettings(); render();   // 고른 뒤엔 밀어 둔 자리를 그대로
 });
 $('theme-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; localStorage.setItem('bb-theme', b.dataset.v); applyTheme(); });
 $('copy-code').onclick = async () => {
@@ -2566,8 +2592,13 @@ $('kakao-login').onclick = async () => {
   const { error } = await sb.auth.signInWithOAuth({ provider: 'kakao', options: { redirectTo: SITE } });
   if (error) alert('카카오 로그인 시작 실패: ' + error.message);
 };
+let setupChar = '';   // 첫 설정에서 고른 내 캐릭터 (만들기·합류 때 같이 저장)
+function drawSetupChars() { charGrid($('setup-chars'), setupChar, false); }
+$('setup-chars').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; setupChar = b.dataset.v; drawSetupChars(); $('nick-msg').textContent = ''; });
 $('nick-save').onclick = async () => {
-  const n = $('nick').value.trim().slice(0, 12); if (!n) return;
+  const n = $('nick').value.trim().slice(0, 12); if (!n) { $('nick-msg').textContent = '이름을 적어주세요'; return; }
+  if (!setupChar) { $('nick-msg').textContent = '캐릭터를 하나 골라주세요'; return; }
+  if (MOCK) { me.nickname = n; stepBaby(); return; }
   const { data: taken } = await sb.from('profiles').select('id').eq('nickname', n).neq('id', me.id);
   if (taken && taken.length) { $('nick-msg').textContent = '이미 쓰고 있는 이름이에요'; return; }
   const { error } = await sb.from('profiles').upsert({ id: me.id, nickname: n });
@@ -2582,7 +2613,7 @@ $('baby-create').onclick = async () => {
   if ($('baby-create').disabled) return; $('baby-create').disabled = true; setTimeout(() => $('baby-create').disabled = false, 4000);   // 두 번 눌러 기록표가 둘 생기는 것 방지 (09-27 실측)
   const { data, error } = await sb.from('babies').insert({ name, birth_date: birth, invite_code: genCode(), created_by: me.id }).select().single();
   if (error) { $('baby-msg').textContent = '만들기 실패: ' + error.message; return; }
-  const { error: e2 } = await sb.from('baby_members').insert({ baby_id: data.id, user_id: me.id, avatar_url: 'char:dad' });
+  const { error: e2 } = await sb.from('baby_members').insert({ baby_id: data.id, user_id: me.id, avatar_url: 'char:' + (setupChar || 'm1') });
   if (e2) { $('baby-msg').textContent = '등록 실패: ' + e2.message; return; }
   baby = data;
   if (setupPhoto) { try { const url = await uploadPhoto(setupPhoto, baby.id); await db.updBaby({ photo_url: url }); } catch (e) { toast('사진은 나중에 설정에서 다시 올려주세요'); } }
@@ -2591,7 +2622,7 @@ $('baby-create').onclick = async () => {
 $('join-go').onclick = async () => {
   const code = $('join-code').value.trim().toUpperCase(); if (code.length < 6) { $('join-msg').textContent = '6자리 코드를 적어주세요'; return; }
   if ($('join-go').disabled) return; $('join-go').disabled = true; setTimeout(() => $('join-go').disabled = false, 4000);
-  const { data, error } = await sb.rpc('join_baby', { code, avatar: 'char:mom' });
+  const { data, error } = await sb.rpc('join_baby', { code, avatar: 'char:' + (setupChar || 'f1') });
   if (error) { $('join-msg').textContent = error.message.replace(/^.*?: /, ''); return; }
   const { data: b } = await sb.from('babies').select('*').eq('id', data).single();
   baby = b; await enterHome();
@@ -2599,7 +2630,7 @@ $('join-go').onclick = async () => {
 async function enterHome() { await db.loadAll(); lastSync = Date.now(); subscribe(); day = dstr(new Date()); show('s-home'); render(); }
 
 async function boot() {
-  if (MOCK) { mock(); show('s-home'); render(); return; }
+  if (MOCK) { mock(); if (new URLSearchParams(location.search).has('setup')) { show('s-setup'); $('nick').value = me.nickname; drawSetupChars(); return; } show('s-home'); render(); return; }   // ?mock=1&setup=1 = 첫 설정 화면 확인용
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { show('s-login'); return; }
   const u = session.user;
@@ -2607,8 +2638,8 @@ async function boot() {
   me = { id: u.id, nickname: profile?.nickname || '', avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || '' };
   const { data: mem } = await sb.from('baby_members').select('baby_id').eq('user_id', u.id).limit(1);
   if (mem && mem.length) { const { data: b } = await sb.from('babies').select('*').eq('id', mem[0].baby_id).single(); baby = b; await enterHome(); return; }
-  show('s-setup');
-  if (me.nickname) stepBaby(); else $('nick').value = u.user_metadata?.name || u.user_metadata?.full_name || '';
+  show('s-setup'); drawSetupChars();   // 이름이 이미 있어도 이 단계를 거친다 — 캐릭터를 고르고 이름을 확인·수정 (11-18)
+  $('nick').value = me.nickname || u.user_metadata?.name || u.user_metadata?.full_name || '';
 }
 if (!MOCK) sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_IN' && !me) boot(); });
 if (!MOCK && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -2616,7 +2647,9 @@ if (!MOCK && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.
 // ── 로컬 확인용 가짜 데이터 (?mock=1)
 function mock() {
   me = { id: 'u-dad', nickname: '아빠' }; nickById = { 'u-dad': '아빠', 'u-mom': '엄마' };
-  avatarById = {};   // 사진 없음 → 기본 캐릭터(미지 2R 채택본)
+  avatarById = {};   // 값 없음 → 기본 캐릭터(m1·f1)
+  { const cs = (new URLSearchParams(location.search).get('chars') || '').split(',').filter(k => CHAR[k]), ids = ['u-dad', 'u-mom', 'u-3', 'u-4', 'u-5'], nn = ['아빠', '엄마', '할머니', '할아버지', '이모'];   // ?chars=m2,f2,f3 = 목업 가족의 캐릭터 (셋째부터는 가족이 늘어난다)
+    cs.forEach((k, i) => { if (ids[i]) { avatarById[ids[i]] = 'char:' + k; nickById[ids[i]] = nn[i]; } }); if (new URLSearchParams(location.search).get('legacy')) { avatarById['u-dad'] = 'char:dad'; avatarById['u-mom'] = 'char:mom'; } }
   baby = { id: 'b1', name: '콩이', birth_date: '2026-09-15', invite_code: 'K7M2PQ', created_by: 'u-dad' };
   const T = (h, m, dayOff = 0) => { const d = new Date(); d.setDate(d.getDate() + dayOff); d.setHours(h, m, 0, 0); return d.toISOString(); };
   logs = [
@@ -2698,7 +2731,7 @@ async function openBook() {
       for (let from = 0; ; from += 1000) { const { data } = await sb.from('baby_logs').select('kind, at, ended_at, detail').eq('baby_id', baby.id).gte('at', since).order('at').range(from, from + 999); all.push(...(data || [])); if (!data || data.length < 1000) break; } } catch (_) { all = logs; }
   }
   const ids = Object.keys(nickById).sort((a, b) => (a === baby.created_by ? -1 : 0) - (b === baby.created_by ? -1 : 0));
-  const members = ids.slice(0, 5).map(id => ({ id, name: nickById[id] || (charOf(id) === 'mom' ? '엄마' : '아빠'), img: '../' + avatarSrc(id) }));   // 표지 얼굴은 아기 + 가족 5 = 최대 6명
+  const members = ids.slice(0, 5).map(id => ({ id, name: nickById[id] || '가족', img: '../' + avatarSrc(id) }));   // 표지 얼굴은 아기 + 가족 5 = 최대 6명
   const input = { baby: { name: baby.name, birth_date: baby.birth_date }, days: bookDays(), members, me: me.id, api: bookApi(), logs: all.slice().sort((a, b) => a.at < b.at ? -1 : 1), growth, checks: Object.values(checks), today: dstr(new Date()) };
   f.addEventListener('load', () => { try { f.contentWindow.bookStart(input); } catch (e) { closeBook(); toast('성장앨범을 열지 못했어요'); } });
   f.src = 'book/index.html';

@@ -651,6 +651,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') photoClose(); });
 async function start(d) {
   baby = d.baby; if (Q.get('name')) baby = { ...baby, name: Q.get('name') };   // ?name= 은 이름 길이 확인용
   members = d.members; ME = d.me;
+  { const im = $('cm-form').querySelector('img'), w = who(ME); im.src = w.img; im.alt = w.name; }   // 댓글 입력칸 옆 얼굴 = 내가 고른 캐릭터
   pages = d.days.filter(x => x.diary || x.photo).sort((a, b) => a.day < b.day ? -1 : 1).map(model);
   { const n = [...baby.name].length; $('ttl').textContent = baby.name; $('ttl-h').className = n > 7 ? 'xlong' : n > 4 ? 'long' : ''; document.title = `${baby.name}의 성장앨범`; }
   try { await Promise.race([document.fonts.load('16px "Poor Story"'), new Promise(r => setTimeout(r, 1500))]); } catch (_) {}
