@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poor+Story&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="book.css">
+<script>window.__bv = new URLSearchParams(location.search).get('v') || Date.now(); document.write('<link rel="stylesheet" href="book.css?v=' + encodeURIComponent(__bv) + '">');</script>   <!-- 11-20: 앱 버전을 붙여 받아 폰 캐시에 옛 책이 남지 않게 -->
 </head>
 <body>
 <div id="app">
@@ -84,6 +84,6 @@
 </section>
 
 <div id="phview" class="phview" hidden role="dialog" aria-modal="true" aria-label="사진 크게 보기 — 누르면 닫혀요"><img alt=""><p></p></div>   <!-- 일기 쪽 사진을 누르면: 앱 다이어리의 사진 크게 보기(.phview)와 같은 모양·동작 -->
-<script src="book.js"></script>
+<script>document.write('<script src="book.js?v=' + encodeURIComponent(__bv) + '"><\/script>');</script>
 </body>
 </html>

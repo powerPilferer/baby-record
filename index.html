@@ -56,7 +56,8 @@
   @media (prefers-reduced-motion: reduce) { #splash .dots i { animation: none; opacity: .6; } }
   .onb { padding: 14vh 0 40px; max-width: 360px; margin: 0 auto; }
   #s-login .onb { text-align: center; padding-top: 18vh; }
-  #s-setup .onb { padding-top: clamp(24px, calc(48vh - 290px), 14vh); }   /* 첫 설정(이름·캐릭터 / 만들기·합류): 큰 화면은 전처럼 14vh, 화면이 낮을수록 위 여백을 줄여 내용을 올린다 (11-18 사장님) */
+  #s-setup.screen { padding-bottom: 0; }
+  #s-setup .onb { padding: calc(var(--sat, 0px) + 24px) 0 calc(var(--sab, 0px) + 24px); min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }   /* 11-20 사장님 "다른 화면과 같이 중앙정렬" — 첫 설정만 화면 아래 패딩 없이 정가운데 — 첫 설정 내용을 화면 세로 가운데에, 길면 위에서부터 스크롤 */   /* 첫 설정(이름·캐릭터 / 만들기·합류): 큰 화면은 전처럼 14vh, 화면이 낮을수록 위 여백을 줄여 내용을 올린다 (11-18 사장님) */
   .onb h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
   .onb > p, .onb > div > p:not(.msg) { color: var(--fg2); font-size: 15px; margin: 0 0 22px; }
   .family { display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
@@ -730,9 +731,12 @@
   .cgrid button.on img { box-shadow: 0 0 0 3px var(--card, var(--bg)), 0 0 0 5.5px var(--fg); }
   .cgrid button.on::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 22px; height: 22px; border-radius: 50%; background: var(--fg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 15px no-repeat; box-shadow: 0 0 0 2px var(--card, var(--bg)); }
   /* 처음 들어올 때 화면만: 같은 크기(72px)로 한 줄에 넷씩 아래로 나열 — 위아래 자리가 넉넉해서 (11-18 사장님). 설정은 가로 슬라이드 그대로 */
-  .card.form .cgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 72px)); justify-content: space-between; gap: 14px 8px; overflow: visible; margin: 2px 0 0; padding: 8px 2px 6px; }
-  .card.form .cgrid button.gap { margin-left: 0; }
-  .card.form .cgrid button { width: 100%; height: auto; aspect-ratio: 1; }   /* 아주 좁은 화면(320)에선 같이 줄어든다 */
+  /* 처음 들어올 때 화면만: '여자'·'남자' 머리글로 나눠 다섯 명씩 한 줄(두 줄) — 줄이 묶음과 딱 맞는다 (11-20 사장님). 설정은 가로 슬라이드 그대로 */
+  .card.form .cgrid , #char-seg.cgrid  { display: block; overflow: visible; margin: 2px 0 0; padding: 2px 0 6px; }
+  .card.form .cgrid h4 , #char-seg.cgrid h4  { font-size: 12px; font-weight: 600; color: var(--fg3); margin: 10px 0 8px; }
+  .card.form .cgrid .row , #char-seg.cgrid .row  { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding: 0 2px; }
+  .card.form .cgrid button , #char-seg.cgrid button  { width: 100%; height: auto; aspect-ratio: 1; }
+  .card.form .cgrid button.on::after , #char-seg.cgrid button.on::after  { width: 19px; height: 19px; background-size: 13px; }
   .pick button { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--fg3); font-size: 14px; font-weight: 500; }
   .pick button img { width: 72px; height: 72px; border-radius: 50%; opacity: .45; transition: opacity .15s, box-shadow .15s; }
   .pick button.on { color: var(--fg); }
@@ -1294,9 +1298,11 @@ const charKey = v => { const k = String(v || '').replace(/^char:/, ''); return k
 const charOf = id => charKey(avatarById[id]) || (id === baby.created_by ? 'm1' : 'f1');   // 값이 없는 옛 기록: 만든 사람 = m1, 합류 = f1 (전과 같은 그림)
 const avatarSrc = id => CHAR[charOf(id)];
 // 한 줄 가로 슬라이드. 처음 그릴 때만 만들고, 고를 때는 표시만 바꾼다(밀어 둔 자리가 그대로). center=true 면 고른 캐릭터가 보이게 그 자리로 미리 민다
-function charGrid(el, sel, center) {
+function charGrid(el, sel, center, grouped) {   // grouped = 처음 들어올 때: '여자'·'남자' 머리글로 나눠 다섯 명씩 아래로 (11-20 사장님)
+  const btn = (k, i) => `<button type="button" data-v="${k}" aria-label="캐릭터 ${i + 1}"><img src="${CHAR[k]}" alt=""></button>`;
+  if (!el.firstChild && grouped) el.innerHTML = [['여자', 0], ['남자', 5]].map(([t, a]) => `<h4>${t}</h4><div class="row">${CHAR_LIST.slice(a, a + 5).map((k, i) => btn(k, a + i)).join('')}</div>`).join('');
   if (!el.firstChild) el.innerHTML = CHAR_LIST.map((k, i) => `<button type="button" data-v="${k}" class="${i === 5 ? 'gap' : ''}" aria-label="캐릭터 ${i + 1}"><img src="${CHAR[k]}" alt=""></button>`).join('');
-  for (const b of el.children) { const on = b.dataset.v === sel; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
+  for (const b of el.querySelectorAll('button')) { const on = b.dataset.v === sel; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
   if (center) requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.on'); el.scrollLeft = b ? Math.max(0, b.offsetLeft - el.offsetLeft - (el.clientWidth - b.offsetWidth) / 2) : 0; }));
 }
 const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
@@ -2455,9 +2461,9 @@ _who.onclick = () => { if (Date.now() - _tabHandled < 500) return; openBabySheet
 function fillSettings() {
   $('set-baby').textContent = `${baby.name} · ${baby.birth_date.replace(/-/g, '.')} ›`; $('set-code').textContent = baby.invite_code;
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
-  charGrid($('char-seg'), charOf(me.id), !_charKeep); _charKeep = false;
+  charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.27 · 11-20';
+const VER = 'v1.28 · 11-20';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2595,7 +2601,7 @@ $('kakao-login').onclick = async () => {
   if (error) alert('카카오 로그인 시작 실패: ' + error.message);
 };
 let setupChar = '';   // 첫 설정에서 고른 내 캐릭터 (만들기·합류 때 같이 저장)
-function drawSetupChars() { charGrid($('setup-chars'), setupChar, false); }
+function drawSetupChars() { charGrid($('setup-chars'), setupChar, false, true); }
 $('setup-chars').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; setupChar = b.dataset.v; drawSetupChars(); $('nick-msg').textContent = ''; });
 $('nick-save').onclick = async () => {
   const n = $('nick').value.trim().slice(0, 12); if (!n) { $('nick-msg').textContent = '이름을 적어주세요'; return; }
@@ -2736,7 +2742,7 @@ async function openBook() {
   const members = ids.slice(0, 5).map(id => ({ id, name: nickById[id] || '가족', img: '../' + avatarSrc(id) }));   // 표지 얼굴은 아기 + 가족 5 = 최대 6명
   const input = { baby: { name: baby.name, birth_date: baby.birth_date }, days: bookDays(), members, me: me.id, api: bookApi(), logs: all.slice().sort((a, b) => a.at < b.at ? -1 : 1), growth, checks: Object.values(checks), today: dstr(new Date()) };
   f.addEventListener('load', () => { try { f.contentWindow.bookStart(input); } catch (e) { closeBook(); toast('성장앨범을 열지 못했어요'); } });
-  f.src = 'book/index.html';
+  f.src = 'book/index.html?v=' + encodeURIComponent(VER.split(' ')[0]);   // 11-20: 폰이 옛 책 파일을 붙들지 않게 버전마다 새 주소 (v1.27 배포 뒤에도 가로판이 남았음)
 }
 function closeBook() { document.documentElement.classList.remove('book-on'); document.body.style.position = document.body.style.top = document.body.style.left = document.body.style.right = ''; scrollTo(0, _bookY);
   const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.classList.remove('bk'); wrap.innerHTML = ''; }
