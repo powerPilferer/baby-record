@@ -458,3 +458,75 @@ body.flat .full { box-shadow: 0 1px 0 rgba(90, 70, 40, .16); }
 @keyframes pvIn { from { opacity: 0; } }
 .frame .ph { cursor: zoom-in; }
 @media print { .phview { display: none !important; } }
+
+/* ── 책 아래 = 그날의 공책 한 장 (11-19, 댓글을 꺼 둔 동안) — 책 쪽과 같은 크림 종이에 앱 다이어리 공책의 손 괘선(한 줄 29px), 손글씨가 줄에 앉는다. 길면 이 안에서 세로로 넘긴다 ───────────────────────────── */
+.np { min-height: 100%; padding: 14px 20px calc(var(--sab) + 18px); background: url(doodles/lines.svg) 20px 45px / calc(100% - 40px) 116px repeat-y, var(--paper) url(doodles/paper-cream.png) 0 0 / 256px; }
+.np h3 { height: 31px; align-items: center; font-size: 13px; font-weight: 700; color: var(--date); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.np h3 small { font-weight: 500; letter-spacing: 0; }
+.np p { font-family: var(--hand); font-size: 18.5px; line-height: 29px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; word-break: keep-all; padding: 0 2px; user-select: text; -webkit-user-select: text; }
+
+/* ══ 가로 고정 (11-19 사장님: "아래 영역을 빼고 가로형으로 전환. 앨범은 가로형으로 고정") ══════════════════════════════
+   --W·--H = 보이는 방향의 화면 폭·높이(px, book.js orient 가 넣는다). 폰이 세로면 body.rot 로 화면 전체를 90° 돌려 가로로 그린다.
+   책은 높이 기준으로 꽉 차게(373:300 그대로), 타이틀·뒤로는 책 왼쪽 옆, 달·쪽 번호·오늘 쪽은 책 오른쪽 옆. 책 아래 영역은 없다. */
+:root {   /* 책은 화면(안전영역 안) 세로 정가운데. 크기는 셋 중 가장 작은 것: ① 높이 — 위로 책갈피 아기(27px)·아래로 쪽 번호가 들어갈 30px 씩 ② 폭 — 양옆 화살표 자리 ③ 우상단 단추(달 고르기 · 오늘, 넉넉히 132px)와 책 오른쪽 위 모서리·아기가 가로로 부딪히지 않는 폭(작은 폰에서만 걸린다) */
+  --u: calc(min(var(--H) - var(--sat) - var(--sab) - 72px, (var(--W) - var(--sal) - var(--sar) - 150px) * 300 / 373, (var(--W) - 2 * var(--sar) - 308px) * 300 / 373) / 300);
+  --bt: calc((var(--H) - var(--sat) - var(--sab) - 300 * var(--u)) / 2 + 6px); }   /* 11-19 사장님 "아기 머리 여백이 너무 없으니 살짝만 내리고" — 책을 12px 낮추고 6px 내려 아기 머리 위 여유 3→약 15px, 쪽 번호 아래 여유는 그대로 */   /* 책 윗변 = 남는 높이의 절반 → 책 세로 중심 = 화면 세로 중심 */
+html { overflow: hidden; }
+body { position: fixed; left: 0; top: 0; width: var(--W); height: var(--H); overflow: hidden; touch-action: none; }   /* 책장을 끄는 손가락을 브라우저가 스크롤로 가져가지 않게 */
+body.rot { transform-origin: 0 0; transform: translateX(var(--H)) rotate(90deg); }   /* 세로로 든 폰: 시계 방향 90° — 폰을 왼쪽으로 눕히면 노치가 왼쪽, 홈 바가 오른쪽 */
+#app { width: var(--W); height: var(--H); max-width: none; margin: 0; padding-top: var(--sat); }
+.view { position: relative; }
+.book { margin-top: var(--bt); touch-action: none; left: calc(var(--tab) / -2); }
+.under { display: none; }
+/* 책 양옆 칸 (11-19 사장님 재정리): 타이틀은 뺐다. 왼쪽 칸 = ‹ 화살표 + 달 고르기, 오른쪽 칸 = › 화살표 + 오늘 쪽 — 각 칸('안전영역 끝 ~ 책')의 가로 가운데, 책 세로 가운데에 같은 크기로 놓여 좌우가 짝을 이룬다. 쪽 번호는 책 아래 가운데 */
+:root { --tab: 0px;   /* 책 오른쪽으로 나온 색인 탭 폭 — 책을 그 절반만큼 왼쪽으로 옮겨 '책 + 탭' 덩어리가 가운데 온다 */
+  --colL: calc((var(--W) - 373 * var(--u) - var(--tab)) / 2 - var(--sal)); --colR: calc((var(--W) - 373 * var(--u) - var(--tab)) / 2 - var(--sar)); --mid: calc(var(--bt) + 150 * var(--u)); --xL: calc(var(--sal) + var(--colL) / 2); --xR: calc(var(--W) - var(--sar) - var(--colR) / 2); }
+.top { position: absolute; left: var(--sal); top: 0; width: 0; height: 0; margin: 0; padding: 0; display: block; z-index: 1; }
+.top h1 { display: none !important; }
+.top .back { position: absolute; left: 16px; top: calc(var(--sat) + 12px); }
+/* 위 줄 오른쪽: 달 고르기 · 오늘 쪽을 나란히 — 좌상단 뒤로 버튼과 같은 높이(세로 가운데 같음), 오른쪽 여백도 뒤로 버튼의 왼쪽 여백과 같다 (11-19 사장님) */
+.bar { position: absolute; right: calc(var(--sar) + 16px); top: 12px; height: 46px; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 0; margin: 0; transform: none; width: auto; }
+.bar .chip { position: static; transform: none; width: auto; height: 40px; padding: 0 14px; font-size: 14px; margin: 0; }
+.bar .chip:active { transform: scale(.97); }
+.bar .chip.ghost.gone, .bar #btn-month[style*="hidden"] { display: none; }      /* 안 보이는 단추는 자리도 비워 남은 단추가 오른쪽 끝에 붙는다 */
+.nav { position: absolute; transform: translateX(-50%); margin: 0; top: calc(var(--mid) - 22px); width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink); opacity: .72; transition: opacity .15s; }   /* 책 양옆 세로 가운데, 화살표 선만 — 누르는 자리는 44px */
+.nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.nav:active { opacity: 1; }
+.nav:disabled { opacity: .22; }
+.nav.prev { left: calc((var(--W) - 373 * var(--u)) / 2 - 29px); } .nav.next { left: calc((var(--W) + 373 * var(--u)) / 2 + 29px); }   /* 책 가장자리에서 화살표 선까지 18px (누르는 44px 칸은 책과 7px 떨어져 겹치지 않는다) */
+.bar .folio { position: fixed; left: 0; right: 0; top: calc(var(--sat) + var(--bt) + 300 * var(--u) + 5px); flex: none; text-align: center; font-size: 12px; line-height: 14px; padding: 0; pointer-events: none; }   /* 쪽 번호는 책 아래 가운데 */
+.sheet-ui { max-width: 480px; max-height: calc(var(--H) - var(--sat) - 12px); }
+.under-scroll, .mo-list, .more-scroll { touch-action: pan-x pan-y; }   /* 안에서 넘겨 읽는 곳만 스크롤을 푼다 (돌린 화면에서는 읽는 세로 = 화면의 가로) */
+.cover .cv-info .hint { display: none !important; }
+/* 긴 일기 '더보기' */
+.diary { position: relative; }
+.more-btn { display: none; position: absolute; right: 0; bottom: 0; height: var(--dl); padding: 0 calc(2 * var(--u)) 0 calc(16 * var(--u)); font-family: var(--ui); font-size: calc(10.5 * var(--u)); font-weight: 700; color: var(--blue); background: linear-gradient(90deg, rgba(248, 241, 227, 0), var(--paper) 38%); }
+.more-btn::before { content: ""; position: absolute; inset: -6px -4px -8px -6px; }       /* 누르는 자리 넉넉히 */
+.diary.cut .more-btn { display: block; }
+.more-scrim { position: fixed; inset: 0; z-index: 30; background: rgba(50, 38, 20, .3); opacity: 0; transition: opacity .2s var(--in); }
+.more-scrim.on { opacity: 1; transition: opacity .32s var(--out); }
+.more { position: fixed; top: 0; right: 0; bottom: 0; z-index: 31; width: min(440px, 58%); padding-right: var(--sar); display: flex; flex-direction: column; background: var(--paper) url(doodles/paper-cream.png) 0 0 / 256px; border-radius: 22px 0 0 22px; box-shadow: -8px 0 28px rgba(60, 45, 20, .2); transform: translateX(104%); transition: transform .22s var(--in); }
+.more.on { transform: none; transition: transform .38s var(--out); }
+.more header { flex: none; display: flex; align-items: center; height: 52px; padding: calc(var(--sat) + 0px) 8px 0 22px; border-bottom: 1px solid var(--line); }
+.more h2 { flex: 1; display: flex; align-items: baseline; gap: 10px; font-size: 14px; font-weight: 700; color: var(--date); letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.more h2 small { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--mute); overflow: hidden; text-overflow: ellipsis; }
+.more .x { flex: none; width: 44px; height: 44px; display: grid; place-items: center; color: var(--mute); }
+.more .x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.more-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.more-scroll::-webkit-scrollbar { display: none; }
+.more-scroll p { min-height: 100%; padding: 6px 24px calc(var(--sab) + 20px) 22px; font-family: var(--hand); font-size: 18.5px; line-height: 29px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; word-break: keep-all; user-select: text; -webkit-user-select: text;
+  background: url(doodles/lines.svg) 22px 6px / calc(100% - 46px) 116px repeat-y; }   /* 앱 다이어리 공책과 같은 손 괘선 — 한 줄 29px 에 한 칸 */
+@media (prefers-reduced-motion: reduce) { .more, .more.on, .more-scrim, .more-scrim.on { transition-duration: .01s; } }
+
+/* ── 색인 탭 (11-19, 가로형) — 책 오른쪽 가장자리에 꽂힌 책갈피 넷, 글자 없이 아이콘만. 쪽보다 아래(z 0)에 끼워져 쪽 밑에서 나온 것처럼 보인다. 활성이어도 크기는 그대로 ─────────────────────────────
+   ① (기본) 크림 종이 탭, 끝이 둥글다. 평소엔 종이색 + 잉크 선 아이콘, 지금 장만 표지 초록으로 채우고 아이콘은 크림 — 색은 표지 초록 하나뿐 */
+.tabs { position: absolute; left: calc(100% - 8px); top: calc(22 * var(--u)); z-index: 0; display: flex; flex-direction: column; gap: 5px; }
+.tabs button { width: calc(var(--tab) + 6px); height: clamp(40px, calc(50 * var(--u)), 52px); padding-left: 8px; border-radius: 0 999px 999px 0; background: var(--paper-hi); box-shadow: inset 0 0 0 1px rgba(90, 70, 40, .2); color: #6a6459; display: flex; align-items: center; justify-content: center; position: relative; transition: background .18s, color .18s; }
+.tabs button::before { content: ""; position: absolute; inset: -2px -8px -3px 0; }                                  /* 누르는 자리 넉넉히 */
+.tabs svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.tabs button.on { background: #2f6b5c; color: #fdfaf0; box-shadow: none; }
+/* ② 리본 책갈피 (?tabs=b): 표지 초록 한 톤의 리본, 끝이 V 로 파였다. 평소엔 옅은 세이지, 지금 장만 진한 초록 */
+.tabs.b { gap: 7px; }
+.tabs.b button { height: clamp(34px, calc(40 * var(--u)), 40px); border-radius: 0; background: #b9cfc4; box-shadow: none; color: #2c5a4e; clip-path: polygon(0 0, 100% 0, calc(100% - 11px) 50%, 100% 100%, 0 100%); padding: 0 8px 0 6px; }
+.tabs.b button.on { background: #2f6b5c; color: #fdfaf0; }
+.tabs { display: none !important; }                         /* 책 오른쪽 색인 탭은 접었다(11-19 사장님) — 코드는 남김. 장 고르기는 책 오른쪽 위 드롭다운 책갈피(아기 빼꼼 + ⌄)로 */
