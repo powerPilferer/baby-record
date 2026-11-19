@@ -30,7 +30,7 @@
         <span class="cb-in" aria-hidden="true"></span>
       </span>
     </button>
-    <div class="cv-info" id="cv-info"><p class="tt" id="cv-tt"></p><p class="st" id="cv-st"></p></div>
+    <div class="cv-info" id="cv-info"><p class="tt" id="cv-tt"></p><p class="st" id="cv-st"></p><p class="hint">책을 누르면 가장 최근 날이 펼쳐져요</p></div>
   </section>
 
   <div id="view-book" class="view">
@@ -40,7 +40,6 @@
       <div class="half hr" id="hr"></div>
       <div class="sheet" id="sheet" hidden><div class="face front" id="front"></div><div class="face back" id="back"></div></div>
       <div class="spine" aria-hidden="true"></div>
-      <nav class="tabs" id="tabs" aria-label="책갈피 — 장 고르기"></nav>   <!-- 가로형: 책 오른쪽 가장자리에 꽂힌 색인 탭(일기·사진·숫자·성장). 아래 드롭다운 책갈피는 꺼 둠 -->
       <!-- 책갈피: 책 오른쪽 위 모서리에 끼운 캐릭터 책갈피. 누르면 아래로 길게 열려 장(일기·사진·숫자·성장)을 고른다 -->
       <span class="bm-head" aria-hidden="true"><img src="../img/아기-2g-전신-누끼.png" alt=""></span>
       <div class="bm" id="bm" hidden>
@@ -49,16 +48,15 @@
       </div>
     </section>
 
-    <!-- 책 양옆: 작은 화살표(앞 날·다음 날) + 그 밑에 단추 하나씩(왼쪽 달 고르기, 오른쪽 오늘 쪽). 쪽 번호는 책 아래 가운데 -->
-    <button type="button" class="nav prev" id="nav-prev" aria-label="앞 날"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg></button>
-    <button type="button" class="nav next" id="nav-next" aria-label="다음 날"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.500 6l6 6-6 6"/></svg></button>
     <nav class="bar" id="bar" aria-label="쪽 이동">
       <button type="button" class="chip" id="btn-month" aria-haspopup="dialog">
         <span id="lb-month">11월</span>
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>
       </button>
       <span class="folio" id="folio"></span>
-      <button type="button" class="chip ghost" id="btn-today" aria-label="오늘 쪽으로">오늘</button>
+      <button type="button" class="chip ghost" id="btn-today">오늘 쪽
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+      </button>
     </nav>
 
     <!-- 책 아래: 긴 일기 이어 읽기 + 가족 댓글 -->
@@ -85,11 +83,6 @@
   <div class="mo-list" id="mo-list"></div>
 </section>
 
-<div class="more-scrim" id="more-scrim" hidden></div>
-<aside class="more" id="more" role="dialog" aria-modal="true" aria-labelledby="more-h" hidden>   <!-- 긴 일기 '더보기': 오른쪽에서 밀려 들어오는 종이 -->
-  <header><h2 id="more-h"></h2><button type="button" class="x" id="more-x" aria-label="닫기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button></header>
-  <div class="more-scroll" id="more-scroll"><p id="more-body"></p></div>
-</aside>
 <div id="phview" class="phview" hidden role="dialog" aria-modal="true" aria-label="사진 크게 보기 — 누르면 닫혀요"><img alt=""><p></p></div>   <!-- 일기 쪽 사진을 누르면: 앱 다이어리의 사진 크게 보기(.phview)와 같은 모양·동작 -->
 <script src="book.js"></script>
 </body>

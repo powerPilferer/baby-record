@@ -2457,7 +2457,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), !_charKeep); _charKeep = false;
 }
-const VER = 'v1.26 · 11-19';
+const VER = 'v1.27 · 11-20';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2683,7 +2683,7 @@ function mock() {
   ];
 }
 // ═══ 성장앨범 책 (11-17 춘봉) — 통계 맨 아래 카드 → book/index.html 전체 화면(iframe) ═══
-// 매일 쌓이는 책: 펼침 한 면 = 하루(왼쪽 사진, 오른쪽 일기), 아래에 그날 일기 전문 공책(가족 댓글은 11-19 꺼 둠 — book.js 의 COMMENTS). 옛 돌 앨범(album/ 폴더, 예약·미리 만들기)은 더 부르지 않는다 — 코드는 index.bak-1117-book.html
+// 매일 쌓이는 책: 펼침 한 면 = 하루(왼쪽 사진, 오른쪽 일기), 아래에 가족 댓글. 옛 돌 앨범(album/ 폴더, 예약·미리 만들기)은 더 부르지 않는다 — 코드는 index.bak-1117-book.html
 const BOOK_Q = new URLSearchParams(location.search).get('book') || '';   // 목업 확인용: ?book=nocm (댓글 표가 아직 없을 때) · ?book=empty (기록 없는 책)
 function bookMockDays() {   // 목업(?mock)엔 일기·사진이 없어 책에 넣을 날을 지어낸다 — 사진 자리는 앱 캐릭터 그림
   const day = off => { const d = new Date(); d.setDate(d.getDate() - off); return dstr(d); };
@@ -2701,7 +2701,7 @@ function renderAlbumCard() {
   const days = bookDays(), nd = days.filter(d => d.diary.trim()).length, np = days.filter(d => d.photo).length;
   const el = $('album-stat');
   el.innerHTML = `<div class="alb-card"><div class="alb-head"><span class="bk-mini" aria-hidden="true"></span><div><b>${esc(baby.name)}의 성장앨범</b><span>${days.length ? `일기 ${nd}편 · 사진 ${np}장` : '아직 빈 책이에요'}</span></div></div>
-    <p class="alb-tx">매일 쓴 일기와 사진이 책 한 권으로 쌓여요.</p>
+    <p class="alb-tx">매일 쓴 일기와 사진이 책 한 권으로 쌓여요. 가족끼리 댓글도 남길 수 있어요.</p>
     <div class="alb-acts"><button type="button" class="pri" data-a="open">책 펼쳐 보기</button></div></div>`;
   el.querySelector('[data-a]').onclick = openBook;
 }

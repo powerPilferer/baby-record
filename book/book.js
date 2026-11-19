@@ -11,33 +11,13 @@ const WD = '일월화수목금토';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let EMBED = false; try { EMBED = parent !== window && !!parent.document && !Q.get('local'); } catch (_) {}   // 앱 안(같은 출처 iframe)에서 열렸는지
 
-if (Q.get('statusbar') && false) {   // 가로 고정 뒤로는 가짜 상태바를 그리지 않는다   // 캡처 전용 — 상태바 자리가 비어 보이지 않게 가짜 상태바를 그린다
+if (Q.get('statusbar')) {   // 캡처 전용 — 상태바 자리가 비어 보이지 않게 가짜 상태바를 그린다
   const se = innerHeight < 700, sb = document.createElement('div'); sb.className = 'fake-sb' + (se ? ' se' : ''); sb.setAttribute('aria-hidden', 'true');
   sb.innerHTML = `<span>9:41</span><i class="isl"></i><span class="ic"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 17 12"><path d="M8.5 2.3c2.4 0 4.6.9 6.3 2.5l1.1-1.2A10.6 10.6 0 0 0 8.5.6C5.700.6 3.100 1.700 1.100 3.600l1.100 1.200a9 9 0 0 1 6.300-2.500Zm0 3.700c1.400 0 2.700.5 3.700 1.500l1.100-1.200a7 7 0 0 0-9.600 0l1.100 1.200c1-1 2.300-1.500 3.700-1.500Zm0 3.600c-.8 0-1.500.3-2 .8l2 2.100 2-2.100c-.5-.5-1.200-.8-2-.8Z"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.200" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="19" height="8" rx="1.800"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".45"/></svg></span>`;
   document.body.appendChild(sb);
   if (!se) { const hb = document.createElement('i'); hb.className = 'fake-hb'; document.body.appendChild(hb); }
 }
-/* ── 가로 고정 (11-19 사장님: "앨범은 가로형으로 고정") ─────────────────────────────
-   아이폰은 화면 방향을 잠글 수 없어서, 폰이 세로일 때는 화면 전체(body)를 시계 방향으로 90° 돌려 가로로 그린다 → 폰을 왼쪽으로 눕히면 바로 보인다(노치가 왼쪽, 홈 바가 오른쪽).
-   폰이 실제로 가로면 돌리지 않는다. 돌린 동안에는 손가락 좌표와 요소 자리를 '보이는 방향' 기준으로 바꿔 준다 — 아래 넘기기·표지·누르기 코드는 좌표가 돌아간 줄 모르고 그대로 돈다. */
-let ROT = false;
-{ const gbr = Element.prototype.getBoundingClientRect, cx = Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'clientX').get, cy = Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'clientY').get;
-  Element.prototype.getBoundingClientRect = function () { const r = gbr.call(this); return ROT ? new DOMRect(r.top, innerWidth - r.right, r.height, r.width) : r; };   // 보이는 방향의 x = 화면의 y, 보이는 방향의 y = 화면 폭 − x
-  Object.defineProperty(MouseEvent.prototype, 'clientX', { get() { return ROT ? cy.call(this) : cx.call(this); }, configurable: true });
-  Object.defineProperty(MouseEvent.prototype, 'clientY', { get() { return ROT ? innerWidth - cx.call(this) : cy.call(this); }, configurable: true }); }
-function orient() {
-  const de = document.documentElement; ROT = innerHeight > innerWidth; document.body.classList.toggle('rot', ROT);
-  document.documentElement.classList.toggle('narrow', Math.max(innerWidth, innerHeight) < 700);   // 작은 폰(가로 700 미만): 우상단 단추와 책갈피 아기가 부딪히지 않게 책을 조금 더 내린다
-  de.style.setProperty('--W', (ROT ? innerHeight : innerWidth) + 'px'); de.style.setProperty('--H', (ROT ? innerWidth : innerHeight) + 'px');
-  // 안전영역(노치·홈 바): 화면 기준 네 변을 재서 보이는 방향으로 옮긴다. 앱 안(iframe)에서는 env() 가 0 일 수 있어 부모 창에서 잰다. ?safe=위,아래,왼,오른 은 시안 확인용
-  let t = 0, r = 0, b = 0, l = 0;
-  if (Q.get('safe')) { const v = Q.get('safe').split(',').map(Number); [t, b, l, r] = [v[0] || 0, v[1] || 0, v[2] || 0, v[3] || 0]; if (!ROT && innerWidth > innerHeight && !v[2] && !v[3]) [t, b, l, r] = [0, 21, v[0] || 0, v[0] || 0]; }   // 가로 화면에 세로 값만 주면 노치는 좌우로
-  else try { const w = EMBED ? parent : window, pr = w.document.createElement('div'); pr.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;width:0;height:0;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
-    w.document.body.appendChild(pr); const c = w.getComputedStyle(pr); [t, r, b, l] = [c.paddingTop, c.paddingRight, c.paddingBottom, c.paddingLeft].map(parseFloat); pr.remove(); } catch (_) {}
-  const [T, R, B, L] = ROT ? [l, b, r, t] : [t, r, b, l];   // 돌린 화면: 왼쪽 = 폰 위(노치), 오른쪽 = 폰 아래(홈 바)
-  de.style.setProperty('--sat', T + 'px'); de.style.setProperty('--sar', R + 'px'); de.style.setProperty('--sab', B + 'px'); de.style.setProperty('--sal', L + 'px');
-}
-orient();
+if (Q.get('safe')) { const [t, b] = Q.get('safe').split(','); document.documentElement.style.setProperty('--sim-sat', (+t || 0) + 'px'); document.documentElement.style.setProperty('--sim-sab', (+b || 0) + 'px'); }
 
 /* ── 낙서: 날짜로 정해지는 규칙 ───────────────────────────── */
 const AR = { diaper: [185, 122], 'pillow-zzz': [173, 149], notebook: [161, 177], checkup: [151, 131],   /* 11-18 숫자 장 항목 그림(신화방) */
@@ -99,7 +79,6 @@ function model(d) {
 
 /* 가족·댓글 — 앱에 붙으면 부모 창이 넘겨 준다(bookStart). 혼자 열면(로컬 시안) 메모리에서 흉내 */
 const CH = { mom: { name: '엄마', img: '../img/엄마-2g-b.png' }, dad: { name: '아빠', img: '../img/아빠-2g-b.png' } };
-const COMMENTS = false;                                  // 가족 댓글 켜고 끄기 (11-19 사장님: 책에서 댓글은 뺀다). true 로 바꾸면 댓글 목록·입력·지우기가 그대로 돌아온다. 꺼 둔 동안은 서버(baby_comments)를 부르지 않는다
 let members = [], ME = '', API = null, cmOk = true;      // members: [{ id, name, img }] · cmOk=false 면 댓글 준비 중(서버 표 없음)
 const who = id => members.find(m => m.id === id) || { name: '가족', img: CH.dad.img };
 const comments = {};                                     // day → [{ id, user_id, text, created_at }]
@@ -334,35 +313,17 @@ addEventListener('keydown', e => { if (closed) return; if (openEl) { if (e.key =
 let shown = -1;
 function sync() {
   const p = pages[idx];
-  if (false) $('under').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'cubic-bezier(.16, 1, .3, 1)' });   // 넘김이 내려앉으면 아래 글·댓글은 갈아 끼우며 살짝 차오른다(툭 바뀜 방지)
+  if (shown >= 0 && shown !== idx && !REDUCED) $('under').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'cubic-bezier(.16, 1, .3, 1)' });   // 넘김이 내려앉으면 아래 글·댓글은 갈아 끼우며 살짝 차오른다(툭 바뀜 방지)
   shown = idx;
   const ch = chOf(idx), ex = !!p.kind;
   $('btn-month').style.visibility = ex ? 'hidden' : ''; if (!ex) $('lb-month').textContent = +p.m.slice(5) + '월';
   if (ex) { const a = CHS[ch].at, n = CHS[ch].n; $('folio').textContent = `${CHS[ch].name}${n > 1 ? ` ${idx - a + 1} / ${n}` : ''}`; $('folio').removeAttribute('aria-label'); }
   else { $('folio').textContent = `${idx + 1} / ${ND}`; $('folio').setAttribute('aria-label', `${ND}일 가운데 ${idx + 1}번째 날`); }
   $('btn-today').classList.toggle('gone', idx === ND - 1);
-  $('nav-next').disabled = idx >= pages.length - 1; $('nav-prev').setAttribute('aria-label', idx === 0 ? '표지 덮기' : '앞 날');   // 맨 끝에서는 다음 화살표가 흐려지고, 첫 날의 앞 화살표는 표지를 덮는다
-  document.querySelectorAll('#bm-list button, #tabs button').forEach(b => { const on = b.dataset.ch === ch; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'true' : 'false'); });
+  document.querySelectorAll('#bm-list button').forEach(b => { const on = b.dataset.ch === ch; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'true' : 'false'); });
   drawUnder(true);
 }
-// 댓글을 꺼 둔 동안: 책 아래 전체가 그날의 공책 한 장. 머리 = 날짜 + 그날 기록 한 줄, 그 아래 괘선 위에 일기 전문(책 쪽 일곱 줄에 다 못 담은 날만 — 짧은 날은 책에 다 있으니 되풀이하지 않고 빈 괘선으로 둔다)
-let dayStat = {};
-function dayStats(logs) {       // 날짜 → '수유 8번 · 잠 14시간 · 기저귀 7장'
-  const by = {}, at = l => (by[lday(l.at)] = by[lday(l.at)] || { f: 0, d: 0, s: 0 });
-  for (const l of logs) { if (l.kind === 'feed') at(l).f++; else if (l.kind === 'diaper') at(l).d++; else if (l.kind === 'sleep' && l.ended_at) { const h = (new Date(l.ended_at) - new Date(l.at)) / 36e5; if (h > 0 && h < 14) at(l).s += h; } }
-  const out = {}; for (const k in by) { const x = by[k], a = []; if (x.f) a.push(`수유 ${x.f}번`); if (x.s >= .5) a.push(`잠 ${Math.round(x.s)}시간`); if (x.d) a.push(`기저귀 ${x.d}장`); if (a.length) out[k] = a.join(' · '); }
-  return out;
-}
-function drawNote(top) {
-  const p = pages[idx]; let head, sub = '', body = '';
-  if (p.kind) { head = esc(p.title); body = esc(p.note); }
-  else { const sp = pg(idx).R.querySelector('.diary span'), cut = sp.scrollHeight > sp.clientHeight + 2 || Q.get('short') === 'full';   // ?short=full = 짧은 날도 전문을 되풀이해 보는 비교용
-    head = `${p.label} · ${p.n}일`; sub = dayStat[p.day] || ''; body = cut ? esc(p.diary) : ''; }
-  $('under').innerHTML = `<section class="np"><h3>${head}${sub ? `<small>${sub}</small>` : ''}</h3><p>${body}</p></section>`;
-  if (top) $('under').scrollTop = 0;
-}
 function drawUnder(top) {
-  if (!COMMENTS) return markMore();          // 11-19 가로 고정: 책 아래 영역은 없앴다. 긴 일기는 쪽 끝 '더보기' → 오른쪽에서 열리는 종이
   if (pages[idx].kind) { $('under').innerHTML = `<section class="cms solo xnote"><h3>${esc(pages[idx].title)}</h3><p>${esc(pages[idx].note)}</p></section>`; $('cm-form').hidden = true; if (top) $('under').scrollTop = 0; return; }
   $('cm-form').hidden = false;
   const p = pages[idx], list = comments[p.day] || [], sp = pg(idx).R.querySelector('.diary span');
@@ -419,8 +380,6 @@ function drawMonths() {
 $('btn-month').addEventListener('click', () => { drawMonths(); openSheet($('sheet-mo')); const c = $('mo-list').querySelector('[aria-current]'); if (c) c.scrollIntoView({ block: 'center' }); });
 $('mo-list').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (!b) return; closeSheet(); setTimeout(() => jump(+b.dataset.i), 200); });
 $('btn-today').addEventListener('click', () => jump(ND - 1));
-// 화살표: 누르면 한 장 — 끌어 넘길 때와 같은 넘김(go)을 그대로 부른다. 쪽을 눌러 넘기는 것은 여전히 없다 (11-19 사장님)
-$('nav-prev').addEventListener('click', () => { if (!closed) go(-1); }); $('nav-next').addEventListener('click', () => { if (!closed) go(1); });
 $('btn-back').addEventListener('click', () => { if (EMBED) parent.postMessage({ t: 'book', act: 'close' }, location.origin); else if (history.length > 1) history.back(); });   // 앱 안에서는 통계 탭으로 돌아간다
 
 /* ── 닫힌 책 ↔ 펼침 (11-17 모선 — 레퍼6) ─────────────────────────────
@@ -439,13 +398,14 @@ function coverLayout() {
   const dock = { x: b.left - a.left + b.width / 2, y: b.top - a.top, w: b.width / 2, h: b.height }; dockW = dock.w;
   cbook.style.left = dock.x + 'px'; cbook.style.top = dock.y + 'px'; cbook.style.width = dock.w + 'px'; cbook.style.height = dock.h + 'px';
   cbook.style.perspective = `calc(${PERSP} * var(--u))`;
-  const sab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0;
+  const sab = parseFloat(getComputedStyle($('cm-form')).paddingBottom) - 8;
   let s, y0;
   {
     // 책 + 서브 문구 한 줄을 한 덩어리로 보고, 화면 전체(상태바 아래 ~ 홈 바 위)의 세로 가운데에 둔다 — 책만 가운데 두면 아래 문구 때문에 처져 보인다
     const small = a.height < 700, sat = parseFloat(getComputedStyle($('app')).paddingTop), top = sat, bot = a.height - sab, g = 20, subH = 20;
-    s = Math.min(1.08, (bot - top - g - subH - 26) / dock.h);                // 가로 고정: 뒤로 버튼은 왼쪽 옆에 있으니 높이에만 맞춰 가운데에
+    s = Math.min(small ? 1.3 : 1.42, (a.width - 96) / dock.w);
     const yOf = k => top + (bot - top - (dock.h * k + g + subH)) / 2;
+    while (yOf(s) < sat + 12 + 46 + 14 && s > .8) s -= .02;                 // 책 윗변이 뒤로 버튼 아래로 넉넉히 떨어지게
     y0 = yOf(s);
     pose = { tx: a.width / 2 - dock.w * s / 2 - dock.x, ty: y0 - dock.y, s, cx: a.width / 2 - dock.x, cy: dock.h * .48 };
     $('cv-info').style.top = (y0 + dock.h * s + g) + 'px';
@@ -541,7 +501,7 @@ cbook.addEventListener('pointermove', e => {
 cbook.addEventListener('pointerup', e => { cbook._p = null; coverRelease(e); });
 cbook.addEventListener('pointercancel', e => { cbook._p = null; coverRelease(e); });
 book.addEventListener('pointermove', coverMove); book.addEventListener('pointerup', coverRelease); book.addEventListener('pointercancel', coverRelease);   // 첫 날에서 끌어 덮을 때는 책이 손가락을 쥐고 있다
-addEventListener('resize', () => { orient(); if (closed) coverLayout(); moreClose(); });   // 폰을 돌리면 방향·안전영역을 다시 잡는다. 보고 있던 날(idx)은 그대로
+addEventListener('resize', () => { if (closed) coverLayout(); });
 function drawCover() {
   const nm = baby.name, n = [...nm].length, nc = 'cb-name' + (n > 9 ? ' n12' : n > 6 ? ' n9' : n > 4 ? ' n6' : '');
   cbook.setAttribute('aria-label', `${nm}의 성장앨범 펼치기`); cbook.dataset.design = DESIGN; cover.dataset.design = DESIGN; $('cv-tt').textContent = `${nm}의 성장앨범`; $('cv-l1').textContent = `${nm}의`;
@@ -658,50 +618,16 @@ function buildExtra(p) {
 }
 // 쪽 안 단추: 달 타일 → 그 달 펼침, 사진·기념일 → 그날 일기 (넘김 문법 그대로 한 장 넘어간다)
 function pageAct(el) { const go2 = el.dataset.go != null ? +el.dataset.go : pages.findIndex((p, i) => i < ND && p.day === el.dataset.day); if (go2 >= 0) jump(go2); }
-book.addEventListener('click', e => { if (e.detail === 0) { const el = e.target.closest('[data-go], [data-day]'); if (el) pageAct(el); else if (e.target.closest('[data-more]')) moreOpen(); } });   // 키보드(Enter)로 눌렀을 때
+book.addEventListener('click', e => { if (e.detail === 0) { const el = e.target.closest('[data-go], [data-day]'); if (el) pageAct(el); } });   // 키보드(Enter)로 눌렀을 때
 // 책갈피: 누르면 아래로 길게 열려 장 목록이 나온다 → 고르면 그 장으로 가고 접힌다. 바깥을 누르면 접힌다. (열고 접는 손맛은 모선 몫)
 const bm = $('bm');
-function drawTabs() { $('bm-list').innerHTML = Object.keys(CHS).map(k => `<button type="button" role="menuitem" data-ch="${k}">${CHS[k].name}</button>`).join(''); bm.hidden = Object.keys(CHS).length < 2; bmOpen(false);  drawIdxTabs(); }
-// 색인 탭: 글자 없이 선 아이콘만(같은 굵기·둥근 끝으로 한 벌). 이름은 aria-label·title 로 남긴다
-const TABI = {
-  diary: '<path d="M6.5 4.500h9a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-9z"/><path d="M6.500 4.500v15M10 9h4.500M10 12.500h4.500"/>',              // 공책
-  photo: '<rect x="4.500" y="4" width="15" height="16" rx="2"/><rect x="7" y="6.500" width="10" height="8" rx="1"/><path d="M9.500 17.500h5"/>',   // 붙인 사진
-  num: '<path d="M5 19.500h14"/><path d="M7.500 19.500v-5M12 19.500V8M16.500 19.500v-8"/>',                                                         // 막대
-  grow: '<path d="M12 20v-8"/><path d="M12 12c0-3.500-2.500-5.500-6-5.500 0 3.500 2.500 5.500 6 5.500z"/><path d="M12 14.500c0-3 2-5 5.500-5 0 3-2 5-5.500 5z"/>',   // 새싹
-};
-function drawIdxTabs() { const t = $('tabs'); t.classList.toggle('b', Q.get('tabs') === 'b');   // ?tabs=b = 리본 안(비교용)
-  t.innerHTML = Object.keys(CHS).map(k => `<button type="button" data-ch="${k}" aria-label="${CHS[k].name}" title="${CHS[k].name}"><svg viewBox="0 0 24 24" aria-hidden="true">${TABI[k] || ''}</svg></button>`).join(''); t.hidden = Object.keys(CHS).length < 2; }
-$('tabs').addEventListener('pointerdown', e => e.stopPropagation());                // 탭을 누르는 건 책장 끌기가 아니다
-$('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-ch]'); if (!b || closed) return; const c = CHS[b.dataset.ch]; if (chOf(idx) !== b.dataset.ch) jump(b.dataset.ch === 'diary' ? ND - 1 : c.at); });
+function drawTabs() { $('bm-list').innerHTML = Object.keys(CHS).map(k => `<button type="button" role="menuitem" data-ch="${k}">${CHS[k].name}</button>`).join(''); bm.hidden = Object.keys(CHS).length < 2; bmOpen(false); }
 function bmOpen(on) { bm.classList.toggle('open', on); $('bm-tog').setAttribute('aria-expanded', on); $('bm-list').querySelectorAll('button').forEach(b => { b.tabIndex = on ? 0 : -1; }); }
 bm.addEventListener('pointerdown', e => e.stopPropagation());                       // 책갈피를 누르는 건 책장 끌기·넘김이 아니다
 $('bm-tog').addEventListener('click', () => bmOpen(!bm.classList.contains('open')));
 $('bm-list').addEventListener('click', e => { const b = e.target.closest('button[data-ch]'); if (!b || closed) return; bmOpen(false); const c = CHS[b.dataset.ch]; if (chOf(idx) !== b.dataset.ch) jump(b.dataset.ch === 'diary' ? ND - 1 : c.at); });
 addEventListener('pointerdown', e => { if (bm.classList.contains('open') && !e.target.closest('#bm')) bmOpen(false); }, true);
 addEventListener('keydown', e => { if (e.key === 'Escape') bmOpen(false); });
-
-/* ── 긴 일기 '더보기' (11-19) — 책 쪽 일곱 줄에 다 안 들어간 날만 마지막 줄 끝에 '더보기'. 누르면 화면 오른쪽에서 종이가 밀려 들어와 그날 일기 전문을 보여 준다 ─────────────────────────────
-   닫기: 바깥 누르기 · × · 오른쪽으로 밀기 · Esc. 열려 있는 동안 책은 inert(넘김 멈춤). 열고 닫는 손맛은 모선 몫. */
-const more = $('more'), moreScrim = $('more-scrim');
-function markMore() {            // 지금 펼친 날의 오른쪽 쪽에 '더보기' 를 달지 정한다
-  const p = pages[idx]; if (!p || p.kind) return; const d = pg(idx).R.querySelector('.diary'), sp = d && d.querySelector('span'); if (!sp) return;
-  const cut = sp.scrollHeight > sp.clientHeight + 2; d.classList.toggle('cut', cut);
-  if (cut && !d.querySelector('.more-btn')) d.insertAdjacentHTML('beforeend', '<button type="button" class="more-btn" data-more aria-haspopup="dialog">더보기</button>');
-}
-function moreOpen() {
-  const p = pages[idx]; if (!p || p.kind || closed || anim || canim || book.classList.contains('turning')) return;
-  $('more-h').innerHTML = `${p.label} · ${p.n}일${dayStat[p.day] ? `<small>${dayStat[p.day]}</small>` : ''}`; $('more-body').textContent = p.diary; $('more-scroll').scrollTop = 0;
-  more.hidden = false; moreScrim.hidden = false; more.getBoundingClientRect(); more.classList.add('on'); moreScrim.classList.add('on'); moreAt = performance.now(); $('app').setAttribute('inert', '');
-}
-function moreClose() { if (more.hidden) return; more.classList.remove('on'); moreScrim.classList.remove('on'); $('app').removeAttribute('inert'); setTimeout(() => { if (!more.classList.contains('on')) { more.hidden = true; moreScrim.hidden = true; } }, 240); }
-let moreAt = 0;
-moreScrim.addEventListener('click', () => { if (performance.now() - moreAt > 350) moreClose(); });
-$('more-x').addEventListener('click', moreClose);
-{ let m = null;                                                        // 오른쪽으로 밀어 닫기 (세로로 읽는 스크롤과는 방향으로 가른다)
-  more.addEventListener('pointerdown', e => { m = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
-  more.addEventListener('pointerup', e => { const d = m; m = null; if (d && e.pointerId === d.id && e.clientX - d.x > 56 && Math.abs(e.clientX - d.x) > Math.abs(e.clientY - d.y) * 1.5) moreClose(); });
-  more.addEventListener('pointercancel', () => { m = null; }); }
-addEventListener('keydown', e => { if (e.key === 'Escape') moreClose(); });
 
 /* ── 사진 크게 보기 (11-18) — 일기 쪽 사진을 누르면 앱 다이어리처럼 크게. 넘기기 절과 따로 돈다 ─────────────────────────────
    '누름' = 8px 안 움직이고 0.4초 안에 뗀 것. 끌다가 놓은 것, 넘어가는 중(.turning), 표지가 덮인 동안은 치지 않는다. */
@@ -713,8 +639,8 @@ function photoOpen() {
 }
 function photoClose() { if (pv.hidden) return; pv.hidden = true; pv.querySelector('img').src = ''; $('app').removeAttribute('inert'); }
 { let dn = null;
-  book.addEventListener('pointerdown', e => { const el = e.target.closest && e.target.closest('#hl .frame .ph, #hr [data-more]'); dn = el ? { x: e.clientX, y: e.clientY, t: e.timeStamp, id: e.pointerId, more: el.hasAttribute('data-more') } : null; }, true);
-  addEventListener('pointerup', e => { const d = dn; dn = null; if (d && e.pointerId === d.id && e.timeStamp - d.t < 400 && Math.abs(e.clientX - d.x) < 8 && Math.abs(e.clientY - d.y) < 8) { if (d.more) moreOpen(); else photoOpen(); } }, true);
+  book.addEventListener('pointerdown', e => { dn = e.target.closest && e.target.closest('#hl .frame .ph') ? { x: e.clientX, y: e.clientY, t: e.timeStamp, id: e.pointerId } : null; }, true);
+  addEventListener('pointerup', e => { const d = dn; dn = null; if (d && e.pointerId === d.id && e.timeStamp - d.t < 400 && Math.abs(e.clientX - d.x) < 8 && Math.abs(e.clientY - d.y) < 8) photoOpen(); }, true);
   addEventListener('pointercancel', () => { dn = null; }, true); }
 pv.addEventListener('click', () => { if (performance.now() - pvAt > 350) photoClose(); });   // 여는 그 누름의 click 이 바로 닫지 않게
 pv.addEventListener('touchmove', e => e.preventDefault(), { passive: false });   // 뒤로 스크롤 안 새게
@@ -740,8 +666,7 @@ async function start(d) {
   if (Q.get('case') === 'nodiary') pages[idx].diary = '';
   if (Q.get('case') === 'nophoto') pages[idx].photo = false;
   if (Q.get('orient')) pages[idx].orient = Q.get('orient');
-  dayStat = dayStats(d.logs || []);
-  if (COMMENTS) { API = d.api || localApi(); await loadComments(); } else $('cm-form').hidden = true;
+  API = d.api || localApi(); await loadComments();
   drawCover(); rest(); coverLayout(); coverSpread(); coverApply();
   if (Q.get('open')) { co = 1; coverApply(); closed = false; cover.classList.add('gone'); } else { vb.setAttribute('inert', ''); if (Q.get('cv')) { co = +Q.get('cv'); coverApply(); } }
   const f = +Q.get('flip');
@@ -751,7 +676,9 @@ async function start(d) {
 }
 const fail = err => { $('under').innerHTML = `<p style="padding:30px 4px;font-size:14px">기록을 불러오지 못했어요. (${esc(err && err.message || err)})</p>`; };
 if (EMBED) {
-  // 앱(통계 탭 성장앨범 카드)이 iframe 으로 연다 — 부모가 bookStart(자료)를 부른다
+  // 앱(통계 탭 성장앨범 카드)이 iframe 으로 연다 — 부모가 bookStart(자료)를 부른다. 노치·홈 바 높이는 iframe 안 env() 가 0 일 수 있어 부모 창에서 잰다
+  try { const pd = parent.document, pr = pd.createElement('div'); pr.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)';
+    pd.body.appendChild(pr); document.documentElement.style.setProperty('--sim-sat', pr.offsetHeight + 'px'); document.documentElement.style.setProperty('--sim-sab', pr.offsetWidth + 'px'); pr.remove(); } catch (_) {}
   window.bookStart = d => start(d).catch(fail);
 } else {
   // 혼자 열었을 때 = 로컬 시안 확인용. 이 자료 파일은 배포에 올라가지 않는다(배포.sh 가 뺀다)
