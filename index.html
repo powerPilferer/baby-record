@@ -212,7 +212,7 @@
   .status .chip.feed { --c: var(--feed); } .status .chip.sleep { --c: var(--sleep); } .status .chip.diaper { --c: var(--diaper); }
   :root[data-theme="light"] .status .chip.diaper b { color: #9a7400; }
   .sheet-title h2 { flex: none; }
-  .sum-pill { display: flex; gap: 16px; margin: 0 0 10px; padding: 11px 15px; border-radius: 12px; background: var(--card); white-space: nowrap; overflow: hidden; }   /* 오늘의 표 제목 아래 한 줄 (v0.20, 사장님 "오늘의 표 아래로 한줄로") */
+  .sum-pill { display: flex; flex-wrap: wrap; gap: 5px 16px; margin: 0 0 10px; padding: 11px 15px; border-radius: 12px; background: var(--card); white-space: nowrap; overflow: hidden; }   /* 11-23: 넘치면 항목째 다음 줄로(항목 안에서는 안 끊김) */   /* 오늘의 표 제목 아래 한 줄 (v0.20, 사장님 "오늘의 표 아래로 한줄로") */
   .sum-pill::-webkit-scrollbar { display: none; }
   .sum-pill i { font-style: normal; font-size: 13px; color: var(--fg3); font-variant-numeric: tabular-nums; flex: none; }
   .sum-pill b { color: var(--fg2); font-weight: 600; }
@@ -232,6 +232,12 @@
   .quick .sleep.on { background: var(--card2); }
   .quick .sleep.on .s { color: var(--fg2); }
   .quick .sleep.on .ic { background: color-mix(in srgb, var(--sleep) 22%, var(--card2)); }
+  /* 수유 타이머 (11-20): 재는 동안 수유 버튼도 눌려 들어간 모습 — 잠 버튼과 같은 문법, 스위치는 없음(누르면 재는 창이 열린다) */
+  .quick .feed.on { background: color-mix(in srgb, var(--feed) 13%, var(--card2)); box-shadow: inset 0 2px 7px rgba(0,0,0,.10), inset 0 0 0 1.5px color-mix(in srgb, var(--feed) 50%, transparent); }
+  .quick .feed.on .k { color: var(--feed); } .quick .feed.on .s { color: var(--fg2); font-variant-numeric: tabular-nums; }
+  .quick .feed.on .ic { background: color-mix(in srgb, var(--feed) 22%, var(--card2)); }
+  :root:not([data-theme="light"]) #s-home .h-panel .quick .feed.on { background: color-mix(in srgb, var(--feed) 15%, #141418); box-shadow: inset 0 3px 9px rgba(0,0,0,.6), inset 0 0 0 1.5px color-mix(in srgb, var(--feed) 55%, transparent); }
+  .status button.chip { width: 100%; text-align: left; }
   /* 잠 버튼 = 토글: 잠듦 누르면 눌려 들어간 모습, 깸 누르면 원상태 (10-14 사장님) */
   .quick button { transition: transform .12s, box-shadow .15s, background .15s; }
   .quick button:active { transform: scale(.97); }
@@ -465,6 +471,9 @@
   .stat-card.feed { --c: var(--feed); } .stat-card.sleep { --c: var(--sleep); } .stat-card.diaper { --c: var(--diaper); }
   .stat-card .sub { font-size: 12px; color: var(--fg3); margin-bottom: 10px; }
   .stat-card .sub b { color: var(--fg2); font-weight: 600; }
+  .stat-card.sleep { --nap: color-mix(in srgb, var(--sleep) 42%, var(--card)); }   /* 낮잠 = 잠 색을 옅게 (밤잠은 잠 색 그대로) */
+  .stat-card .sub .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2.5px; background: var(--sleep); opacity: .9; margin-right: 5px; }
+  .stat-card .sub .sw.nap { background: var(--nap); opacity: 1; }
   .stat-card svg { width: 100%; height: auto; display: block; }
   /* 성장곡선 (v0.10) */
   .stat-card.grow { --c: var(--ok); }
@@ -701,6 +710,43 @@
   .sheet[data-kind="feed"] { --c: var(--feed); } .sheet[data-kind="diaper"] { --c: var(--diaper); } .sheet[data-kind="sleep"] { --c: var(--sleep); } .sheet[data-kind="temp"] { --c: var(--temp); }
   .sheet .seg button, .sheet .ml button { transition: background .12s, color .12s; }
   .sheet .seg button.on, .sheet .ml button.on { background: var(--c); color: var(--on-fg); font-weight: 700; box-shadow: 0 3px 10px color-mix(in srgb, var(--c) 30%, transparent); }
+  /* 수유 타이머 (11-20) — 시작 단추 · 재는 창 */
+  .ft-go { display: flex; gap: 8px; margin: 0 0 6px; }
+  .ft-go button { flex: 1; height: 54px; border-radius: 16px; background: color-mix(in srgb, var(--feed) 16%, var(--bg)); color: var(--feed); font-size: 17px; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--feed) 42%, transparent); transition: transform .12s, background .15s; }
+  .ft-go button:active { transform: scale(.97); background: color-mix(in srgb, var(--feed) 26%, var(--bg)); }
+  .ft-go svg { width: 13px; height: 13px; fill: currentColor; flex: none; }
+  .ft-or { font-size: 13px; color: var(--fg3); margin: 0 2px 12px; }
+  .sheet.ft-typed .ft-go, .sheet.ft-typed .ft-or { display: none; }   /* 양·메모 칸을 누르면(= 다 먹인 뒤 적는 중) 시작 단추는 접는다 — 키보드 위에 저장 단추가 남게. 창을 다시 열 때까지 접힌 채(칸을 떠날 때 되살리면 저장 단추가 손끝에서 달아난다) */
+  .frow.ft-t .tt { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .frow.ft-t .tt i { font-style: normal; color: var(--fg3); }
+  .frow.ft-t input[type=time] { width: 122px; min-width: 0; padding: 10px 6px; font-size: 18px; text-align: center; }
+  .frow.ft-t input[type=time]::-webkit-calendar-picker-indicator { display: none; }   /* 두 칸이 한 줄이라 시계 그림 자리까지 글자에 준다 */
+  .sheet h3 .ft-ty { font-size: 14px; font-weight: 500; color: var(--fg2); }
+  .ft-clock { text-align: center; font-size: 56px; line-height: 1; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; padding: 14px 0 8px; }
+  .ft-sub { text-align: center; font-size: 14px; color: var(--fg3); font-variant-numeric: tabular-nums; margin-bottom: 20px; }
+  .ft-lr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .ft-lr button { height: 92px; border-radius: 18px; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--fg2); box-shadow: inset 0 0 0 1.5px transparent; transition: background .15s, box-shadow .15s, transform .12s; }
+  .ft-lr button:active { transform: scale(.97); }
+  .ft-lr .n { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .ft-lr .n::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .ft-lr b { font-size: 28px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--fg3); }
+  .ft-lr button.on { background: color-mix(in srgb, var(--feed) 15%, var(--bg)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--feed) 55%, transparent); }
+  .ft-lr button.on .n { color: var(--feed); font-weight: 700; } .ft-lr button.on .n::before { background: var(--feed); }
+  .ft-lr button.on b, .ft-lr button.has b { color: var(--fg); }
+  /* 일시정지 (11-23) — 시작 시각 줄 바로 위, 가운데. 분유·모유 모두 바닥에서 같은 높이 */
+  .ft-pz { display: flex; justify-content: center; margin: 0 0 18px; }
+  .ft-pz button { height: 52px; min-width: 168px; padding: 0 24px; border-radius: 999px; background: var(--bg); color: var(--fg); font-size: 17px; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; justify-content: center; gap: 9px; transition: transform .12s, background .15s, color .15s, box-shadow .15s; }
+  .ft-pz button:active { transform: scale(.97); }
+  .ft-pz svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+  .ft-pz button.go { background: color-mix(in srgb, var(--feed) 16%, var(--bg)); color: var(--feed); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--feed) 42%, transparent); }
+  .quick .feed.on.pz .k { color: var(--fg2); }
+  .ft-clock { transition: color .15s; } .ft-clock.pz { color: var(--fg3); }
+  .ft-sub.pz { color: var(--feed); font-weight: 600; }
+  .ft-lr button.last .n { color: var(--fg); } .ft-lr button.last .n::before { background: color-mix(in srgb, var(--feed) 55%, var(--line)); }
+  .ft-hint { font-size: 13px; color: var(--fg3); text-align: center; margin: 0 0 14px; min-height: 18px; }
+  .sheet .acts .end { background: var(--feed); color: var(--on-fg); flex: 2; }
+  .sheet h3 .ft-len { margin-left: auto; height: 28px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--feed) 16%, var(--card)); color: var(--feed); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sheet h3 .ft-len + .sd { margin-left: 0; }
   .acts { display: flex; gap: 8px; margin-top: 16px; }
   .acts button { flex: 1; padding: 15px; border-radius: 999px; font-weight: 700; font-size: 18px; }
   .acts .save { background: var(--fg); color: var(--bg); flex: 2; }
@@ -894,12 +940,12 @@ setTimeout(function(){var e=document.getElementById('splash-slow');if(e)e.classL
     <button type="button" id="day-next" aria-label="다음 날"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <div class="status">
-    <div class="chip feed"><b>마지막 수유</b><span id="st-feed">—</span></div>
-    <button type="button" class="chip sleep" id="st-sleep-chip"><b>잠</b><span id="st-sleep">—</span></button>
+    <button type="button" class="chip feed" id="st-feed-chip"><b id="st-feed-k">마지막 수유</b><span id="st-feed">—</span></button>
+    <button type="button" class="chip sleep" id="st-sleep-chip"><b id="st-sleep-k">잠</b><span id="st-sleep">—</span></button>
   </div>
   <div class="status vx-box hidden" id="st-vax-wrap"></div>
   <div class="quick">
-    <button type="button" class="feed" data-kind="feed"><span class="ic"><img src="img/ic-feed.png" alt=""></span><span class="tx"><span class="k">수유</span><span class="s">분유 · 모유 · 유축</span></span></button>
+    <button type="button" class="feed" data-kind="feed" id="q-feed"><span class="ic"><img src="img/ic-feed.png" alt=""></span><span class="tx"><span class="k">수유</span><span class="s">분유 · 모유 · 유축</span></span></button>
     <button type="button" class="diaper" data-kind="diaper"><span class="ic"><img src="img/ic-diaper.png" alt=""></span><span class="tx"><span class="k">기저귀</span><span class="s">소변 · 대변</span></span></button>
     <button type="button" class="sleep" data-kind="sleep" id="q-sleep"><span class="ic"><img src="img/ic-sleep.png" alt=""></span><span class="tx"><span class="k">잠듦</span><span class="s">지금부터</span></span><span class="sw" aria-hidden="true"><i></i></span></button>
     <button type="button" class="temp" data-kind="temp"><span class="ic"><img src="img/ic-temp.png" alt=""></span><span class="tx"><span class="k">체온</span><span class="s">℃</span></span></button>
@@ -1071,6 +1117,20 @@ const WD = ['일', '월', '화', '수', '목', '금', '토'];
 const fmtDate = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() + 1}월 ${d.getDate()}일 <small>${WD[d.getDay()]}</small>`; };
 const ago = ts => { const m = Math.max(0, Math.round((Date.now() - new Date(ts)) / 60000)); return m < 60 ? `${m}분 전` : `${Math.floor(m / 60)}시간 ${m % 60}분 전`; };
 const dur = (a, b) => { const m = Math.max(0, Math.round((new Date(b || Date.now()) - new Date(a)) / 60000)); return m < 60 ? `${m}분` : `${Math.floor(m / 60)}시간 ${m % 60}분`; };
+// ── 수유 타이머 (11-20 사장님 "수유 시간도 기록 했음 좋겠다" → 타이머 방식). DB 는 그대로: at = 시작, ended_at = 끝, detail.timer = 타이머로 잰 기록
+// 재는 중 = detail.timer 이고 ended_at 이 없는 수유뿐. 옛 기록은 ended_at 이 없어도 timer 표시가 없으니 재는 중으로 보지 않는다
+// 모유는 재는 동안 detail 에 side('l'|'r'|null=쉼) · since(그쪽을 물린 시각) · lms/rms(쌓인 ms) 를 둔다 — 서버에 있으니 앱을 닫아도, 다른 폰에서도 이어진다
+const feedOn = l => l.kind === 'feed' && !l.ended_at && !!(l.detail && l.detail.timer);
+const sideMs = (l, k, now) => { const d = l.detail || {}; return (+d[k + 'ms'] || 0) + (d.side === k && d.since ? Math.max(0, (now || Date.now()) - new Date(d.since)) : 0); };
+// 일시정지 (11-23): detail.pat = 쉬기 시작한 시각(쉬는 중일 때만), detail.pms = 지금까지 쉰 ms 합. 모유는 쉬는 동안 since 를 비워 좌우 시간도 멈춘다(side 는 남겨 '마지막 쪽')
+const feedPaused = l => feedOn(l) && !!l.detail.pat;
+const feedLiveMs = (l, now) => Math.max(0, (l.detail.pat ? +new Date(l.detail.pat) : (now || Date.now())) - new Date(l.at) - (+l.detail.pms || 0));   // 쉰 시간을 뺀, 실제로 먹인 시간
+const minOfMs = ms => ms > 0 ? Math.max(1, Math.round(ms / 60000)) : 0;
+const clockTxt = ms => { const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), ss = t % 60; return h ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`; };
+// 한 번 먹인 시간(ms): 모유는 왼·오 분의 합(쉰 시간 뺀 것), 나머지는 시작~끝. 시간이 없는 옛 기록은 0
+const feedMs = l => { if (l.kind !== 'feed' || feedOn(l)) return 0; const d = l.detail || {}; if (+d.min > 0) return d.min * 60000;   // min = 모유 왼·오 합, 또는 쉬었다 먹인 분유·유축의 실제 분(11-23)
+  return l.ended_at ? Math.max(0, new Date(l.ended_at) - new Date(l.at)) : 0; };
+const minTxt = m => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}시간${mm ? ' ' + mm + '분' : ''}` : `${mm}분`; };
 const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800); };
 const TABBED = ['s-home', 's-diary', 's-growth', 's-stats'];
 const show = id => {
@@ -1103,6 +1163,10 @@ async function makeThumb(blob) {   // 336×420(화면 168px의 2배) JPEG ≈ 20
   return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('썸네일 실패')), 'image/jpeg', .78)); }
 let photoPaths = {};    // day → 비공개 저장소 diary-photos 안 경로 (baby_days.photo)
 const PHOTO_ON = true;
+// 밤잠·낮잠 기준 (11-23 사장님 "19시~07시 기준으로 진행"): 잠든 시각이 NIGHT_FROM시 ~ 다음날 NIGHT_TO시 전이면 밤잠, 아니면 낮잠. 그 잠 전체가 잠든 시각 하나로 정해진다(자정을 넘겨도 밤잠)
+const NIGHT_FROM = 19, NIGHT_TO = 7;
+const isNight = l => { const h = new Date(l.at).getHours(); return NIGHT_FROM > NIGHT_TO ? (h >= NIGHT_FROM || h < NIGHT_TO) : (h >= NIGHT_FROM && h < NIGHT_TO); };
+const slpName = l => isNight(l) ? '밤잠' : '낮잠';
 let day = dstr(new Date());
 let seenToday = day;   // 화면을 켜 둔 채 자정이 지나면 '오늘'을 보던 사람은 새 오늘로 넘긴다 (10-29 사장님 "다음날 바로 눌렀더니 전날 새벽으로 기록")
 function rollDay() { const t = dstr(new Date()); if (t === seenToday) return false; const was = day === seenToday; seenToday = t; if (was) day = t; return was; }
@@ -1146,18 +1210,18 @@ const db = {
     this.loaded.add(ym);
   },
   async addLog(row) {
-    if (MOCK) { row.id = 'm' + Date.now(); logs.push(row); return row; }
+    if (MOCK) { row.id = 'm' + Date.now(); logs.push(row); mockKeep(); return row; }
     const { data, error } = await sb.from('baby_logs').insert(row).select().single();
     if (error) throw error; upsertLocal(logs, data); return data;
   },
   async updLog(id, patch) {
-    if (MOCK) { Object.assign(logs.find(x => x.id === id), patch); return; }
+    if (MOCK) { Object.assign(logs.find(x => x.id === id), patch); mockKeep(); return; }
     const { data, error } = await sb.from('baby_logs').update(patch).eq('id', id).select().single();
     if (error) throw error; upsertLocal(logs, data);
   },
   async delLog(id) {
     logs = logs.filter(x => x.id !== id);
-    if (MOCK) return;
+    if (MOCK) return mockKeep();
     const { error } = await sb.from('baby_logs').delete().eq('id', id); if (error) throw error;
   },
   async updBaby(patch) {
@@ -1308,7 +1372,11 @@ function charGrid(el, sel, center, grouped) {   // grouped = 처음 들어올 �
 const avatar = id => `<span class="av" title="${esc(nickById[id] || '')}"><img src="${esc(avatarSrc(id))}" alt=""></span>`;
 function detailOf(l) {
   const d = l.detail || {};
-  if (l.kind === 'feed') return `${FEED[d.type] || '수유'} ${d.type === 'breast' ? breastText(d) : (d.ml ? d.ml + 'ml' : '')}`.trim();
+  if (l.kind === 'feed') {
+    if (feedOn(l)) return `${FEED[d.type] || '수유'} · ${d.pat ? '쉬는 중' : '수유 중'} ${minTxt(Math.round(feedLiveMs(l) / 60000))}`;
+    const base = `${FEED[d.type] || '수유'} ${d.type === 'breast' ? breastText(d) : (d.ml ? d.ml + 'ml' : '')}`.trim();
+    return l.ended_at && !(d.type === 'breast' && breastText(d)) ? `${base} · ${+d.min > 0 ? minTxt(d.min) : dur(l.at, l.ended_at)}` : base;   // 쉬었다 먹였으면 실제 먹인 분   // 모유는 왼·오 분이 곧 시간
+  }
   if (l.kind === 'diaper') return [d.pee && '소변', d.poo && '대변'].filter(Boolean).join(' + ') || '기저귀';
   if (l.kind === 'sleep') return l.ended_at ? `→ ${hhmm(l.ended_at)} 깸 · ${dur(l.at, l.ended_at)}` : `자는 중 · ${dur(l.at)}`;
   if (l.kind === 'temp') return `${d.c ?? '—'}℃`;
@@ -1478,12 +1546,14 @@ $('phview').addEventListener('touchmove', e => e.preventDefault(), { passive: fa
 
 // ── 통계: 최근 7/30일 막대 (인라인 SVG)
 let statRange = +(localStorage.getItem('bb-stat') || 7);
-function bars(series, color, fmt, unit) {                         // series: [{label, v}]
+function bars(series, color, fmt, unit) {                         // series: [{label, v, top}] — top 이 있으면 막대 윗부분(top 만큼)을 옅은 색으로 쌓는다(잠 카드: 아래 밤잠·위 낮잠)
   const W = 320, H = 120, padL = 4, padB = 18, n = series.length, gap = n > 10 ? 2 : 6, bw = (W - padL * 2 - gap * (n - 1)) / n;
   const max = Math.max(1, ...series.map(s => s.v)); let g = '';
   series.forEach((s, i) => {
     const x = padL + i * (bw + gap), bh = s.v / max * (H - padB - 16), y = H - padB - bh;
     g += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="${Math.min(4, bw / 2)}" fill="${color}" opacity="${s.v ? .9 : .15}"/>`;
+    if (s.v && s.top > 0) { const th = Math.min(bh, s.top / max * (H - padB - 16)), id = 'bst' + Math.round(x * 10);   // 둥근 막대 모양 그대로 윗부분만 덧칠
+      g += `<clipPath id="${id}"><rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="${Math.min(4, bw / 2)}"/></clipPath><rect x="${x}" y="${y}" width="${bw}" height="${th}" fill="var(--nap)" clip-path="url(#${id})"/>`; }
     if (s.v && n <= 10) g += `<text x="${x + bw / 2}" y="${y - 4}" text-anchor="middle" font-size="10" fill="var(--fg2)">${fmt(s.v)}</text>`;
     if (n <= 10 || i % 5 === 0 || i === n - 1) g += `<text x="${x + bw / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--fg3)">${s.label}</text>`;
   });
@@ -1496,19 +1566,22 @@ function renderStats() {
   for (const b of $('stat-range').children) b.classList.toggle('on', +b.dataset.v === statRange);
   const today = new Date(); const daysArr = [];
   for (let i = statRange - 1; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); daysArr.push(dstr(d)); }
-  const per = Object.fromEntries(daysArr.map(d => [d, { feed: 0, ml: 0, slp: 0, pee: 0, poo: 0 }]));
+  const per = Object.fromEntries(daysArr.map(d => [d, { feed: 0, ml: 0, slp: 0, nap: 0, pee: 0, poo: 0, fms: 0, fn: 0 }]));
   for (const l of logs) { const d = localDay(l.at); const p = per[d]; if (!p) continue;
-    if (l.kind === 'feed') { p.feed++; p.ml += +(l.detail || {}).ml || 0; }
+    if (l.kind === 'feed') { p.feed++; p.ml += +(l.detail || {}).ml || 0; const ms = feedMs(l); if (ms) { p.fms += ms; p.fn++; } }   // 먹인 시간은 시작한 날에 (11-20)
     if (l.kind === 'diaper') { if (l.detail?.pee) p.pee++; if (l.detail?.poo) p.poo++; }
   }
-  for (const l of logs) for (const d of slpDays(l)) if (per[d]) per[d].slp += slpIn(l, d);   // 자정 넘긴 잠은 날짜별로 나눠 (10-10)
+  for (const l of logs) for (const d of slpDays(l)) if (per[d]) { const ms = slpIn(l, d); per[d].slp += ms; if (!isNight(l)) per[d].nap += ms; }   // nap = 그중 낮잠 (11-23)
+  const hTxt = ms => (ms / n / 3600000).toFixed(1) + '시간';   // 자정 넘긴 잠은 날짜별로 나눠 (10-10)
   const lab = d => statRange <= 7 ? WD[new Date(d + 'T00:00').getDay()] : String(+d.slice(8));
   const tot = k => daysArr.reduce((s, d) => s + per[d][k], 0), has = daysArr.some(d => per[d].feed || per[d].pee || per[d].slp);
   if (!has) { $('stats').innerHTML = '<div class="stat-empty">아직 기록이 쌓이지 않았어요</div>'; return; }
   const n = daysArr.filter(d => per[d].feed || per[d].pee || per[d].slp).length || 1;
+  const fN = tot('fn'), fDays = daysArr.filter(d => per[d].fn).length || 1;   // 수유 시간: 시간이 적힌 수유·그런 날만으로 평균 (옛 기록엔 시간이 없다)
+  const fLine = fN ? `<br>수유 시간 하루 <b>${minTxt(Math.round(tot('fms') / fDays / 60000))}</b> · 한 번 평균 <b>${minTxt(Math.max(1, Math.round(tot('fms') / fN / 60000)))}</b>` : '';
   $('stats').innerHTML = `
-    <div class="stat-card feed"><h3>수유량</h3><div class="sub">하루 평균 <b>${Math.round(tot('ml') / n)}ml</b> · <b>${(tot('feed') / n).toFixed(1)}회</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: per[d].ml })), 'var(--feed)', v => v)}</div>
-    <div class="stat-card sleep"><h3>잠</h3><div class="sub">하루 평균 <b>${(tot('slp') / n / 3600000).toFixed(1)}시간</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: Math.round(per[d].slp / 360000) / 10 })), 'var(--sleep)', v => v + 'h')}</div>
+    <div class="stat-card feed"><h3>수유량</h3><div class="sub">하루 평균 <b>${Math.round(tot('ml') / n)}ml</b> · <b>${(tot('feed') / n).toFixed(1)}회</b>${fLine}</div>${bars(daysArr.map(d => ({ label: lab(d), v: per[d].ml })), 'var(--feed)', v => v)}</div>
+    <div class="stat-card sleep"><h3>잠</h3><div class="sub">하루 평균 <b>${hTxt(tot('slp'))}</b><br><i class="sw"></i>밤잠 <b>${hTxt(tot('slp') - tot('nap'))}</b> · <i class="sw nap"></i>낮잠 <b>${hTxt(tot('nap'))}</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: Math.round(per[d].slp / 360000) / 10, top: per[d].nap / 3600000 })), 'var(--sleep)', v => v + 'h')}</div>
     <div class="stat-card diaper"><h3>기저귀</h3><div class="sub">하루 평균 소변 <b>${(tot('pee') / n).toFixed(1)}</b> · 대변 <b>${(tot('poo') / n).toFixed(1)}</b></div>${bars(daysArr.map(d => ({ label: lab(d), v: per[d].pee + per[d].poo })), 'var(--diaper)', v => v)}</div>`;
 }
 // ═══ 성장곡선 (v0.10) — 몸무게·키·머리둘레 + WHO 기준 백분위 ═══
@@ -2028,9 +2101,14 @@ function render() {
   const dayLogs = sorted.filter(l => localDay(l.at) === day);
   const lastFeed = [...sorted].reverse().find(l => l.kind === 'feed');
   { const h = homeVaxLine(); $('st-vax-wrap').innerHTML = h; $('st-vax-wrap').classList.toggle('hidden', !h); } if ($('st-vax')) $('st-vax').onclick = () => { goTab('s-growth'); setGSub('vax'); };
-  $('st-feed').innerHTML = lastFeed ? `${hhmm(lastFeed.at)}<small>${ago(lastFeed.at)}</small>` : '아직 없음';
+  const fOn = sorted.find(feedOn);   // 재는 중인 수유 (11-20)
+  const fPz = !!fOn && feedPaused(fOn), fMin = fOn ? minTxt(Math.round(feedLiveMs(fOn) / 60000)) : '';   // 쉰 시간은 빼고 센다 (11-23)
+  $('st-feed-k').textContent = fOn ? (fPz ? '수유 쉬는 중' : '수유 중') : '마지막 수유';
+  $('st-feed').innerHTML = fOn ? `${feedLiveName(fOn)}<small>${fMin}</small>` : lastFeed ? `${hhmm(lastFeed.at)}<small>${ago(lastFeed.at)}</small>` : '아직 없음';
+  { const qf = $('q-feed'), on = !!fOn && day === today; qf.classList.toggle('on', on); qf.classList.toggle('pz', on && fPz); qf.querySelector('.k').textContent = on ? (fPz ? '수유 쉬는 중' : '수유 중') : '수유'; qf.querySelector('.s').textContent = on ? `${feedLiveName(fOn).replace(/^모유 /, '')} · ${fMin}${fPz ? '' : ' 째'}` : '분유 · 모유 · 유축'; }   // 버튼은 좁아서 모유는 '오른쪽 · 12분 째'만
   const open = sorted.find(l => l.kind === 'sleep' && !l.ended_at);
   $('st-sleep').innerHTML = open ? `자는 중<small>${dur(open.at)}</small>` : (() => { const s = [...sorted].reverse().find(l => l.kind === 'sleep' && l.ended_at); return s ? `${hhmm(s.ended_at)} 깸<small>${ago(s.ended_at)}</small>` : '아직 없음'; })();
+  $('st-sleep-k').textContent = open ? slpName(open) : '잠';   // 자는 중이면 꼬리표가 밤잠·낮잠
   const qs = $('q-sleep'); qs.classList.toggle('on', !!open);
   qs.querySelector('.k').textContent = open ? '지금 깸' : '잠듦'; qs.querySelector('.s').textContent = open ? dur(open.at) + ' 째' : '지금부터';   // 스위치가 '자는 중'을 보여 줘서 글은 시간만 (10-22)
   const qi = qs.querySelector('.ic img'); const want = open ? 'img/ic-wake.png' : 'img/ic-sleep.png';   // 자는 중이면 해, 아니면 달
@@ -2039,21 +2117,24 @@ function render() {
   const feedsAll = dayLogs.filter(l => l.kind === 'feed'); const mlAll = feedsAll.reduce((s, l) => s + (+(l.detail || {}).ml || 0), 0);
   const dpAll = dayLogs.filter(l => l.kind === 'diaper'); const peeAll = dpAll.filter(l => l.detail?.pee).length, pooAll = dpAll.filter(l => l.detail?.poo).length;
   const slpAll = sorted.reduce((s, l) => s + slpIn(l, day), 0);
+  // 요약줄의 잠 = 밤잠·낮잠 따로, 자는 중인 잠도 지금까지 시간으로 (11-23 사장님 "상단에 총 잠 시간을 낮잠 밤잠을 구분"). 날짜별로 자르는 규칙(slpIn)은 그대로
+  let slpN = 0, slpD = 0; for (const l of sorted) if (l.kind === 'sleep') { const ms = slpIn(l.ended_at ? l : { ...l, ended_at: new Date().toISOString() }, day); if (isNight(l)) slpN += ms; else slpD += ms; }
+  const hShort = ms => { const m = Math.round(ms / 60000); return m < 60 ? m + '분' : String(Math.round(m / 6) / 10) + '시간'; };   // 40분 · 5시간 · 5.2시간
   // 하루 합계 = 오늘의 표 제목 아래 상자 (v0.20, 사장님 "접종 상자 디자인처럼 합계를") — 표 맨 아래 합계 줄은 없앰
-  $('day-sum').classList.toggle('hidden', !dayLogs.length && !slpAll);
+  $('day-sum').classList.toggle('hidden', !dayLogs.length && !slpN && !slpD);
   // 원래 표 아래 합계 글을 박스로 감싸 제목 옆에 (사장님 "원래 아래에 있던 합계의 글을 박스로 감싸서 오늘의 표 옆으로")
   const slpTxt = m => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}시간${mm ? ' ' + mm + '분' : ''}` : `${mm}분`; };
-  $('day-sum').innerHTML = `<i class="feed">수유 <b>${feedsAll.length}회</b>${mlAll ? ` · <b>${mlAll}ml</b>` : ''}</i><i class="diaper">소변 <b>${peeAll}</b> 대변 <b>${pooAll}</b></i>${slpAll ? `<i class="sleep">잠 <b>${slpTxt(Math.round(slpAll / 60000))}</b></i>` : ''}`;
+  $('day-sum').innerHTML = `<i class="feed">수유 <b>${feedsAll.length}회</b>${mlAll ? ` · <b>${mlAll}ml</b>` : ''}</i><i class="diaper">소변 <b>${peeAll}</b> 대변 <b>${pooAll}</b></i>${slpN || slpD ? `<i class="sleep">${[slpN ? `밤잠 <b>${hShort(slpN)}</b>` : '', slpD ? `낮잠 <b>${hShort(slpD)}</b>` : ''].filter(Boolean).join(' · ')}</i>` : ''}`;   // 한 줄에 안 들어가면 잠 묶음이 통째로 다음 줄로 (CSS flex-wrap)
   const sumHtml = '';
   for (const b of $('view-seg').children) b.classList.toggle('on', b.dataset.v === view);
   rows.classList.toggle('hidden', view !== 'list'); $('clock').classList.toggle('hidden', view !== 'clock');
   if (view === 'clock') { $('clock').innerHTML = renderClock(sorted, dayLogs, today) + sumHtml; }
   // 자정 넘긴 잠: 전날 잠든 잠이 이 날 깼거나 아직 자는 중이면 이 날 목록 맨 아래에도 보여 줌 (10-08 사장님 "잠들고 00시가 지나면 깸을 누를수가 없어")
   // — 전엔 어제 목록에만 있어서 오늘 화면에선 그 잠을 열어 깬 시각을 고칠 수 없었음. 합계·원형은 그대로(잠든 날 기준)
-  const carry = sorted.filter(l => l.kind === 'sleep' && localDay(l.at) < day && (l.ended_at ? localDay(l.ended_at) >= day : day <= today));
+  const carry = sorted.filter(l => (l.kind === 'sleep' || (l.kind === 'feed' && (l.ended_at || feedOn(l)))) && localDay(l.at) < day && (l.ended_at ? localDay(l.ended_at) >= day : day <= today));   // 자정 넘긴 수유도 같은 규칙 (11-20)
   if (!dayLogs.length && !carry.length) rows.innerHTML = `<div class="empty">${day === today ? '위 버튼으로 첫 기록을 남겨보세요' : '기록이 없어요'}</div>`;
   else {
-    const title = l => (l.kind === 'sleep' || l.kind === 'temp') ? `${KIND[l.kind]} ${detailOf(l)}` : detailOf(l);
+    const title = l => l.kind === 'sleep' ? `${slpName(l)} ${detailOf(l)}` : l.kind === 'temp' ? `${KIND[l.kind]} ${detailOf(l)}` : detailOf(l);   // 잠 줄은 밤잠·낮잠으로 (11-23)
     const feedAts = logs.filter(x => x.kind === 'feed').map(x => +new Date(x.at)).sort((a, b) => a - b);
     const gapOf = l => {   // 직전 수유 뒤 몇 시간 텀인지 (10-07 사장님) — 전날 수유도 이어서 셈
       const t = +new Date(l.at), prev = feedAts.filter(x => x < t).pop(); if (prev == null) return '';
@@ -2091,8 +2172,95 @@ new MutationObserver(() => {
   }
 }).observe($('sheet'), { childList: true, subtree: true });
 
-function openSheet(kind, log) {
+// ── 수유 재는 창 (11-20). 1초마다 다시 그리되 기록은 늘 logs 에서 id 로 다시 찾는다(다른 폰이 바꾸거나 끝내도 따라간다)
+let _ftT = 0;
+const feedLiveName = l => { const d = l.detail || {}; return d.type === 'breast' ? `모유${d.side === 'l' ? ' 왼쪽' : d.side === 'r' ? ' 오른쪽' : ''}` : (FEED[d.type] || '수유'); };
+async function startFeed(type, side) {
+  if (saving) return; if (logs.some(feedOn)) return openFeedLive(logs.find(feedOn));
+  saving = true; setTimeout(() => saving = false, 1500);   // 연타로 두 번 시작되지 않게
+  const now = new Date().toISOString(), detail = { type, timer: true };
+  if (type === 'breast') Object.assign(detail, { side: side || null, since: side ? now : null, lms: 0, rms: 0 });
+  try {
+    const row = await db.addLog({ baby_id: baby.id, user_id: me.id, kind: 'feed', at: now, ended_at: null, detail, note: '' });
+    localStorage.setItem('bb-feedtype', type); render(); openFeedLive(row);
+  } catch (err) { alert('저장 실패: ' + err.message); resync(0); }
+}
+async function feedSet(id, d) {   // 화면은 바로, 서버는 뒤따라
+  const l = logs.find(x => x.id === id); l.detail = d; paintFeedLive(); render();
+  try { await db.updLog(id, { detail: d }); } catch (err) { alert('저장 실패: ' + err.message); resync(0); }
+}
+function feedSide(id, side) {   // 물린 쪽 바꾸기 전용 (11-23: 쉬기는 일시정지 단추로). 쉬는 중에 누르면 그쪽으로 다시 시작, 지금 물린 쪽을 또 누르면 아무 일 없음
+  const l = logs.find(x => x.id === id); if (!l || !feedOn(l)) return;
+  const now = Date.now(), d = { ...l.detail }; if (!d.pat && d.side === side) return;
+  d.lms = sideMs(l, 'l', now); d.rms = sideMs(l, 'r', now); d.side = side; d.since = new Date(now).toISOString();
+  if (d.pat) { d.pms = (+d.pms || 0) + Math.max(0, now - new Date(d.pat)); d.pat = null; }
+  feedSet(id, d);
+}
+function feedPause(id) {   // 일시정지 ↔ 다시 시작. 다시 시작하면 멈춘 자리부터(모유는 마지막 쪽으로) 이어 간다
+  const l = logs.find(x => x.id === id); if (!l || !feedOn(l)) return;
+  const now = Date.now(), iso = new Date(now).toISOString(), d = { ...l.detail };
+  if (d.pat) { d.pms = (+d.pms || 0) + Math.max(0, now - new Date(d.pat)); d.pat = null; if (d.type === 'breast' && d.side) d.since = iso; }
+  else { if (d.type === 'breast') { d.lms = sideMs(l, 'l', now); d.rms = sideMs(l, 'r', now); d.since = null; } d.pat = iso; }
+  feedSet(id, d);
+}
+async function endFeed(id) {
+  const l = logs.find(x => x.id === id); if (!l || saving) return;
+  saving = true; setTimeout(() => saving = false, 1500);
+  const now = Date.now(), d = { ...l.detail }, act = feedLiveMs(l, now), rested = (+d.pms || 0) > 0 || !!d.pat;
+  if (d.type === 'breast') { d.l = minOfMs(sideMs(l, 'l', now)); d.r = minOfMs(sideMs(l, 'r', now)); d.min = d.l + d.r; delete d.side; delete d.since; delete d.lms; delete d.rms; }
+  else if (rested) d.min = minOfMs(act);   // 쉬었으면 시작~끝과 실제 먹인 시간이 다르다 → 실제 분을 따로 적어 둔다 (안 쉬었으면 시작~끝이 곧 시간)
+  delete d.pat; delete d.pms;
+  try {
+    await db.updLog(id, { ended_at: new Date(now).toISOString(), detail: d });
+    saving = false; render();
+    // 모유는 왼·오 분이 이미 채워져 적을 게 없다 → 조용히 저장만. 오래 켜 뒀어도 묻지 않는다 — 고칠 건 목록에서 눌러 고친다 (11-23 사장님 "팝업들은 다 안떠도")
+    // 분유·유축만 양·메모 창 (양은 여기서 넣는다)
+    if (d.type === 'breast') { clearInterval(_ftT); closeSheet(); return; }
+    openSheet('feed', logs.find(x => x.id === id), true);
+  } catch (err) { alert('저장 실패: ' + err.message); resync(0); }
+}
+function paintFeedLive() {
+  const sh = $('sheet'), l = logs.find(x => x.id === sh.dataset.live);
+  if (!$('ft-clock') || sh.classList.contains('hidden') || sh.classList.contains('closing')) return clearInterval(_ftT);
+  if (!l || !feedOn(l)) { clearInterval(_ftT); closeSheet(); render(); return; }   // 다른 폰에서 끝냈거나 지웠다
+  const now = Date.now(), d = l.detail;
+  const pz = !!d.pat, pb = $('ft-pz');
+  $('ft-clock').textContent = clockTxt(feedLiveMs(l, now)); $('ft-clock').classList.toggle('pz', pz);
+  $('ft-sub').textContent = `${localDay(l.at) !== dstr(new Date()) ? '어제 ' : ''}${hhmm(l.at)} 시작${pz ? ' · 쉬는 중' : ''}`; $('ft-sub').classList.toggle('pz', pz);
+  if (pb.classList.contains('go') !== pz || !pb.firstChild) { pb.classList.toggle('go', pz); pb.setAttribute('aria-label', pz ? '다시 시작' : '일시정지');
+    pb.innerHTML = pz ? '<svg viewBox="0 0 12 12"><path d="M2.5 1.2v9.6L10.6 6z"/></svg>다시 시작' : '<svg viewBox="0 0 12 12"><rect x="1.8" y="1.2" width="3.1" height="9.6" rx=".9"/><rect x="7.1" y="1.2" width="3.1" height="9.6" rx=".9"/></svg>일시정지'; }
+  if (d.type === 'breast') {
+    for (const b of sh.querySelectorAll('.ft-lr button')) { const k = b.dataset.side, ms = sideMs(l, k, now), on = d.side === k && !pz;
+      b.classList.toggle('on', on); b.classList.toggle('last', d.side === k && pz); b.classList.toggle('has', ms > 0); b.setAttribute('aria-pressed', on); b.querySelector('b').textContent = clockTxt(ms); }
+    $('ft-hint').textContent = pz ? '다시 물릴 쪽을 눌러도 이어 재요' : '바꿔 물리면 반대쪽을 눌러 주세요';
+  }
+  if (document.activeElement !== $('ft-at')) $('ft-at').value = hhmm(l.at);
+}
+function openFeedLive(log) {
+  editing = null; clearInterval(_ftT);
+  const d = log.detail || {}, sh = $('sheet');
+  sh.innerHTML = `<h3 class="feed">수유 중<span class="ft-ty">${FEED[d.type] || ''}</span></h3>
+    <div class="ft-clock" id="ft-clock" aria-live="off">0:00</div><div class="ft-sub" id="ft-sub"></div>
+    ${d.type === 'breast' ? `<div class="ft-lr"><button type="button" data-side="l"><span class="n">왼쪽</span><b>0:00</b></button><button type="button" data-side="r"><span class="n">오른쪽</span><b>0:00</b></button></div><div class="ft-hint" id="ft-hint"></div>` : ''}
+    <div class="ft-pz"><button type="button" id="ft-pz"></button></div>
+    <div class="frow"><label>시작 시각</label><input type="time" id="ft-at" value="${hhmm(log.at)}"></div>
+    <div class="acts"><button type="button" class="del" id="ft-del">삭제</button><button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="end" id="ft-end">끝</button></div>`;
+  sh.dataset.kind = 'feed'; sh.dataset.live = log.id;
+  shOpen(); paintFeedLive(); _ftT = setInterval(paintFeedLive, 1000);
+  sh.querySelector('.ft-lr')?.addEventListener('click', e => { const b = e.target.closest('button'); if (b) feedSide(log.id, b.dataset.side); });
+  $('ft-at').addEventListener('change', async () => {   // 늦게 눌렀을 때 시작 시각 당기기 — 앞날은 안 되고, 지금보다 뒤 시각이면 어제로 본다
+    const l = logs.find(x => x.id === log.id), v = $('ft-at').value; if (!l || !v) return;
+    const at = atFromTime(v, dstr(new Date())); if (+at > Date.now() + 60000) at.setDate(at.getDate() - 1);
+    try { await db.updLog(l.id, { at: at.toISOString() }); paintFeedLive(); render(); } catch (err) { alert('저장 실패: ' + err.message); resync(0); }
+  });
+  const t0 = Date.now();   // 시작 단추를 두 번 두드리면 둘째가 (낮아진 창 위) 어두운 바탕에 떨어져 창이 닫힌다 → 뜬 직후 0.6초는 바탕 눌림을 무시
+  $('sh-cancel').onclick = closeSheet; $('dim').onclick = () => { if (Date.now() - t0 > 600) closeSheet(); };
+  $('ft-end').onclick = () => endFeed(log.id); $('ft-pz').onclick = () => feedPause(log.id);
+  $('ft-del').onclick = async () => { if (!confirm('재던 수유를 지울까요?')) return; clearInterval(_ftT); try { await db.delLog(log.id); closeSheet(); render(); toast('지웠어요'); } catch (err) { alert('삭제 실패: ' + err.message); closeSheet(); resync(0); } };
+}
+function openSheet(kind, log, ended) {   // ended = 방금 '끝'을 누른 수유 (제목·단추 글만 다르다)
   if (!log && rollDay()) render();   // 새 기록은 날짜도 지금 기준
+  clearInterval(_ftT);
   editing = log || null;
   const d = (log && log.detail) || {};
   const t = log ? hhmm(log.at) : nowTime();
@@ -2101,7 +2269,12 @@ function openSheet(kind, log) {
     const type = d.type || localStorage.getItem('bb-feedtype') || 'formula';
     const lastMl = +(localStorage.getItem('bb-ml') || 60);
     const lastBr = log ? null : logs.filter(l => l.kind === 'feed' && l.detail?.type === 'breast').sort((a, b) => +new Date(b.at) - +new Date(a.at))[0];   // 다음엔 반대쪽부터 물리게 지난번 보여 주기
+    const canGo = !log && day === dstr(new Date()) && !logs.some(feedOn);   // 지금부터 재기: 오늘 화면에서 새로 적을 때만
+    const PLAY = '<svg viewBox="0 0 12 12"><path d="M2.5 1.2v9.6L10.6 6z"/></svg>';
     body = `<div class="seg" id="feed-type">${Object.entries(FEED).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === type ? 'on' : ''}">${v}</button>`).join('')}</div>
+      ${canGo ? `<div class="ft-go ${type === 'breast' ? 'hidden' : ''}" id="ft-go-b"><button type="button" data-go="">${PLAY}지금부터 시간 재기</button></div>
+      <div class="ft-go ${type === 'breast' ? '' : 'hidden'}" id="ft-go-lr"><button type="button" data-go="l">${PLAY}왼쪽부터 재기</button><button type="button" data-go="r">${PLAY}오른쪽부터 재기</button></div>
+      <div class="ft-or">다 먹인 뒤라면 아래에 바로 적어요</div>` : ''}
       <div id="feed-ml" class="${type === 'breast' ? 'hidden' : ''}"><div class="ml"><button type="button" data-add="0" class="clr" aria-label="0으로 리셋"><svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 3.5v4.2h4.2"/></svg></button>${[5, 10, 20, 50].map(v => `<button type="button" data-add="${v}">+${v}</button>`).join('')}</div>
       <div class="frow"><label>양 (ml)</label><input type="number" inputmode="numeric" id="f-ml" value="${d.ml || lastMl}"></div></div>
       <div id="feed-min" class="${type === 'breast' ? '' : 'hidden'}"><div class="lr"><div class="lrb"><label for="f-l">왼쪽</label><div class="in"><input type="number" inputmode="numeric" id="f-l" placeholder="0" value="${d.l ?? (d.r == null && d.min ? d.min : '')}"></div><span class="u">분</span></div>
@@ -2117,10 +2290,11 @@ function openSheet(kind, log) {
   } else if (kind === 'temp') {
     body = `<div class="frow"><label>체온 (℃)</label><input type="number" inputmode="decimal" step="0.1" id="f-c" placeholder="36.8" value="${d.c || ''}"></div>`;
   }
-  $('sheet').innerHTML = `<h3 class="${kind}">${KIND[kind]} ${log ? '고치기' : ''}<span class="sd" id="sh-date"></span></h3>${kind === 'sleep' ? '' : body}
-    <div class="frow"><label>${kind === 'sleep' ? '잠든 시각' : '시각'}</label><input type="time" id="f-at" value="${t}"></div>${kind === 'sleep' ? body : ''}
+  const fEnd = kind === 'feed' && log ? `<div class="frow ft-t"><label>시작 ~ 끝</label><span class="tt"><input type="time" id="f-at" aria-label="시작 시각" value="${t}"><i>~</i><input type="time" id="f-fend" aria-label="끝난 시각" value="${log.ended_at ? hhmm(log.ended_at) : ''}"></span></div>` : '';   // 수유를 고칠 땐 시작·끝을 한 줄에 — 줄을 늘리면 키보드가 떴을 때 저장 단추가 밀려난다 (11-20)
+  $('sheet').innerHTML = `<h3 class="${kind}">${KIND[kind]} ${ended ? '끝' : log ? '고치기' : ''}${ended ? `<span class="ft-len">${minTxt(Math.round(feedMs(log) / 60000))}</span>` : ''}<span class="sd" id="sh-date"></span></h3>${kind === 'sleep' ? '' : body}
+    ${fEnd || `<div class="frow"><label>${kind === 'sleep' ? '잠든 시각' : '시각'}</label><input type="time" id="f-at" value="${t}"></div>`}${kind === 'sleep' ? body : ''}
     <div class="frow col"><label>메모</label><input class="wide" id="f-note" maxlength="60" placeholder="트림 안 시킴, 조금 보챔…" value="${esc(log ? log.note : '')}"></div>
-    <div class="acts">${log ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">취소</button><button type="button" class="save" id="sh-save">${log ? '저장' : '기록'}</button></div>`;
+    <div class="acts">${log ? '<button type="button" class="del" id="sh-del">삭제</button>' : ''}<button type="button" class="cancel" id="sh-cancel">${ended ? '닫기' : '취소'}</button><button type="button" class="save" id="sh-save">${log && !ended ? '저장' : '기록'}</button></div>`;
   $('sheet').dataset.kind = kind;
   showSheetDate(); $('f-at').addEventListener('input', showSheetDate); $('f-at').addEventListener('change', showSheetDate);
   shOpen();
@@ -2129,8 +2303,15 @@ function openSheet(kind, log) {
   for (const seg of $('sheet').querySelectorAll('.seg')) seg.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     for (const x of seg.children) x.classList.toggle('on', x === b);
-    if (seg.id === 'feed-type') { $('feed-ml').classList.toggle('hidden', b.dataset.v === 'breast'); $('feed-min').classList.toggle('hidden', b.dataset.v !== 'breast'); }
+    if (seg.id === 'feed-type') { $('feed-ml').classList.toggle('hidden', b.dataset.v === 'breast'); $('feed-min').classList.toggle('hidden', b.dataset.v !== 'breast');
+      if ($('ft-go-b')) { $('ft-go-b').classList.toggle('hidden', b.dataset.v === 'breast'); $('ft-go-lr').classList.toggle('hidden', b.dataset.v !== 'breast'); } }
   });
+  $('sheet').classList.remove('ft-typed'); if ($('ft-go-b')) for (const i of $('sheet').querySelectorAll(_KBIN)) i.addEventListener('focus', () => $('sheet').classList.add('ft-typed'));
+  if (ended) for (const i of [$('f-at'), $('f-fend')]) i.addEventListener('input', () => {   // 시각을 고치면 제목 옆 'N분'도 따라간다
+    const a = sheetAt(), e = $('f-fend').value, el = $('sheet').querySelector('.ft-len'); if (!el) return;
+    const ed = e ? atFromTime(e, dstr(a)) : null; if (ed && ed < a) ed.setDate(ed.getDate() + 1);
+    el.textContent = ed && ed - a <= 4 * 3600000 ? dur(a, ed) : '—'; });
+  for (const g of $('sheet').querySelectorAll('.ft-go')) g.addEventListener('click', e => { const b = e.target.closest('button'); if (b) startFeed($('feed-type').querySelector('.on').dataset.v, b.dataset.go); });
   $('sheet').querySelector('.ml')?.addEventListener('click', e => {   // 계산기처럼: 0 = 비우기, +5/+10/+20/+50 = 더하기 (10-04 사장님)
     const b = e.target.closest('button'); if (!b) return; const add = +b.dataset.add;
     $('f-ml').value = add ? (+$('f-ml').value || 0) + add : 0;
@@ -2297,12 +2478,23 @@ let saving = false;   // 저장 버튼 두 번 눌림 막기 (10-28 사장님 "�
 async function saveSheet() {
   if (saving) return;
   const kind = $('sheet').dataset.kind;
-  const at = sheetAt();
+  let at = sheetAt();
   const detail = {}; let ended_at = editing ? editing.ended_at : null;
   if (kind === 'feed') {
     detail.type = $('feed-type').querySelector('.on').dataset.v;
     if (detail.type === 'breast') { const l = $('f-l').value, r = $('f-r').value; detail.l = l === '' ? null : +l; detail.r = r === '' ? null : +r; detail.min = (detail.l || 0) + (detail.r || 0); } else { detail.ml = +$('f-ml').value || 0; localStorage.setItem('bb-ml', detail.ml); }
     localStorage.setItem('bb-feedtype', detail.type);
+    if (editing) {   // 끝난 시각 (11-20): 비우면 시간 없는 기록으로 — 타이머 표시도 떼서 '재는 중'으로 되살아나지 않게
+      const e = $('f-fend').value;
+      if ($('f-at').value === hhmm(editing.at)) at = new Date(editing.at);   // 안 고친 시각은 초까지 그대로 — 분 단위로 잘리면 '13분'이 저장 뒤 '12분'이 된다
+      if (e) { const ed = editing.ended_at && e === hhmm(editing.ended_at) ? new Date(editing.ended_at) : atFromTime(e, dstr(at)); if (ed < at) ed.setDate(ed.getDate() + 1);
+        if (ed - at > 4 * 3600000) { $('f-fend').focus(); return toast('끝난 시각이 시작보다 빨라요'); }
+        if (+ed > Date.now() + 60000) { $('f-fend').focus(); return toast('끝난 시각이 아직 안 왔어요'); }
+        ended_at = ed.toISOString(); if (editing.detail?.timer) detail.timer = true;
+        const od = editing.detail || {};   // 쉬었다 먹인 분유·유축: 시각을 안 고쳤으면 실제 먹인 분을 지킨다. 시각을 고치면 시작~끝이 다시 기준
+        if (detail.type !== 'breast' && od.type !== 'breast' && +od.min > 0 && +at === +new Date(editing.at) && +ed === +new Date(editing.ended_at)) detail.min = od.min; }
+      else ended_at = null;
+    }
   } else if (kind === 'diaper') { const v = $('dp-type').querySelector('.on').dataset.v; detail.pee = v !== 'poo'; detail.poo = v !== 'pee'; }
   else if (kind === 'temp') { detail.c = +$('f-c').value || null; if (!detail.c) { $('f-c').focus(); return toast('체온을 적어 주세요'); } }
   else if (kind === 'sleep') { const e = $('f-end').value; if (!e && !editing && dstr(at) !== dstr(new Date())) { $('f-end').focus(); return toast('깬 시각도 적어 주세요'); } if (e) { const ed = atFromTime(e, dstr(at)); if (ed < at) ed.setDate(ed.getDate() + 1); if (+ed > Date.now() + 60000) { $('f-end').focus(); return toast('깬 시각이 아직 안 왔어요'); } ended_at = ed.toISOString(); } else ended_at = null; }   // 미래 깬 시각 막기 (10-27 사장님 "미래로 가는 건 말이 안 되니까")
@@ -2334,12 +2526,14 @@ document.querySelector('.quick').addEventListener('click', async e => {
     } catch (err) { alert('저장 실패: ' + err.message); resync(0); }
     return;
   }
+  if (kind === 'feed' && day === dstr(new Date())) { const on = logs.find(feedOn); if (on) return openFeedLive(on); }   // 재는 중이면 재는 창 (11-20)
   openSheet(kind);
 });
+$('st-feed-chip').onclick = () => { const o = logs.find(feedOn); if (o) openFeedLive(o); };   // 수유 중 줄을 누르면 재는 창 (잠과 같게)
 $('st-sleep-chip').onclick = () => { const o = logs.find(l => l.kind === 'sleep' && !l.ended_at); if (o) openSheet('sleep', o); };   // 자는 중 줄을 누르면 그 잠을 열어 깬 시각 입력 (10-08)
-$('rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = logs.find(x => x.id === r.dataset.id); if (l) openSheet(l.kind, l); });
+$('rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = logs.find(x => x.id === r.dataset.id); if (l) feedOn(l) ? openFeedLive(l) : openSheet(l.kind, l); });
 $('view-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; view = b.dataset.v; localStorage.setItem('bb-view', view); render(); });
-$('clock').addEventListener('click', e => { const p = e.target.closest('.ck'); if (!p) return; const l = logs.find(x => x.id === p.dataset.id); if (l) openSheet(l.kind, l); });
+$('clock').addEventListener('click', e => { const p = e.target.closest('.ck'); if (!p) return; const l = logs.find(x => x.id === p.dataset.id); if (l) feedOn(l) ? openFeedLive(l) : openSheet(l.kind, l); });
 // 날짜 이동: 30일 넘은 날은 그 달 기록을 더 불러온다 (달력으로 멀리 뛸 수 있어서)
 async function goDay(ds) { day = ds; render(); if (!MOCK) { await db.loadMonth(ds.slice(0, 7)); render(); } }
 // iOS 날짜 고르기의 '재설정' = 오늘로 (v0.17, 사장님 "재설정이 '오늘'인건가?" → "응"). 재설정은 값을 비우거나 기본값(오늘)으로 되돌린다
@@ -2463,7 +2657,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.28 · 11-20';
+const VER = 'v1.29 · 11-23';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2653,6 +2847,7 @@ if (!MOCK) sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_IN' && !me) bo
 if (!MOCK && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // ── 로컬 확인용 가짜 데이터 (?mock=1)
+function mockKeep() { try { sessionStorage.setItem('bb-mock-logs', JSON.stringify(logs.filter(l => /^(m\d|x-)/.test(l.id)))); } catch (e) {} }   // 목업에서 새로 적은 기록(id m…)만 이 탭에 기억
 function mock() {
   me = { id: 'u-dad', nickname: '아빠' }; nickById = { 'u-dad': '아빠', 'u-mom': '엄마' };
   avatarById = {};   // 값 없음 → 기본 캐릭터(m1·f1)
@@ -2675,7 +2870,9 @@ function mock() {
   ].filter(l => new Date(l.at) <= Date.now() || true);
   for (let off = 1; off <= 9; off++) for (const [h, k, d] of [[1, 'feed', { type: 'formula', ml: 40 + off * 5 }], [4, 'diaper', { pee: true, poo: off % 3 === 0 }], [5, 'feed', { type: 'formula', ml: 60 }], [9, 'diaper', { pee: true }], [12, 'feed', { type: 'breast', min: 15 }], [18, 'feed', { type: 'formula', ml: 70 }]])
     logs.push({ id: `p${off}-${h}`, kind: k, at: T(h, 0, -off), detail: d, note: '', user_id: off % 2 ? 'u-dad' : 'u-mom' });
+  for (let off = 1; off <= 9; off++) logs.push({ id: `nap${off}`, kind: 'sleep', at: T(13, 0, -off), ended_at: T(14, off % 2 ? 30 : 0, -off), detail: {}, note: '', user_id: 'u-dad' });
   for (let off = 1; off <= 9; off++) logs.push({ id: `s${off}`, kind: 'sleep', at: T(22, 0, -off - 1), ended_at: T(3, 30, -off), detail: {}, note: '', user_id: 'u-mom' });
+  try { for (const r of JSON.parse(sessionStorage.getItem('bb-mock-logs') || '[]')) upsertLocal(logs, r); } catch (e) {}
   const gd = off => { const d = new Date(); d.setDate(d.getDate() - off); return dstr(d); };
   checks = { hepb1: { item: 'hepb1', done_on: '2026-09-15', note: '출산 병원', user_id: 'u-mom' } };
   growth = [
