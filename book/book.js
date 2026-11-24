@@ -433,6 +433,7 @@ function coverApply() {
   cbook.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
   cbook.style.perspectiveOrigin = `${((pose.cx - tx) / sc).toFixed(1)}px ${(pose.cy || 0).toFixed(1)}px`;   // 소실점 = 화면 가운데(펼침이면 책등)
   cbCover.style.transform = R > 0 ? `rotateY(${(-R * 180).toFixed(3)}deg)` : '';
+  { const back = R >= .5; $('cb-front').style.visibility = back ? 'hidden' : ''; cbook.querySelector('.cb-in').style.visibility = back ? '' : 'hidden'; }   // 11-23: 90°(옆으로 선 순간)에서 앞·안쪽 면을 바꿔 낀다 — 뒷면 가림(backface)이 안 먹는 사파리 층에서도 표지 얼굴·제목이 판과 함께 사라진다
   const [f, bk, rw, ro] = shade(phi);
   $('cb-front').style.setProperty('--shade', (f * 1.2).toFixed(3));
   CV.ish.style.opacity = bk.toFixed(3);
@@ -648,6 +649,8 @@ addEventListener('keydown', e => { if (e.key === 'Escape') photoClose(); });
 
 /* ── 시작 ───────────────────────────── */
 // d = { baby:{name,birth_date}, days:[{day,diary,sticker,photo,url,thumb}], members:[{id,name,img}], me, api:{list,add,del}, logs, growth, checks, today }
+function reveal() { document.documentElement.classList.remove('boot'); }   // 11-23: 표지가 제자리·제 상태로 놓인 뒤에야 화면을 연다 (index.html 의 html.boot)
+const coverImgs = () => Promise.race([Promise.all([...cover.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : 0)), new Promise(r => setTimeout(r, 800))]);   // 표지 얼굴이 뒤늦게 튀어나오지 않게 — 늦어도 0.8초
 async function start(d) {
   baby = d.baby; if (Q.get('name')) baby = { ...baby, name: Q.get('name') };   // ?name= 은 이름 길이 확인용
   members = d.members; ME = d.me;
@@ -657,6 +660,7 @@ async function start(d) {
   try { await Promise.race([document.fonts.load('16px "Poor Story"'), new Promise(r => setTimeout(r, 1500))]); } catch (_) {}
   if (!pages.length) {                                   // 아직 일기도 사진도 없는 책 — 표지만 보여 주고 열리지 않는다
     drawCover(); coverLayout(); $('cv-st').textContent = '다이어리에 첫 일기를 쓰면 여기에 쌓여요'; cbook.disabled = true; vb.setAttribute('inert', '');
+    await coverImgs(); reveal();
     window.__book = { pages, get closed() { return true; }, get idx() { return 0; } }; return;
   }
   ND = pages.length; pages = pages.concat(extraPages(d)); drawTabs();     // 일기 장 뒤에 사진첩·숫자·성장 장을 잇는다
@@ -669,12 +673,13 @@ async function start(d) {
   API = d.api || localApi(); await loadComments();
   drawCover(); rest(); coverLayout(); coverSpread(); coverApply();
   if (Q.get('open')) { co = 1; coverApply(); closed = false; cover.classList.add('gone'); } else { vb.setAttribute('inert', ''); if (Q.get('cv')) { co = +Q.get('cv'); coverApply(); } }
+  await coverImgs(); reveal();
   const f = +Q.get('flip');
   if (f > 0 && idx < pages.length - 1) setup(idx, idx + 1, f); else if (f < 0 && idx > 0) setup(idx - 1, idx, 1 + f);
   if (Q.get('mo')) $('btn-month').click();
   window.__book = { go, jump, pages, ND, CHS, openBook, closeBook, get closed() { return closed; }, friend: i => compose(pages[i]).friend, get idx() { return idx; } };
 }
-const fail = err => { $('under').innerHTML = `<p style="padding:30px 4px;font-size:14px">기록을 불러오지 못했어요. (${esc(err && err.message || err)})</p>`; };
+const fail = err => { reveal(); $('under').innerHTML = `<p style="padding:30px 4px;font-size:14px">기록을 불러오지 못했어요. (${esc(err && err.message || err)})</p>`; };
 if (EMBED) {
   // 앱(통계 탭 성장앨범 카드)이 iframe 으로 연다 — 부모가 bookStart(자료)를 부른다. 노치·홈 바 높이는 iframe 안 env() 가 0 일 수 있어 부모 창에서 잰다
   try { const pd = parent.document, pr = pd.createElement('div'); pr.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)';

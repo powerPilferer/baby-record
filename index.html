@@ -295,6 +295,7 @@
   .empty { padding: 26px 14px; text-align: center; color: var(--fg3); font-size: 16px; }
   .sum { display: flex; gap: 14px; padding: 15px 16px; border-top: 1px solid var(--line); margin-top: 2px; font-size: 14px; color: var(--fg3); font-variant-numeric: tabular-nums; }
   .sum b { color: var(--fg2); font-weight: 500; }
+  .row .d .fmin { color: var(--feed); }   /* 목록 수유 분 = 수유 색 (11-23 사장님) */
 
   /* 서로에게 한마디 */
   .notes { background: var(--card); border-radius: 16px; padding: 15px 17px; }
@@ -2142,7 +2143,7 @@ function render() {
     const listLogs = [...dayLogs].reverse().concat(carry.reverse());   // 최신순 (v0.14, 사장님 "최신순으로") — 원형 보기·합계는 그대로
     rows.innerHTML = listLogs.map((l, i) => `<button type="button" class="row ${l.kind} ${i === listLogs.length - 1 ? 'last' : ''}" data-id="${l.id}">
       <span class="tc"><span class="t">${hhmm(l.at)}</span>${l.kind === 'feed' && gapOf(l) ? `<span class="gap">텀 ${gapOf(l)}</span>` : ''}${localDay(l.at) < day ? `<span class="gap">${md(new Date(localDay(l.at) + 'T00:00'))}부터</span>` : ''}</span><span class="rl"></span>
-      <span class="d"><b>${esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
+      <span class="d"><b>${l.kind === 'feed' ? esc(title(l)).replace(/\d+시간(?: \d+분)?|\d+분/g, '<span class="fmin">$&</span>') : esc(title(l))}</b>${l.note ? `<small>${esc(l.note)}</small>` : ''}</span>
       <span class="w">${avatar(l.user_id)}</span></button>`).join('');
     rows.insertAdjacentHTML('beforeend', sumHtml);
   }
@@ -2174,6 +2175,12 @@ new MutationObserver(() => {
 
 // ── 수유 재는 창 (11-20). 1초마다 다시 그리되 기록은 늘 logs 에서 id 로 다시 찾는다(다른 폰이 바꾸거나 끝내도 따라간다)
 let _ftT = 0;
+// 수유 시간 창이 떠 있는 동안 화면 자동 꺼짐 막기 (11-24 사장님) — 지원 안 하는 폰은 조용히 넘어감. 앱이 뒤로 가면 OS가 풀고, 돌아오면 1초 틱에서 다시 잡는다
+let _wl = null, _wlBusy = false;
+const wakeOn = async () => { if (_wl || _wlBusy || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return; _wlBusy = true;
+  try { _wl = await navigator.wakeLock.request('screen'); _wl.addEventListener('release', () => { _wl = null; }); } catch (e) {} _wlBusy = false;
+  const sh = $('sheet'); if (!$('ft-clock') || sh.classList.contains('hidden') || sh.classList.contains('closing')) wakeOff(); };   // 잡는 사이 창이 닫혔으면 바로 놓기
+const wakeOff = () => { if (_wl) { _wl.release().catch(() => {}); _wl = null; } };
 const feedLiveName = l => { const d = l.detail || {}; return d.type === 'breast' ? `모유${d.side === 'l' ? ' 왼쪽' : d.side === 'r' ? ' 오른쪽' : ''}` : (FEED[d.type] || '수유'); };
 async function startFeed(type, side) {
   if (saving) return; if (logs.some(feedOn)) return openFeedLive(logs.find(feedOn));
@@ -2221,8 +2228,9 @@ async function endFeed(id) {
 }
 function paintFeedLive() {
   const sh = $('sheet'), l = logs.find(x => x.id === sh.dataset.live);
-  if (!$('ft-clock') || sh.classList.contains('hidden') || sh.classList.contains('closing')) return clearInterval(_ftT);
+  if (!$('ft-clock') || sh.classList.contains('hidden') || sh.classList.contains('closing')) { wakeOff(); return clearInterval(_ftT); }
   if (!l || !feedOn(l)) { clearInterval(_ftT); closeSheet(); render(); return; }   // 다른 폰에서 끝냈거나 지웠다
+  wakeOn();
   const now = Date.now(), d = l.detail;
   const pz = !!d.pat, pb = $('ft-pz');
   $('ft-clock').textContent = clockTxt(feedLiveMs(l, now)); $('ft-clock').classList.toggle('pz', pz);
@@ -2413,6 +2421,7 @@ function shOpen() {
 }
 $('sheet').addEventListener('animationend', e => { if (e.target === $('sheet')) $('sheet').classList.remove('in', 'in-kb'); });
 function closeSheet(now) {
+  wakeOff();
   const sh = $('sheet'), dm = $('dim'); editing = null; clearTimeout(_shT); cancelAnimationFrame(_shRaf);
   const done = () => { dm.classList.add('hidden'); sh.classList.add('hidden'); sh.classList.remove('closing', 'in', 'in-kb'); dm.classList.remove('closing', 'in', 'in-kb');
     sh.style.transform = ''; sh.style.transition = ''; dm.style.opacity = ''; dm.style.transition = ''; sh.classList.remove('kb'); sh.style.bottom = ''; sh.style.translate = ''; sh.style.maxHeight = ''; sh.scrollTop = 0;
@@ -2657,7 +2666,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.29 · 11-23';
+const VER = 'v1.30 · 11-24';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
