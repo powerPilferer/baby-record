@@ -2154,6 +2154,8 @@ function render() {
   renderAlbumHome();   // 성장 앨범 카드 (11-11)
 }
 setInterval(() => { if (!$('s-home').classList.contains('hidden')) render(); }, 30000);
+document.addEventListener('visibilitychange', () => { const sh = $('sheet'); if (document.visibilityState === 'visible' && (!$('ft-clock') || sh.classList.contains('hidden'))) wakeOff(); });
+setInterval(() => { const sh = $('sheet'); if (_wl && (!$('ft-clock') || sh.classList.contains('hidden') || sh.classList.contains('closing'))) wakeOff(); }, 5000);   // 수유 창이 없는데 잠금이 남아 있으면 놓는다 (11-24 사장님 "팝업 닫고 메인에서도 안 꺼지네")
 
 // ── 바텀 시트 (새로 적기 / 고치기)
 let editing = null;
@@ -2178,7 +2180,7 @@ let _ftT = 0;
 // 수유 시간 창이 떠 있는 동안 화면 자동 꺼짐 막기 (11-24 사장님) — 지원 안 하는 폰은 조용히 넘어감. 앱이 뒤로 가면 OS가 풀고, 돌아오면 1초 틱에서 다시 잡는다
 let _wl = null, _wlBusy = false;
 const wakeOn = async () => { if (_wl || _wlBusy || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return; _wlBusy = true;
-  try { _wl = await navigator.wakeLock.request('screen'); _wl.addEventListener('release', () => { _wl = null; }); } catch (e) {} _wlBusy = false;
+  try { const w = await navigator.wakeLock.request('screen'); _wl = w; w.addEventListener('release', () => { if (_wl === w) _wl = null; }); } catch (e) {} _wlBusy = false;   // 옛 잠금의 늦은 release가 새 잠금 손잡이를 지우면 영영 못 놓는다 (11-24)
   const sh = $('sheet'); if (!$('ft-clock') || sh.classList.contains('hidden') || sh.classList.contains('closing')) wakeOff(); };   // 잡는 사이 창이 닫혔으면 바로 놓기
 const wakeOff = () => { if (_wl) { _wl.release().catch(() => {}); _wl = null; } };
 const feedLiveName = l => { const d = l.detail || {}; return d.type === 'breast' ? `모유${d.side === 'l' ? ' 왼쪽' : d.side === 'r' ? ' 오른쪽' : ''}` : (FEED[d.type] || '수유'); };
@@ -2666,7 +2668,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.30 · 11-24';
+const VER = 'v1.31 · 11-24';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
