@@ -17,7 +17,7 @@
   --ui: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
   --sat: max(env(safe-area-inset-top), var(--sim-sat, 0px));
   --sab: max(env(safe-area-inset-bottom), var(--sim-sab, 0px));
-  --u: calc((min(100vw, 480px) - 20px) / 373);   /* 책 안의 1칸 — 폭 393 에서 1px */
+  --u: calc(min(min(100vw, 480px) - 20px, max(170px, (100dvh - var(--sat) - 124px) * 1.2433)) / 373);   /* 책 안의 1칸 — 폭 393 에서 1px. 11-26: 높이가 낮으면(폰 가로·낮은 창) 책이 한 화면에 들어오게 높이로도 묶는다 — 124 = 위 타이틀 58 + 책 위 8 + 아래 줄 50 + 숨 8, 1.2433 = 373/300. 세로 폰에서는 폭 쪽이 늘 작아 전과 같다 */
   --dl: calc(25 * var(--u));                      /* 책 안 일기 한 줄 */
   --cv: #8db3e6; --cv-d: #759fd8; --cv-in: #e3ecf8;   /* 표지 색 — 기본 하늘 파랑 (?cover=butter|coral) */
   --out: cubic-bezier(.16, 1, .3, 1);
@@ -500,3 +500,15 @@ html.share .pg.L:not(.fl)::before { left: 0; transform-origin: 0 100%; border-ra
 .sh-off h1 { font-family: var(--hand); font-weight: 400; font-size: 26px; line-height: 1.2; color: var(--ink); }
 .sh-off p { font-size: 14px; line-height: 1.6; color: var(--mute); margin-top: 10px; word-break: keep-all; }
 .sh-off .chip { margin-top: 20px; }
+
+/* ── 낮은 가로 화면 (11-26) — 폰을 가로로 돌렸을 때·낮고 넓은 창. 가로판을 따로 디자인하지 않는다(11-20 철회): 세로판 그대로, 책은 위 --u 가 높이에 맞춰 줄이고, 책 아래는 내려서 본다.
+   전에는 html·body 가 overflow hidden, #app 이 100dvh 고정, 책 크기는 폭만 봐서 — 가로에선 책이 화면보다 커지고 내릴 길도 없었다.
+   내리는 통은 문서가 아니라 #app (앱 안 iframe 은 scrolling=no 라 문서가 못 내려간다 — 통 하나로 공유 화면·앱 안 책이 같이 된다). 표지가 덮여 있을 땐 아래 판을 치워 내릴 것이 없다. */
+@media (orientation: landscape) and (max-height: 560px) {
+  #app { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #app::-webkit-scrollbar { display: none; }
+  .view { flex: 0 0 auto; }
+  .under { flex: none; min-height: 240px; overflow: visible; }
+  .under-scroll { flex: none; overflow: visible; }
+  .view[inert] .under { display: none; }
+}

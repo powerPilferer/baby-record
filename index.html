@@ -2721,7 +2721,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.33 · 11-26';
+const VER = 'v1.34 · 11-26';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침

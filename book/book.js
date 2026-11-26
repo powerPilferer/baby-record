@@ -508,7 +508,7 @@ function coverRun(to, ms, ez = k => k) {
   canim = requestAnimationFrame(step);
 }
 const openBook = () => { if (!closed || canim || cdrag) return; coverSpread(); coverRun(1, OPEN_MS); };
-function closeBook() { if (closed || canim || anim || cdrag) return; coverLayout(); coverSpread(); coverRun(0, CLOSE_MS); }
+function closeBook() { if (closed || canim || anim || cdrag) return; $('app').scrollTop = 0; coverLayout(); coverSpread(); coverRun(0, CLOSE_MS); }   // 11-26: 낮은 가로 화면에서 아래로 내려 둔 채 덮으면 표지 자리가 어긋난다 — 맨 위로 올리고 덮는다(세로에선 내릴 것이 없어 아무 일도 없다)
 
 /* 표지 끌기 (11-17 사장님: "드래그로 넘길수 있게") — 책장 끌기와 같은 함수(fingerT)로 표지 각도를 정하고, 그 각도에 맞는 진행도로 책 자리·배율도 같이 간다.
    놓으면 속도를 이어받아 열리거나 덮인다. 튕김 없음. */
@@ -557,6 +557,7 @@ cbook.addEventListener('pointerup', e => { cbook._p = null; coverRelease(e); });
 cbook.addEventListener('pointercancel', e => { cbook._p = null; coverRelease(e); });
 book.addEventListener('pointermove', coverMove); book.addEventListener('pointerup', coverRelease); book.addEventListener('pointercancel', coverRelease);   // 첫 날에서 끌어 덮을 때는 책이 손가락을 쥐고 있다
 addEventListener('resize', () => { if (closed) coverLayout(); });
+addEventListener('orientationchange', () => setTimeout(() => { if (closed) coverLayout(); }, 300));   // 11-26: 폰을 돌린 뒤 크기가 늦게 자리 잡는 브라우저가 있어 한 번 더
 function drawCover() {
   const nm = baby.name, n = [...nm].length, nc = 'cb-name' + (n > 9 ? ' n12' : n > 6 ? ' n9' : n > 4 ? ' n6' : '');
   cbook.setAttribute('aria-label', `${nm}의 성장앨범 펼치기`); cbook.dataset.design = DESIGN; cover.dataset.design = DESIGN; $('cv-tt').textContent = `${nm}의 성장앨범`; $('cv-l1').textContent = `${nm}의`;
