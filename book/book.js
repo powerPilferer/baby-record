@@ -10,6 +10,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const WD = '일월화수목금토';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let EMBED = false; try { EMBED = parent !== window && !!parent.document && !Q.get('local'); } catch (_) {}   // 앱 안(같은 출처 iframe)에서 열렸는지
+const SHARE = Q.get('s') || '';                          // 11-25 공유 링크(book/?s=토큰): 로그인 없이 보기만. 뒤로 버튼·댓글·입력칸 없음 (맨 아래 '공유 링크' 절)
+if (SHARE) document.documentElement.classList.add('share');
 
 if (Q.get('statusbar')) {   // 캡처 전용 — 상태바 자리가 비어 보이지 않게 가짜 상태바를 그린다
   const se = innerHeight < 700, sb = document.createElement('div'); sb.className = 'fake-sb' + (se ? ' se' : ''); sb.setAttribute('aria-hidden', 'true');
@@ -328,30 +330,70 @@ function drawUnder(top) {
   $('cm-form').hidden = false;
   const p = pages[idx], list = comments[p.day] || [], sp = pg(idx).R.querySelector('.diary span');
   const cut = sp.scrollHeight > sp.clientHeight + 2;       // 오른쪽 쪽 일곱 줄에 다 안 들어간 날만 아래에서 이어 읽는다
-  const item = c => { const w = who(c.user_id), mine = c.user_id === ME; return `<li data-id="${esc(c.id)}"><img src="${esc(w.img)}" alt=""><div class="bub"><p class="who">${esc(w.name)}<time>${cmTime(c)}</time>${mine ? '<button type="button" class="more" aria-label="내 댓글 메뉴">⋯</button>' : ''}</p><p class="tx">${esc(c.text)}</p></div></li>`; };
+  // 11-26 손님 댓글: c.guest(이름)가 있으면 링크로 온 손님이 쓴 것, c.pub 이면 가족이 '모두에게'로 쓴 것. 공유 화면엔 이 둘만 온다(가족 전용은 서버가 안 준다)
+  const item = c => { const g = c.guest != null, w = g ? { name: c.guest } : who(c.user_id), canDel = !SHARE && (g || c.user_id === ME);   // 가족은 내 댓글과 손님 댓글을 지울 수 있다. 손님 화면엔 지우기가 없다
+    const face = g ? `<span class="gface" aria-hidden="true">${esc([...c.guest.trim()][0] || '?')}</span>` : `<img src="${esc(w.img)}" alt="">`;
+    const tag = SHARE ? '' : g ? '<i class="tag">손님</i>' : c.pub ? '<i class="tag p">모두에게</i>' : '';
+    return `<li data-id="${esc(c.id)}">${face}<div class="bub"><p class="who"><span class="nm">${esc(w.name)}</span>${tag}<time>${cmTime(c)}</time>${canDel ? `<button type="button" class="more" aria-label="${g ? '손님 댓글 메뉴' : '내 댓글 메뉴'}">⋯</button>` : ''}</p><p class="tx">${esc(c.text)}</p></div>${g && !SHARE && API.pub ? `<button type="button" class="re" data-re="${esc(c.guest)}">답하기</button>` : ''}</li>`; };
+  const ttl = SHARE ? ['한마디', '가족과 링크를 받은 분들이 함께 봐요', '아직 한마디가 없어요. 첫 한마디를 남겨 보세요.'] : ['가족 댓글', API.pub ? '‘모두에게’를 켜면 링크로 온 손님도 봐요' : '초대된 가족만 보고 써요', '아직 댓글이 없어요. 첫 한마디를 남겨 보세요.'];   // 임시 문구 — 단비 몫
   $('under').innerHTML = (cut ? `<section class="full"><h3>${p.label} 일기<small>책에 다 못 담은 글</small></h3><p>${esc(p.diary)}</p></section>` : '')
-    + `<section class="cms${cut ? '' : ' solo'}"><h3>가족 댓글${list.length ? `<em>${list.length}</em>` : ''}<small>초대된 가족만 보고 써요</small></h3><ol class="cm-list">${!cmOk
+    + `<section class="cms${cut ? '' : ' solo'}"><h3>${ttl[0]}${list.length ? `<em>${list.length}</em>` : ''}<small>${ttl[1]}</small></h3><ol class="cm-list">${!cmOk
       ? `<li class="empty"><img src="doodles/sprout.svg" alt="">댓글은 준비 중이에요. 곧 열려요.</li>`
       : list.length ? list.map(item).join('')
-      : `<li class="empty"><img src="doodles/heart.svg" alt="">아직 댓글이 없어요. 첫 한마디를 남겨 보세요.</li>`}</ol></section>`;
+      : `<li class="empty"><img src="doodles/heart.svg" alt="">${ttl[2]}</li>`}</ol></section>`;
   $('cm-form').classList.toggle('off', !cmOk); $('cm-input').disabled = !cmOk; if (!cmOk) $('cm-send').disabled = true;
+  formSet();
   if (top) $('under').scrollTop = 0;
 }
+/* 입력칸 (11-26): 앱 = [내 얼굴][가족만↔모두에게][칸][남기기] · 공유 링크 = [이름][칸][남기기].
+   손님 이름(11-26 사장님 "가장 좌측을 눌러서 이름적고 내용적으면 안되나"): 칸은 처음부터 한마디 쓰기. 이름은 맨 왼쪽에서 정한다 —
+   이름이 없으면 '이름' 알약, 누르면 그 자리가 작은 이름 칸으로 넓어지고(한마디 칸이 그만큼 줄 뿐, 줄 높이·자리는 그대로) 적고 나면 첫 글자 동그라미로 접힌다. 고칠 때도 같은 자리.
+   이름 없이 '남기기'를 누르면 글은 그대로 두고 이름 칸을 열어 이름만 받는다 → 엔터나 남기기 한 번이면 바로 보낸다. 이름은 이 브라우저에 기억(bb-guest-name). */
+const GUEST_KEY = 'bb-guest-name';
+let gname = ''; try { if (SHARE) gname = (localStorage.getItem(GUEST_KEY) || '').trim().slice(0, 20); } catch (_) {}
+let pubOn = false, nameOpen = false, namePend = false;   // namePend = 이름만 받으면 바로 보낼 글이 기다리는 중
+function formSet() {
+  const inp = $('cm-input'), pb = $('cm-pub'), me = $('cm-me');
+  if (SHARE) { if (me) { me.classList.toggle('none', !gname); me.innerHTML = gname ? esc([...gname][0]) : '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5.4" r="2.7"/><path d="M2.8 13.6c.7-2.6 2.7-3.9 5.2-3.9s4.5 1.3 5.2 3.9"/></svg>이름'; me.setAttribute('aria-label', gname ? `이름 고치기 — 지금 ${gname}` : '이름 적기'); me.hidden = nameOpen; }
+    $('cm-name').hidden = !nameOpen; $('cm-tip').hidden = !(nameOpen && namePend); inp.placeholder = '한마디 남기기'; return; }
+  const can = !!(API && API.pub) && cmOk; pb.hidden = !can; if (!can) pubOn = false;
+  pb.classList.toggle('on', pubOn); pb.setAttribute('aria-checked', pubOn); pb.querySelector('span').textContent = pubOn ? '모두에게' : '가족만';
+  inp.placeholder = pubOn ? '모두에게 한마디' : can ? '한마디 남기기' : '이 날에 한마디 남기기';   // 스위치가 붙으면 칸이 좁아져(375 폭에서 155px) 글을 줄인다
+}
+function nameShow() { if (nameOpen) return $('cm-name').focus({ preventScroll: true }); nameOpen = true; const n = $('cm-name'); n.value = gname; formSet(); n.focus({ preventScroll: true }); n.select(); }   // 누른 그 손짓 안에서 바로 포커스(아이폰은 손짓 밖 포커스에 키보드를 안 올린다)
+function nameKeep() {                                     // 이름 칸 접기: 적은 게 있으면 기억, 비었으면 전 이름 그대로
+  if (!nameOpen) return !!gname; const v = [...$('cm-name').value.trim()].slice(0, 20).join('');
+  if (v) { gname = v; try { localStorage.setItem(GUEST_KEY, gname); } catch (_) {} }
+  nameOpen = false; formSet(); return !!gname;
+}
+$('cm-pub').addEventListener('click', () => { pubOn = !pubOn; formSet(); $('cm-input').focus({ preventScroll: true }); });
+$('cm-name').addEventListener('blur', () => { setTimeout(() => { if (nameOpen && document.activeElement !== $('cm-name')) { namePend = false; nameKeep(); } }, 0); });   // 다른 칸으로 옮기면 접는다(같은 줄 안에서 폭만 바뀐다). 기다리던 글은 지우지 않고 '남기기'를 다시 기다린다
+$('cm-name').addEventListener('pointerdown', e => e.stopPropagation());
+$('cm-name').addEventListener('keydown', e => { if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return; e.preventDefault(); $('cm-form').dispatchEvent(new Event('submit', { cancelable: true })); });   // 남기기 단추가 꺼져 있으면(글이 비었으면) 엔터가 폼을 못 보낸다 — 직접 넘긴다. 한글 조합 중 엔터는 건너뛴다
 $('cm-input').addEventListener('input', e => { $('cm-send').disabled = !e.target.value.trim(); });
 let cmBusy = false;
 $('cm-form').addEventListener('submit', async e => {
-  e.preventDefault(); const tx = $('cm-input').value.trim(); if (!tx || cmBusy || !cmOk) return;
+  e.preventDefault(); const tx = $('cm-input').value.trim(); if (cmBusy || !cmOk) return;
+  if (SHARE) {                                             // 손님: 이름 칸에서 엔터 = 이름 정하기. 글이 기다리고 있었으면(남기기를 먼저 눌렀으면) 그대로 보내고, 아니면 한마디 칸으로 간다
+    const fromName = nameOpen && document.activeElement === $('cm-name'), go = namePend || !fromName;
+    if (nameOpen && !nameKeep()) { nameShow(); return; }  // 이름이 비었으면 그대로 이름 칸
+    if (!tx || !go) { namePend = false; formSet(); $('cm-input').focus({ preventScroll: true }); return; }
+    if (!gname) { namePend = true; nameShow(); return; }  // 이름 없이 남기기: 글은 그대로, 이름만 받는다
+    namePend = false; formSet();
+  }
+  if (!tx) return;
   const day = pages[idx].day; cmBusy = true; $('cm-send').disabled = true;
-  try { const r = await API.add(day, tx); (comments[day] = comments[day] || []).push(r); $('cm-input').value = ''; }
-  catch (_) { cmNote('댓글을 남기지 못했어요. 잠시 뒤 다시 해 주세요.'); $('cm-send').disabled = false; }
+  try { const r = await API.add(day, tx, pubOn, gname); (comments[day] = comments[day] || []).push(r); $('cm-input').value = ''; pubOn = false; }   // '모두에게'는 한 번 쓰면 다시 꺼진다 — 기본은 늘 가족만
+  catch (e) { const m = e && e.message || ''; cmNote(SHARE && /[가-힣]/.test(m) ? m : '댓글을 남기지 못했어요. 잠시 뒤 다시 해 주세요.'); $('cm-send').disabled = false; if (SHARE && /꺼졌/.test(m)) setTimeout(() => location.reload(), 1200); }   // 쓰는 사이 링크가 꺼졌으면 덮인 책으로
   cmBusy = false; if (pages[idx].day === day) { drawUnder(false); const u = $('under'); u.scrollTop = u.scrollHeight; }
 });
 // 내 댓글 지우기: ⋯ → '지우기'가 나오고, 한 번 더 누르면 지운다 (다른 곳을 누르면 접힌다)
 $('under').addEventListener('click', async e => {
+  const re = e.target.closest('.re'); if (re) { const inp = $('cm-input'); pubOn = true; formSet(); inp.value = '@' + re.dataset.re + ' '; $('cm-send').disabled = true; inp.focus({ preventScroll: true }); inp.setSelectionRange(inp.value.length, inp.value.length); return; }   // 손님 댓글에 답하기 = @이름 + '모두에게' 켬 (답글 묶음 구조는 두지 않는다 — 시간순 대화)
   const b = e.target.closest('.more, .del'), li = e.target.closest('li[data-id]');
-  $('under').querySelectorAll('.del').forEach(d => { if (d !== b) { d.className = 'more'; d.textContent = '⋯'; d.setAttribute('aria-label', '내 댓글 메뉴'); } });
+  $('under').querySelectorAll('.del').forEach(d => { if (d !== b) { d.className = 'more'; d.textContent = '⋯'; } });
   if (!b || !li) return;
-  if (b.classList.contains('more')) { b.className = 'del'; b.textContent = '지우기'; b.setAttribute('aria-label', '이 댓글 지우기'); return; }
+  if (b.classList.contains('more')) { b.className = 'del'; b.textContent = '지우기'; return; }
   const day = pages[idx].day, id = li.dataset.id; b.disabled = true;
   try { await API.del(id); comments[day] = (comments[day] || []).filter(c => String(c.id) !== id); if (pages[idx].day === day) drawUnder(false); }
   catch (_) { b.disabled = false; cmNote('지우지 못했어요. 잠시 뒤 다시 해 주세요.'); }
@@ -649,17 +691,27 @@ addEventListener('keydown', e => { if (e.key === 'Escape') photoClose(); });
 
 /* ── 시작 ───────────────────────────── */
 // d = { baby:{name,birth_date}, days:[{day,diary,sticker,photo,url,thumb}], members:[{id,name,img}], me, api:{list,add,del}, logs, growth, checks, today }
-function reveal() { document.documentElement.classList.remove('boot'); }   // 11-23: 표지가 제자리·제 상태로 놓인 뒤에야 화면을 연다 (index.html 의 html.boot)
+function reveal() {   // 11-23: 표지가 제자리·제 상태로 놓인 뒤에야 화면을 연다 (index.html 의 html.boot)
+  document.documentElement.classList.remove('boot');
+  // 11-26 로딩 걷기: 앱 안이면 부모 창의 로딩이 덮고 있으니 이쪽 것은 바로 치우고 'ready' 만 알린다. 공유 링크·혼자 열 때는 0.3초 안에 끝났으면 바로, 아니면 적어도 0.7초 보여 주고 걷는다
+  const el = $('bload'); if (!el || el.classList.contains('out')) return;
+  if (EMBED) { el.remove(); try { parent.postMessage({ t: 'book', act: 'ready' }, location.origin); } catch (_) {} return; }
+  const ms = performance.now(), out = q => { el.classList.add('out'); if (q) el.classList.add('q'); setTimeout(() => el.remove(), q ? 180 : 320); };
+  if (ms < 300 || REDUCED || Q.get('noload')) out(true); else setTimeout(() => out(false), Math.max(0, 700 - ms));   // ?noload=1 = 캡처 도구용
+}
+const FONTS = Promise.race([document.fonts.load('16px "Poor Story"'), new Promise(r => setTimeout(r, 1500))]).catch(() => {});   // 11-26: 글꼴은 파일이 실행되자마자 받기 시작(자료를 기다리는 동안 같이 온다). 늦어도 1.5초
 const coverImgs = () => Promise.race([Promise.all([...cover.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : 0)), new Promise(r => setTimeout(r, 800))]);   // 표지 얼굴이 뒤늦게 튀어나오지 않게 — 늦어도 0.8초
 async function start(d) {
   baby = d.baby; if (Q.get('name')) baby = { ...baby, name: Q.get('name') };   // ?name= 은 이름 길이 확인용
   members = d.members; ME = d.me;
-  { const im = $('cm-form').querySelector('img'), w = who(ME); im.src = w.img; im.alt = w.name; }   // 댓글 입력칸 옆 얼굴 = 내가 고른 캐릭터
+  if (SHARE) { const im = $('cm-form').querySelector('img'), bt = document.createElement('button'); bt.type = 'button'; bt.id = 'cm-me'; bt.className = 'gface'; im.replaceWith(bt); bt.addEventListener('click', nameShow); }   // 손님: 얼굴 자리에 '이름' 알약 / 이름 첫 글자 — 누르면 그 자리에서 이름 적기·고치기
+  else { const im = $('cm-form').querySelector('img'), w = who(ME); im.src = w.img; im.alt = w.name; }   // 댓글 입력칸 옆 얼굴 = 내가 고른 캐릭터
   pages = d.days.filter(x => x.diary || x.photo).sort((a, b) => a.day < b.day ? -1 : 1).map(model);
   { const n = [...baby.name].length; $('ttl').textContent = baby.name; $('ttl-h').className = n > 7 ? 'xlong' : n > 4 ? 'long' : ''; document.title = `${baby.name}의 성장앨범`; }
-  try { await Promise.race([document.fonts.load('16px "Poor Story"'), new Promise(r => setTimeout(r, 1500))]); } catch (_) {}
+  const cmP = d.api && pages.length ? (API = d.api, loadComments()) : null;   // 11-26: 앱에서는 댓글을 글꼴과 나란히 받는다(전에는 글꼴을 다 기다린 뒤에 받기 시작)
+  await FONTS;
   if (!pages.length) {                                   // 아직 일기도 사진도 없는 책 — 표지만 보여 주고 열리지 않는다
-    drawCover(); coverLayout(); $('cv-st').textContent = '다이어리에 첫 일기를 쓰면 여기에 쌓여요'; cbook.disabled = true; vb.setAttribute('inert', '');
+    drawCover(); coverLayout(); $('cv-st').textContent = SHARE ? '아직 빈 책이에요' : '다이어리에 첫 일기를 쓰면 여기에 쌓여요'; cbook.disabled = true; vb.setAttribute('inert', '');
     await coverImgs(); reveal();
     window.__book = { pages, get closed() { return true; }, get idx() { return 0; } }; return;
   }
@@ -670,7 +722,7 @@ async function start(d) {
   if (Q.get('case') === 'nodiary') pages[idx].diary = '';
   if (Q.get('case') === 'nophoto') pages[idx].photo = false;
   if (Q.get('orient')) pages[idx].orient = Q.get('orient');
-  API = d.api || localApi(); await loadComments();
+  if (cmP) await cmP; else { API = localApi(); await loadComments(); }
   drawCover(); rest(); coverLayout(); coverSpread(); coverApply();
   if (Q.get('open')) { co = 1; coverApply(); closed = false; cover.classList.add('gone'); } else { vb.setAttribute('inert', ''); if (Q.get('cv')) { co = +Q.get('cv'); coverApply(); } }
   await coverImgs(); reveal();
@@ -680,7 +732,45 @@ async function start(d) {
   window.__book = { go, jump, pages, ND, CHS, openBook, closeBook, get closed() { return closed; }, friend: i => compose(pages[i]).friend, get idx() { return idx; } };
 }
 const fail = err => { reveal(); $('under').innerHTML = `<p style="padding:30px 4px;font-size:14px">기록을 불러오지 못했어요. (${esc(err && err.message || err)})</p>`; };
-if (EMBED) {
+/* ── 공유 링크 (11-25) — book/?s=토큰 ─────────────────────────────
+   로그인 없이 토큰 하나로 그 아기의 책만 받아 본다. 서버: 스키마-v1.32-공유.sql 의 book_share_get(토큰) — 꺼졌거나 없는 토큰이면 null.
+   사진은 비공개 저장소 그대로 두고, 링크가 켜져 있는 동안만 1시간짜리 서명 주소를 받아 쓴다(끄면 새 서명이 안 나온다).
+   받는 자료는 책이 쓰는 것만: 이름·생일 / 날짜·일기·스티커·사진 경로 / 가족 캐릭터·닉네임 / 수유(ml)·기저귀(응가)·잠(시각) / 몸무게·키·머리둘레 / 접종 날짜 / 댓글 가운데 손님이 쓴 것과 가족이 '모두에게'로 쓴 것(11-26). 가족 전용 댓글·메모는 오지 않는다.
+   ?mock=1 이면 서버 대신 share-mock.js(로컬 시안 전용, 배포에 안 올라감)를 쓴다. */
+const SB_URL = 'https://wbtgaydqpupxgmwmxbdv.supabase.co', SB_KEY = 'sb_publishable_kZD_r_s3lca-tdu8NqABnA_WVgHWKBo';   // 앱(index.html)과 같은 공개 키
+const SHARE_SIGN_S = 3600;                               // 사진 서명 주소 수명(초) — 링크를 끈 뒤 이미 받은 주소가 살아 있는 최대 시간
+const FACE = { f1: '엄마-2g-b.png', f2: 'char-f2.png', f3: 'char-f3.png', f4: 'char-f4.png', f5: 'char-f5.png', m1: '아빠-2g-b.png', m2: 'char-m2.png', m3: 'char-m3.png', m4: 'char-m4.png', m5: 'char-m5.png' };   // 앱 CHAR 와 같은 표
+const faceOf = f => { const k = String(f.a || '').replace(/^char:/, ''), key = k === 'mom' ? 'f1' : k === 'dad' ? 'm1' : FACE[k] ? k : (f.c ? 'm1' : 'f1'); return '../img/' + FACE[key]; };   // 값이 없으면 만든 사람 = m1, 합류 = f1 (앱과 같은 규칙)
+const sbPost = async (path, body) => { const r = await fetch(SB_URL + path, { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!r.ok) { let m = ''; try { m = (await r.json()).message || ''; } catch (_) {} throw new Error(m || '통신 ' + r.status); } return r.json(); };   // 서버 함수가 낸 말(조금 뒤에 다시…)은 그대로 전한다
+const shareSrv = {
+  get: tok => sbPost('/rest/v1/rpc/book_share_get', { tok }),
+  say: (tok, d, nm, tx) => sbPost('/rest/v1/rpc/book_share_say', { tok, d, nm, tx }),   // 손님 한마디 — 토큰 확인·글자 수·연달아 쓰기·하루 총량은 서버가 본다
+  sign: async paths => { const out = {}; if (!paths.length) return out;
+    try { (await sbPost('/storage/v1/object/sign/diary-photos', { expiresIn: SHARE_SIGN_S, paths })).forEach(r => { if (r.signedURL && !r.error) out[r.path] = SB_URL + '/storage/v1' + r.signedURL; }); } catch (_) {}   // 서명이 안 되면 책은 글만으로 열린다
+    return out; },
+};
+function shareOff(kind) {                                // 꺼진 링크 · 못 불러온 책 — 책상 위에 덮인 책 한 권과 두 줄
+  const off = kind === 'off';
+  document.title = '성장앨범'; $('app').hidden = true; reveal();
+  const m = document.createElement('main'); m.className = 'sh-off';
+  m.innerHTML = `<span class="ob" aria-hidden="true"><i></i></span><h1>${off ? '지금은 덮여 있는 책이에요' : '책을 펼치지 못했어요'}</h1><p>${off ? '이 링크는 꺼졌어요.<br>보내 준 분께 새 링크를 부탁해 보세요.' : '잠시 뒤에 다시 열어 주세요.'}</p>${off ? '' : '<button type="button" class="chip" onclick="location.reload()">다시 열기</button>'}`;   // 임시 문구 — 단비 몫
+  document.body.appendChild(m);
+}
+async function shareStart() {
+  let srv = shareSrv;
+  if (Q.has('mock')) { await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'share-mock.js?v=' + Date.now(); sc.onload = ok; sc.onerror = () => no(new Error('mock')); document.head.appendChild(sc); }); srv = window.__shareMock; }
+  let d; try { d = await srv.get(SHARE); } catch (_) { return shareOff('fail'); }
+  if (!d || !d.baby) return shareOff('off');
+  const tp = x => x.replace(/\.jpg$/, '.t.jpg'), paths = (d.days || []).filter(x => x.photo).flatMap(x => [x.photo, tp(x.photo)]), urls = await srv.sign(paths);
+  const days = (d.days || []).map(x => ({ day: x.day, diary: x.diary || '', sticker: x.sticker || '', photo: !!x.photo && !!urls[x.photo], url: x.photo ? urls[x.photo] || '' : '', thumb: x.photo ? urls[tp(x.photo)] || urls[x.photo] || '' : '' })).filter(x => x.diary.trim() || x.photo);
+  const members = (d.faces || []).map((f, i) => ({ id: 'f' + (f.k != null ? f.k : i), name: f.n || '가족', img: faceOf(f) }));   // 표지는 앞 다섯만 쓴다(drawCover). 이름은 '모두에게' 댓글 옆에 보인다
+  const row = c => c.name != null ? { id: c.id, day: c.day, guest: c.name, text: c.text, created_at: c.created_at } : { id: c.id, day: c.day, user_id: 'f' + c.k, text: c.text, created_at: c.created_at };   // 손님 댓글 / 가족이 모두에게 쓴 댓글
+  const api = { pub: false, list: async () => (d.comments || []).map(row), add: async (day, text, _p, name) => row(await srv.say(SHARE, day, name, text)) };
+  const t0 = Date.now(); document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - t0 > (SHARE_SIGN_S - 600) * 1000) location.reload(); });   // 오래 열어 둔 화면: 사진 주소가 끝나기 전에 다시 받는다(그때 링크가 꺼졌으면 덮인 책)
+  await start({ baby: d.baby, days, members, me: '', api, logs: d.logs || [], growth: d.growth || [], checks: d.checks || [], today: lday(Date.now()) });
+}
+if (SHARE) shareStart().catch(fail);
+else if (EMBED) {
   // 앱(통계 탭 성장앨범 카드)이 iframe 으로 연다 — 부모가 bookStart(자료)를 부른다. 노치·홈 바 높이는 iframe 안 env() 가 0 일 수 있어 부모 창에서 잰다
   try { const pd = parent.document, pr = pd.createElement('div'); pr.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)';
     pd.body.appendChild(pr); document.documentElement.style.setProperty('--sim-sat', pr.offsetHeight + 'px'); document.documentElement.style.setProperty('--sim-sab', pr.offsetWidth + 'px'); pr.remove(); } catch (_) {}

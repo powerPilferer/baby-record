@@ -842,6 +842,14 @@
   .alb-acts button.pri { background: var(--fg); color: var(--bg); }
   .alb-acts button:active { transform: scale(.97); }
   .alb-acts button:disabled { opacity: .38; }
+  .alb-acts button[data-a="share"] { flex: 0 0 auto; padding: 0 18px; display: inline-flex; align-items: center; gap: 7px; }   /* 11-25 공유 링크 — 켜져 있으면 초록 점 */
+  .alb-acts button[data-a="share"].on::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  .sheet[data-kind="share"] .acts button { padding: 15px 6px; font-size: 16px; white-space: nowrap; }
+  .sheet[data-kind="share"] .acts .save { flex: 1.4; }
+  .sheet[data-kind="share"] .vx-info.warn { color: var(--temp); }
+  .shr-url { display: flex; align-items: center; height: 48px; padding: 0 14px; border-radius: 14px; background: var(--card2); font-size: 14px; color: var(--fg); font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all; }
+  .shr-url span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shr-meta { margin: 8px 2px 0; font-size: 12.5px; color: var(--fg3); }
   .alb-acts button small { display: block; font-size: 10px; font-weight: 500; color: var(--fg3); line-height: 1; margin-top: 2px; }
   .alb-acts button.pri small { color: var(--bg); opacity: .6; }
   .alb-links { display: flex; justify-content: center; gap: 14px; margin-top: 12px; font-size: 13px; color: var(--fg3); }
@@ -859,6 +867,23 @@
   .album-wrap iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
   html.book-on, html.book-on body { overflow: hidden; overscroll-behavior: none; }   /* 11-18 사장님 "성장앨범 들어갔을때 뒤에 화면이 스크롤 되는듯" — 책이 떠 있는 동안 뒤 화면 고정 */
   .album-wrap { overscroll-behavior: none; }
+  /* 11-26 책 여는 동안 로딩 — 시작 로딩 화면(#splash)과 같은 캐릭터·점·글씨 값, 바탕만 책상색. 누른 첫 프레임부터 깔리고 표지가 준비되면(책이 'ready' 를 보냄) 걷힌다 */
+  .bk-load { position: absolute; inset: 0; z-index: 1; background: #ece2cf; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity .28s ease; }
+  .bk-load.out { opacity: 0; pointer-events: none; } .bk-load.out.q { transition-duration: .15s; }
+  .bk-load > .roll, .bk-load > .msg, .bk-load > .dots { animation: bkl-in .24s cubic-bezier(.16,1,.3,1) both; }   /* 누른 다음 프레임부터 보이되(16ms 에 이미 1/4쯤) 툭 튀어나오지 않게 짧게 차오른다 */
+  @keyframes bkl-in { from { opacity: 0; } }
+  .bk-load .roll { position: relative; width: 120px; height: 92px; margin-bottom: 12px; }
+  .bk-load .roll img { position: absolute; left: 50%; bottom: 0; height: 88px; width: auto; transform: translateX(-50%); visibility: hidden; }
+  .bk-load .roll img.on { visibility: visible; }
+  .bk-load .msg { font-size: 15px; font-weight: 400; color: #655e54; letter-spacing: -.01em; margin: 0 0 12px; }
+  .bk-load .dots { display: flex; gap: 6px; }
+  .bk-load .dots i { width: 6px; height: 6px; border-radius: 50%; background: #655e54; opacity: .25; animation: sp-dot 1.2s ease-in-out infinite; }
+  .bk-load .dots i:nth-child(2) { animation-delay: .2s; } .bk-load .dots i:nth-child(3) { animation-delay: .4s; }
+  .bk-load .slow { position: absolute; left: 0; right: 0; top: calc(50% + 80px); text-align: center; color: #655e54; font-size: 13px; opacity: 0; transition: opacity .4s; }
+  .bk-load .slow.on { opacity: 1; }
+  .bk-load .bk-x { position: absolute; top: calc(var(--sat) + 12px); left: 16px; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #45444d; background: rgba(255,255,255,.5); border: 1px solid rgba(90,70,40,.12); box-shadow: 0 6px 20px rgba(90,70,40,.16); }   /* 책의 뒤로 버튼과 같은 자리·모양 — 로딩이 걷혀도 그대로 이어지고, 망이 느릴 때 나갈 길이 된다 */
+  .bk-load .bk-x svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-reduced-motion: reduce) { .bk-load .dots i { animation: none; opacity: .6; } .bk-load > * { animation: none !important; } }
   .album-wrap.bk { background: #ece2cf; }   /* 성장앨범 책은 늘 밝은 화면 — 뜨는 동안 어두운 바탕이 번쩍이지 않게 (11-17) */
   .bk-mini { flex: none; position: relative; width: 34px; height: 46px; border-radius: 2px 6px 6px 2px; background: linear-gradient(90deg, #27594d 0, #27594d 14%, #2f6b5c 14%); box-shadow: 2px 2px 0 #fbf5e8, 2px 2px 0 1px rgba(90,70,40,.2); }   /* 표지 축소판: 짙은 초록 + 노랑 밴드 + 흰 제목 두 줄 */
   .bk-mini::before { content: ""; position: absolute; right: 4px; top: 0; bottom: 0; width: 2px; background: #f3c85a; }
@@ -2668,7 +2693,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.31 · 11-24';
+const VER = 'v1.32 · 11-26';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2898,7 +2923,7 @@ function mock() {
 }
 // ═══ 성장앨범 책 (11-17 춘봉) — 통계 맨 아래 카드 → book/index.html 전체 화면(iframe) ═══
 // 매일 쌓이는 책: 펼침 한 면 = 하루(왼쪽 사진, 오른쪽 일기), 아래에 가족 댓글. 옛 돌 앨범(album/ 폴더, 예약·미리 만들기)은 더 부르지 않는다 — 코드는 index.bak-1117-book.html
-const BOOK_Q = new URLSearchParams(location.search).get('book') || '';   // 목업 확인용: ?book=nocm (댓글 표가 아직 없을 때) · ?book=empty (기록 없는 책)
+const BOOK_Q = new URLSearchParams(location.search).get('book') || '';   // 목업 확인용: ?book=nocm (댓글 표가 아직 없을 때) · ?book=empty (기록 없는 책) · ?book=slow (자료 받기가 느린 날) · ?book=nopub (공유 SQL 적용 전 — 스위치·손님 댓글 없음)
 function bookMockDays() {   // 목업(?mock)엔 일기·사진이 없어 책에 넣을 날을 지어낸다 — 사진 자리는 앱 캐릭터 그림
   const day = off => { const d = new Date(); d.setDate(d.getDate() - off); return dstr(d); };
   const tx = ['목욕하고 나서 한참을 웃었다.\n아빠 목소리가 들리면 그쪽으로 고개를 돌린다.', '새벽 수유 두 번.\n그래도 아침엔 방긋.', '오늘은 소아과 다녀온 날.\n몸무게가 또 늘었다. 주사는 씩씩하게 맞고 집에 와서 한참 잤다.\n\n저녁엔 엄마 품에서 떨어지지 않으려고 해서 둘이 번갈아 안고 밥을 먹었다. 이런 날도 지나고 보면 그리울 거라고, 서로 말해 줬다.\n\n잘 자, 우리 콩이.', '첫 산책. 바람이 좋았다.', '', '손을 한참 들여다본다.\n자기 손인 줄 아는 걸까.', '할머니가 다녀가셨다.\n콩이 안고 한참을 계셨다.', '낮잠을 세 시간이나 잤다.', '옹알이가 늘었다.', '집에 온 첫날.'];
@@ -2916,45 +2941,130 @@ function renderAlbumCard() {
   const el = $('album-stat');
   el.innerHTML = `<div class="alb-card"><div class="alb-head"><span class="bk-mini" aria-hidden="true"></span><div><b>${esc(baby.name)}의 성장앨범</b><span>${days.length ? `일기 ${nd}편 · 사진 ${np}장` : '아직 빈 책이에요'}</span></div></div>
     <p class="alb-tx">매일 쓴 일기와 사진이 책 한 권으로 쌓여요. 가족끼리 댓글도 남길 수 있어요.</p>
-    <div class="alb-acts"><button type="button" class="pri" data-a="open">책 펼쳐 보기</button></div></div>`;
+    <div class="alb-acts"><button type="button" class="pri" data-a="open">책 펼쳐 보기</button>${days.length ? `<button type="button" data-a="share" class="${_share ? 'on' : ''}">공유 링크</button>` : ''}</div></div>`;
   el.querySelector('[data-a]').onclick = openBook;
+  const sh = el.querySelector('[data-a="share"]'); if (sh) { sh.onclick = openShareSheet; if (_share === undefined) shareDb.get().then(v => { _share = v || null; sh.classList.toggle('on', !!_share); }).catch(() => {}); }   // 켜짐 표시는 처음 한 번만 물어본다 (표가 아직 없으면 조용히 꺼짐으로)
+}
+// ═══ 성장앨범 공유 링크 (11-25 춘봉) — 로그인 없이 책을 넘겨 보는 주소 book/?s=토큰. 서버: 스키마-v1.32-공유.sql (표 baby_shares · 함수 book_share_make/off/get)
+// 아기 한 명에 켜진 링크는 하나. 끄면 그 주소는 바로 안 열리고, 다시 만들면 새 토큰이 나온다. 암호는 걸지 않는다(사장님 "아무나 봐도 상관은 없고")
+let _share;   // undefined = 아직 안 물어봄 · null = 꺼짐 · { token, created_by, created_at } = 켜짐
+const shareUrl = tok => new URL('book/?s=' + tok + (MOCK ? '&mock=1' : ''), location.origin + location.pathname).href;
+const shareDb = {   // 목업은 이 브라우저(localStorage bb-mock-share)에 두고, book/share-mock.js 가 같은 값을 본다
+  async get() { if (MOCK) { try { return JSON.parse(localStorage.getItem('bb-mock-share') || 'null'); } catch (_) { return null; } }
+    const { data, error } = await sb.from('baby_shares').select('token, created_by, created_at').eq('baby_id', baby.id).is('off_at', null).maybeSingle(); if (error) throw error; return data; },
+  async make() { const row = { created_by: me.id, created_at: new Date().toISOString() };
+    if (MOCK) { row.token = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/-/g, ''); localStorage.setItem('bb-mock-share', JSON.stringify(row)); return row; }
+    const { data, error } = await sb.rpc('book_share_make', { b: baby.id }); if (error) throw error; row.token = data; return row; },
+  async off() { if (MOCK) { localStorage.removeItem('bb-mock-share'); return; } const { error } = await sb.rpc('book_share_off', { b: baby.id }); if (error) throw error; },
+};
+async function openShareSheet() {
+  try { _share = (await shareDb.get()) || null; } catch (_) { toast('공유 링크는 아직 준비 중이에요'); return; }   // 다른 가족이 켜거나 껐을 수 있어 열 때마다 다시 본다
+  let busy = false, arm = 0;
+  const mark = () => { const b = document.querySelector('#album-stat [data-a="share"]'); if (b) b.classList.toggle('on', !!_share); };
+  const copy = async url => { try { await navigator.clipboard.writeText(url); const b = $('shr-copy'); if (b) { b.textContent = '복사했어요'; setTimeout(() => { if (b.isConnected) b.textContent = '링크 복사'; }, 1600); } } catch (_) { prompt('링크를 복사하세요', url); } };   // 알림은 시트의 주소 칸을 가려서, 단추 글로 알린다
+  const draw = () => {
+    mark(); clearTimeout(arm);
+    if (!_share) {
+      $('sheet').innerHTML = `<h3 class="grow">성장앨범 링크</h3>
+      <div class="vx-info">링크를 받은 사람은 로그인 없이 책을 넘겨 볼 수 있어요.<br>일기·사진·숫자·성장이 보이고, 가족 댓글은 보이지 않아요.<br>링크는 언제든 끌 수 있어요.</div>
+      <div class="acts"><button type="button" class="cancel" id="sh-cancel">닫기</button><button type="button" class="save" id="shr-make">링크 만들기</button></div>`;
+      $('sh-cancel').onclick = closeSheet;
+      $('shr-make').onclick = async () => { if (busy) return; busy = true; try { _share = await shareDb.make(); draw(); } catch (e) { toast('링크를 만들지 못했어요'); } busy = false; };
+      return;
+    }
+    const url = shareUrl(_share.token), d = new Date(_share.created_at), info = '이 링크를 받은 사람은 로그인 없이 책을 넘겨 볼 수 있어요.<br>가족 댓글은 보이지 않아요.';
+    $('sheet').innerHTML = `<h3 class="grow">성장앨범 링크<span class="sd today">켜짐</span></h3>
+    <div class="vx-info" id="shr-info">${info}</div>
+    <div class="shr-url"><span>${esc(url.replace(/^https?:\/\//, ''))}</span></div>
+    <p class="shr-meta">${d.getMonth() + 1}. ${d.getDate()}. ${esc(nickById[_share.created_by] || '가족')}${_share.created_by === me.id ? '(나)' : ''}가 만들었어요</p>
+    <div class="acts"><button type="button" class="del" id="shr-off">링크 끄기</button><button type="button" class="cancel" id="shr-copy">링크 복사</button><button type="button" class="save" id="shr-go">공유하기</button></div>`;
+    $('shr-copy').onclick = () => copy(url);
+    $('shr-go').onclick = async () => { if (!navigator.share) return copy(url);
+      try { await navigator.share({ title: `${baby.name}의 성장앨범`, url }); } catch (e) { if (e && e.name !== 'AbortError') copy(url); } };
+    $('shr-off').onclick = async e => {   // 창을 하나 더 띄우지 않고 그 자리에서 한 번 더 묻는다 — 4초 안에 다시 누르면 꺼진다
+      const b = e.currentTarget, inf = $('shr-info');
+      if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = '정말 끄기'; inf.classList.add('warn'); inf.innerHTML = '끄면 이 링크는 바로 안 열려요.<br>다시 만들면 새 주소가 나와요.';
+        arm = setTimeout(() => { if (!b.isConnected) return; delete b.dataset.arm; b.textContent = '링크 끄기'; inf.classList.remove('warn'); inf.innerHTML = info; }, 4000); return; }
+      if (busy) return; busy = true; try { await shareDb.off(); _share = null; draw(); } catch (_) { toast('링크를 끄지 못했어요'); } busy = false; };
+  };
+  draw();
+  $('sheet').dataset.kind = 'share';
+  shOpen(); $('dim').onclick = closeSheet;
 }
 // 가족 댓글 — 서버 표 baby_comments (스키마-v1.20-댓글.sql, 가족만 읽기·쓰기, 내 댓글만 지우기). 표가 아직 없으면 list 가 실패하고 책은 '댓글 준비 중'으로 뜬다
 const _bkMock = [];   // 목업: 메모리에서 흉내 (앱을 새로 고치면 사라진다)
+// 11-26 손님 댓글: 링크로 온 사람이 쓴 한마디는 따로 표 baby_guest_comments 에(가족은 읽고 지우기만, 쓰기는 서버 함수 book_share_say 로만), 가족 댓글엔 pub(모두에게 보이기) 칸 하나만 더했다 — 스키마-v1.32-공유.sql
+// 책에는 한 목록으로 섞어 준다: 가족 { id, day, user_id, text, created_at, pub } · 손님 { id: 'g:…', day, guest: 이름, text, created_at }. api.pub = 서버에 그 표·칸이 있는가(없으면 책이 스위치를 숨기고 지금처럼 가족 댓글만)
 function bookApi() {
-  const cols = 'id, day, user_id, text, created_at';
+  const cols = 'id, day, user_id, text, created_at', byAt = (a, b) => a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
   if (MOCK) {
-    if (!_bkMock.length && BOOK_Q !== 'nocm') { const ds = bookMockDays(), t = (d, h, m) => { const x = new Date(d + 'T00:00'); x.setHours(h, m); return x.toISOString(); };
-      if (ds[0]) _bkMock.push({ id: 'm1', day: ds[0].day, user_id: 'u-mom', text: '오늘 표정 진짜 최고였어. 자꾸 다시 보게 돼', created_at: t(ds[0].day, 21, 12) }, { id: 'm2', day: ds[0].day, user_id: 'u-dad', text: '퇴근하고 여기부터 펼쳐 봤어. 내일 목욕은 아빠가!', created_at: t(ds[0].day, 22, 40) });
+    const LS = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || '[]'); localStorage.setItem(k, JSON.stringify(v)); } catch (_) { return []; } };   // 손님 쪽 목업(book/share-mock.js)과 같은 칸을 본다: bb-mock-gcm · bb-mock-pub · bb-mock-gdel
+    const ds = bookMockDays(), t = (d, h, m) => { const x = new Date(d + 'T00:00'); x.setHours(h, m); return x.toISOString(); };
+    if (!_bkMock.length && BOOK_Q !== 'nocm') {
+      if (ds[0]) _bkMock.push({ id: 'm1', day: ds[0].day, user_id: 'u-mom', text: '오늘 표정 진짜 최고였어. 자꾸 다시 보게 돼', created_at: t(ds[0].day, 8, 12) }, { id: 'm2', day: ds[0].day, user_id: 'u-dad', text: '퇴근하고 여기부터 펼쳐 봤어. 내일 목욕은 아빠가!', created_at: t(ds[0].day, 8, 40) });
       if (ds[2]) _bkMock.push({ id: 'm3', day: ds[2].day, user_id: 'u-mom', text: '주사 맞고도 씩씩했던 날', created_at: t(ds[2].day, 20, 5) }); }
-    return { list: async () => { if (BOOK_Q === 'nocm') throw new Error('relation "baby_comments" does not exist'); return _bkMock.slice(); },
-      add: async (day, text) => { const r = { id: 'm' + Date.now(), day, user_id: me.id, text, created_at: new Date().toISOString() }; _bkMock.push(r); return r; },
-      del: async id => { const i = _bkMock.findIndex(r => r.id === id && r.user_id === me.id); if (i < 0) throw new Error('내 댓글만 지울 수 있어요'); _bkMock.splice(i, 1); } };
+    const seed = () => BOOK_Q === 'nopub' || !ds[0] ? [] : [   // share-mock.js 의 씨앗과 같은 글
+      { id: 'g:s1', day: ds[0].day, guest: '할머니', text: '우리 콩이 많이 컸네. 목욕하고 웃는 얼굴이 제 아빠 어릴 때랑 똑같다', created_at: t(ds[0].day, 9, 14) },
+      { id: 'p:s1', day: ds[0].day, user_id: 'u-mom', pub: true, text: '@할머니 그쵸, 웃을 때 특히요. 주말에 영상통화해요!', created_at: t(ds[0].day, 9, 31) },
+      { id: 'g:s2', day: ds[0].day, guest: '지은 이모', text: '세상에 볼살 좀 봐. 다음 주에 보러 갈게', created_at: t(ds[0].day, 10, 2) },
+      ds[2] && { id: 'g:s3', day: ds[2].day, guest: '할머니', text: '주사 맞느라 고생했다. 푹 재워라', created_at: t(ds[2].day, 19, 40) }].filter(Boolean);
+    const api = { pub: BOOK_Q !== 'nopub' && BOOK_Q !== 'nocm',
+      list: async () => { if (BOOK_Q === 'nocm') throw new Error('relation "baby_comments" does not exist'); if (!api.pub) return _bkMock.slice();
+        const gone = new Set(LS('bb-mock-gdel')); return _bkMock.concat(seed(), LS('bb-mock-gcm').map(c => ({ id: c.id, day: c.day, guest: c.name, text: c.text, created_at: c.created_at })), LS('bb-mock-pub')).filter(c => !gone.has(c.id)).sort(byAt); },
+      add: async (day, text, pub) => { const r = { id: 'm' + Date.now(), day, user_id: me.id, text, created_at: new Date().toISOString(), pub: !!pub && api.pub }; if (r.pub) LS('bb-mock-pub', LS('bb-mock-pub').concat(r)); else _bkMock.push(r); return r; },
+      del: async id => { if (/^g:/.test(id)) { LS('bb-mock-gdel', LS('bb-mock-gdel').concat(id)); return; }   // 손님 댓글은 가족 누구나 지운다
+        const pubs = LS('bb-mock-pub'), j = pubs.findIndex(r => r.id === id && r.user_id === me.id); if (j >= 0) { pubs.splice(j, 1); LS('bb-mock-pub', pubs); return; }
+        const i = _bkMock.findIndex(r => r.id === id && r.user_id === me.id); if (i < 0) throw new Error('내 댓글만 지울 수 있어요'); _bkMock.splice(i, 1); } };
+    return api;
   }
-  return { list: async () => { const { data, error } = await sb.from('baby_comments').select(cols).eq('baby_id', baby.id).order('created_at'); if (error) throw error; return data || []; },
-    add: async (day, text) => { const { data, error } = await sb.from('baby_comments').insert({ baby_id: baby.id, day, user_id: me.id, text }).select(cols).single(); if (error) throw error; return data; },
-    del: async id => { const { error } = await sb.from('baby_comments').delete().eq('id', id).eq('user_id', me.id); if (error) throw error; } };
+  const api = { pub: false,
+    list: async () => {
+      let r = await sb.from('baby_comments').select(cols + ', pub').eq('baby_id', baby.id).order('created_at'), g = { data: [] };
+      api.pub = !r.error;                                    // pub 칸이 아직 없으면(공유 SQL 적용 전) 지금처럼 가족 댓글만
+      if (r.error) r = await sb.from('baby_comments').select(cols).eq('baby_id', baby.id).order('created_at');
+      if (r.error) throw r.error;
+      if (api.pub) { g = await sb.from('baby_guest_comments').select('id, day, name, text, created_at').eq('baby_id', baby.id).order('created_at'); if (g.error) { g = { data: [] }; api.pub = false; } }
+      return (r.data || []).concat((g.data || []).map(x => ({ id: 'g:' + x.id, day: x.day, guest: x.name, text: x.text, created_at: x.created_at }))).sort(byAt); },
+    add: async (day, text, pub) => { const row = { baby_id: baby.id, day, user_id: me.id, text }; if (pub && api.pub) row.pub = true;
+      const { data, error } = await sb.from('baby_comments').insert(row).select(cols + (api.pub ? ', pub' : '')).single(); if (error) throw error; return data; },
+    del: async id => { const { error } = /^g:/.test(id) ? await sb.from('baby_guest_comments').delete().eq('id', id.slice(2)).eq('baby_id', baby.id) : await sb.from('baby_comments').delete().eq('id', id).eq('user_id', me.id); if (error) throw error; } };
+  return api;
 }
-let _bookY = 0;
+let _bookY = 0, _bookLoadT = 0, _bookRoll = 0;
+// 책 여는 동안 로딩 (11-26 사장님 "로딩표시좀 넣자. 인트로 로딩처럼") — 0.3초 안에 끝나면 차오르던 채로 바로 걷고, 그보다 길면 적어도 0.7초는 보여 주고 걷는다
+function bookLoadDone() {
+  const el = document.querySelector('#album-wrap .bk-load'); if (!el || el.classList.contains('out')) return;
+  const ms = performance.now() - _bookLoadT, out = q => { if (!el.isConnected) return; el.classList.add('out'); if (q) el.classList.add('q'); clearInterval(_bookRoll); setTimeout(() => el.remove(), q ? 180 : 320); };
+  if (ms < 300 || _RM.matches) out(true); else setTimeout(() => out(false), Math.max(0, 700 - ms));
+}
 async function openBook() {
   _bookY = scrollY; document.documentElement.classList.add('book-on'); document.body.style.position = 'fixed'; document.body.style.top = -_bookY + 'px'; document.body.style.left = '0'; document.body.style.right = '0';   // iOS: overflow 만으론 뒤가 끌려 움직임 → body 를 제자리에 못 박는다
-  const wrap = $('album-wrap'); wrap.classList.remove('hidden'); wrap.classList.add('bk'); wrap.innerHTML = '<iframe title="성장앨범" allow="fullscreen" scrolling="no"></iframe>';   // scrolling=no: 아이폰이 iframe 을 안쪽 내용 폭만큼 넓히지 못하게
-  const f = wrap.firstChild;
+  const wrap = $('album-wrap'); wrap.classList.remove('hidden'); wrap.classList.add('bk');
+  wrap.innerHTML = '<iframe title="성장앨범" allow="fullscreen" scrolling="no"></iframe>'   // scrolling=no: 아이폰이 iframe 을 안쪽 내용 폭만큼 넓히지 못하게
+    + '<div class="bk-load" role="status" aria-label="성장앨범 펴는 중"><button type="button" class="bk-x" aria-label="통계로 돌아가기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="roll"><img class="on" src="img/로딩-아기.webp" alt=""><img src="img/로딩-엄마.webp" alt=""><img src="img/로딩-아빠2.webp" alt=""></div><p class="msg">책 펴는 중</p><div class="dots"><i></i><i></i><i></i></div><div class="slow">연결이 조금 느려요. 잠시만요</div></div>';   // 문구는 임시 — 단비 몫
+  const f = wrap.firstChild, ld = wrap.lastChild; _bookLoadT = performance.now();
+  { const r = ld.querySelector('.roll').children; let i = 0; clearInterval(_bookRoll); _bookRoll = setInterval(() => { if (!ld.isConnected) return clearInterval(_bookRoll); r[i].className = ''; i = (i + 1) % r.length; r[i].className = 'on'; }, 500);   // 아기 → 엄마 → 아빠 (시작 로딩과 같은 박자)
+    setTimeout(() => { if (ld.isConnected) ld.querySelector('.slow').classList.add('on'); }, 6000); ld.querySelector('.bk-x').onclick = closeBook; }
+  // 11-26: 책 파일(iframe)은 누르자마자 받기 시작하고, 그 사이에 사진 서명·기록 전부를 나란히 받는다 (전에는 자료를 다 받은 뒤에야 책 파일을 받기 시작했다)
+  const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
+  f.src = 'book/index.html?v=' + encodeURIComponent(VER.split(' ')[0]);   // 11-20: 폰이 옛 책 파일을 붙들지 않게 버전마다 새 주소 (v1.27 배포 뒤에도 가로판이 남았음)
   let all = logs;                                            // 숫자 장: 태어난 날부터의 기록 전부(앱은 평소 30일치만 들고 있다). 책 안에서만 더하고 밖으로 나가지 않는다
   if (!MOCK) {
-    try { await signPhotos(); } catch (_) {}                 // 사진 원본·썸네일 서명 주소 (실패해도 책은 글만으로 열린다)
-    try { all = []; const since = new Date(baby.birth_date + 'T00:00').toISOString();
-      for (let from = 0; ; from += 1000) { const { data } = await sb.from('baby_logs').select('kind, at, ended_at, detail').eq('baby_id', baby.id).gte('at', since).order('at').range(from, from + 999); all.push(...(data || [])); if (!data || data.length < 1000) break; } } catch (_) { all = logs; }
-  }
+    await Promise.all([
+      signPhotos().catch(() => {}),                          // 사진 원본·썸네일 서명 주소 (실패해도 책은 글만으로 열린다)
+      (async () => { try { const got = [], since = new Date(baby.birth_date + 'T00:00').toISOString();
+        for (let from = 0; ; from += 1000) { const { data } = await sb.from('baby_logs').select('kind, at, ended_at, detail').eq('baby_id', baby.id).gte('at', since).order('at').range(from, from + 999); got.push(...(data || [])); if (!data || data.length < 1000) break; } all = got; } catch (_) { all = logs; } })(),
+    ]);
+  } else if (BOOK_Q === 'slow') await new Promise(r => setTimeout(r, 1200));   // 목업 확인용: 자료 단계가 1.2초 걸리는 흉내
   const ids = Object.keys(nickById).sort((a, b) => (a === baby.created_by ? -1 : 0) - (b === baby.created_by ? -1 : 0));
   const members = ids.slice(0, 5).map(id => ({ id, name: nickById[id] || '가족', img: '../' + avatarSrc(id) }));   // 표지 얼굴은 아기 + 가족 5 = 최대 6명
   const input = { baby: { name: baby.name, birth_date: baby.birth_date }, days: bookDays(), members, me: me.id, api: bookApi(), logs: all.slice().sort((a, b) => a.at < b.at ? -1 : 1), growth, checks: Object.values(checks), today: dstr(new Date()) };
-  f.addEventListener('load', () => { try { f.contentWindow.bookStart(input); } catch (e) { closeBook(); toast('성장앨범을 열지 못했어요'); } });
-  f.src = 'book/index.html?v=' + encodeURIComponent(VER.split(' ')[0]);   // 11-20: 폰이 옛 책 파일을 붙들지 않게 버전마다 새 주소 (v1.27 배포 뒤에도 가로판이 남았음)
+  await loaded; if (!f.isConnected) return;                  // 기다리는 사이 뒤로 나갔으면 그만
+  try { f.contentWindow.bookStart(input); } catch (e) { closeBook(); toast('성장앨범을 열지 못했어요'); }
 }
 function closeBook() { document.documentElement.classList.remove('book-on'); document.body.style.position = document.body.style.top = document.body.style.left = document.body.style.right = ''; scrollTo(0, _bookY);
-  const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.classList.remove('bk'); wrap.innerHTML = ''; }
-addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.t === 'book' && e.data.act === 'close') closeBook(); });
+  clearInterval(_bookRoll); const wrap = $('album-wrap'); wrap.classList.add('hidden'); wrap.classList.remove('bk'); wrap.innerHTML = ''; }
+addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.t !== 'book') return; if (e.data.act === 'close') closeBook(); else if (e.data.act === 'ready') bookLoadDone(); });   // ready = 표지가 제자리에 놓임(book.js reveal)
 
 boot();
 </script>
