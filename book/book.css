@@ -483,6 +483,15 @@ html.share .top .back { display: none !important; }
 .cm-form .pub svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; opacity: .55; }
 .cm-form .pub.on { color: #fff; background: var(--blue); box-shadow: none; } .cm-form .pub.on svg { opacity: 1; }
 .cm-form:has(.pub:not([hidden])) { gap: 6px; padding-left: 12px; padding-right: 10px; } .cm-form:has(.pub:not([hidden])) input { padding: 0 13px; }
+/* ── 접힌 귀 (11-26) — 공유 화면에서만. 아래 바깥 모서리를 누르면 넘어간다는 작은 단서(book.js cornerTap). 새 버튼·화살표는 두지 않는다 ─────────────────────────────
+   쪽마다 붙어 있어 종이와 같이 넘어간다. 한 변 16칸: 바깥 반은 접혀서 드러난 아래 장(조금 어두운 크림), 안쪽 반은 접힌 종이 뒷면(밝은 크림) + 접힌 선 그늘. */
+html.share .pg:not(.fl)::before { content: ""; position: absolute; bottom: 0; width: calc(16 * var(--u)); height: calc(16 * var(--u)); z-index: 3; pointer-events: none; }
+html.share .pg.R:not(.fl)::before { right: 0; transform-origin: 100% 100%; border-radius: calc(4 * var(--u)) 0 0 0; background: linear-gradient(to top left, #e3d6bd 0 50%, #fffaf0 50% 100%); box-shadow: calc(-1 * var(--u)) calc(-1 * var(--u)) calc(2.5 * var(--u)) rgba(90, 70, 40, .2); }
+html.share .pg.L:not(.fl)::before { left: 0; transform-origin: 0 100%; border-radius: 0 calc(4 * var(--u)) 0 0; background: linear-gradient(to top right, #e3d6bd 0 50%, #fffaf0 50% 100%); box-shadow: calc(1 * var(--u)) calc(-1 * var(--u)) calc(2.5 * var(--u)) rgba(90, 70, 40, .2); }
+.book.ear-hint #hr .pg.R::before { animation: ear 1.2s cubic-bezier(.45, 0, .25, 1) 2; }   /* 처음 한 번: 오른쪽 귀가 두 번 들썩 (튕김 없이 들렸다 내려앉는다) */
+@keyframes ear { 50% { transform: scale(1.55); } }
+@media (prefers-reduced-motion: reduce) { .book.ear-hint #hr .pg.R::before { animation: none; } }
+@media print { html.share .pg::before { display: none; } }
 /* 꺼진 링크 · 못 불러온 책 */
 .sh-off { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--sat) 32px calc(var(--sab) + 40px); }
 .sh-off .ob { position: relative; width: 104px; height: 140px; margin-bottom: 30px; border-radius: 4px 14px 14px 4px; background: linear-gradient(90deg, var(--cv-d) 0, var(--cv-d) 12%, var(--cv) 12%); box-shadow: 4px 4px 0 #fbf5e8, 4px 4px 0 1px rgba(90, 70, 40, .2); transform: rotate(-5deg); }   /* 표지와 같은 초록 책, 덮인 채 살짝 비스듬히 */

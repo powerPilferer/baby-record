@@ -417,6 +417,17 @@
   /* 그날 기록 요약 — 달력 점으로만 보이던 걸 공책 맨 아래에 (10-14 사장님). 글 쓰는 중(키보드)엔 숨김 */
   .dp-text { margin-bottom: 14px; }
   .dp-info { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: auto 18px 10px;   /* 글이 짧으면 맨 아래, 길면 글 끝 다음 (10-15 사장님) */ padding: 11px 14px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px dashed color-mix(in srgb, var(--ink) 16%, transparent); font-size: 13px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+  /* 11-26 공유 링크에서 숨기기 — 공책 맨 아래 조용한 한 줄(글 쓰는 동안은 숨는다). 켜짐 = 숨김, 무채색(레드·초록 아님) */
+  .dp-share { display: flex; align-items: center; gap: 8px; margin: auto 18px 12px; padding: 0 4px 0 14px; min-height: 44px; font-size: 13.5px; color: var(--fg2); }
+  .dp-info + .dp-share { margin-top: 0; }
+  .dp-share svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+  .dp-share svg path + path { opacity: 0; } .dp-share.on svg path + path { opacity: 1; }   /* 숨기면 눈에 빗금 */
+  .dp-share small { font-size: 12px; color: var(--fg3); }
+  .dp-share button { margin-left: auto; flex: none; width: 46px; height: 28px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 16%, transparent); position: relative; transition: background .16s; }
+  .dp-share button::after { content: ""; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.22); transition: transform .16s cubic-bezier(.32,.72,0,1); }
+  .dp-share.on { color: var(--fg); } .dp-share.on button { background: var(--ink); } .dp-share.on button::after { transform: translateX(18px); }
+  .dpage:has(.dp-text:focus) .dp-share { display: none; }
+  .cal .d .n .hid { display: inline-flex; margin-left: 5px; vertical-align: 1px; opacity: .45; } .cal .d .n .hid svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }   /* 다이어리 칸: 공유에서 숨긴 날 = 날짜 옆 아주 작은 빗금 눈 */
   .dp-info em { font-style: normal; font-size: 11.5px; color: var(--fg3); width: 100%; margin-bottom: 1px; }
   .dp-info span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
   .dp-info span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--fg3)); }
@@ -1178,6 +1189,9 @@ let growth = [];       // baby_growth 측정 기록 (v0.10)
 let stickers = {};      // day → 이모지 (baby_days)
 let tilts = {};         // day → 1/-1 (붙일 때 랜덤으로 정해진 기울기 방향)
 let diaries = {};       // day → 일기 글 (baby_days.diary) — 홈의 한마디(baby_notes)와 별개
+let shareHide = {};     // day → true : 공유 링크에서 숨긴 날 (baby_days.share_hide, 11-26). 앱 안 책·다이어리에는 그대로 보인다
+let shareHideOk = MOCK && !/[?&]book=(nopub|nocm|nohide)/.test(location.search);   // 서버에 그 칸이 있는가 — 없으면(SQL 적용 전) 스위치를 숨긴다. 목업은 ?book=nohide 로 흉내
+const SHARE_EYE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8c1.6-2.6 3.6-3.9 6-3.9s4.4 1.3 6 3.9c-1.6 2.6-3.6 3.9-6 3.9S3.6 10.6 2 8z"/><path d="M3 13 13 3"/></svg>';
 let photos = {};        // day → 그 주 사진 보기 주소(서명, 7일) — 주 1장 (10-15)
 let thumbs = {};        // day → 썸네일 주소. 달력·공책은 썸네일, 크게 볼 때만 원본 (10-22 전송량 1/10)
 const thumbPath = p => p.replace(/\.jpg$/, '.t.jpg');
@@ -1219,6 +1233,7 @@ const db = {
     tilts = Object.fromEntries((sd.data || []).map(x => [x.day, x.tilt || 1]));
     diaries = Object.fromEntries((sd.data || []).filter(x => x.diary).map(x => [x.day, x.diary]));
     photoPaths = Object.fromEntries((sd.data || []).filter(x => x.photo).map(x => [x.day, x.photo])); await signPhotos();
+    db.loadShareHide().catch(() => {});   // 11-26 공유에서 숨긴 날 — 기다리지 않는다(칸이 없어도 나머지는 그대로)
     const ids = (m.data || []).map(x => x.user_id);
     avatarById = Object.fromEntries((m.data || []).map(x => [x.user_id, x.avatar_url || '']));
     const { data: ps } = await sb.from('profiles').select('id,nickname').in('id', ids);
@@ -1281,6 +1296,17 @@ const db = {
     const gone = old.map(d => photoPaths[d]).filter(Boolean).flatMap(p => [p, thumbPath(p)]); if (gone.length) sb.storage.from('diary-photos').remove(gone);   // 실패해도 기록엔 영향 없음
     for (const d of old) { delete photos[d]; delete thumbs[d]; delete photoPaths[d]; }
     if (path) { photoPaths[dayStr] = path; await signPhotos([dayStr]); }
+  },
+  async setShareHide(dayStr, on) {   // 공유 링크에서 그날을 빼기/되돌리기 — 이 칸만 바꾼다(일기·사진·스티커는 그대로). 목업은 book/share-mock.js 와 같은 칸(bb-mock-hide)
+    if (MOCK) { if (on) shareHide[dayStr] = true; else delete shareHide[dayStr]; try { localStorage.setItem('bb-mock-hide', JSON.stringify(Object.keys(shareHide))); } catch (_) {} return; }
+    const { error } = await sb.from('baby_days').upsert({ baby_id: baby.id, day: dayStr, share_hide: !!on, updated_by: me.id, updated_at: new Date().toISOString() });
+    if (error) throw error; if (on) shareHide[dayStr] = true; else delete shareHide[dayStr];
+  },
+  async loadShareHide() {            // 따로 묻는다 — 칸이 아직 없을 때 일기 불러오기까지 같이 실패하지 않게
+    if (MOCK) { try { shareHide = Object.fromEntries(JSON.parse(localStorage.getItem('bb-mock-hide') || '[]').map(d => [d, true])); } catch (_) {} return; }
+    const { data, error } = await sb.from('baby_days').select('day').eq('baby_id', baby.id).eq('share_hide', true);
+    shareHideOk = !error; if (error) return; shareHide = Object.fromEntries((data || []).map(r => [r.day, true]));
+    if (!$('s-diary').classList.contains('hidden')) renderDiary();
   },
   async setDiary(dayStr, text) {
     if (text) diaries[dayStr] = text; else delete diaries[dayStr];
@@ -1364,7 +1390,7 @@ function subscribe() {
       if (p.eventType === 'DELETE') logs = logs.filter(x => x.id !== p.old.id); else upsertLocal(logs, p.new);
       render();
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; delete photos[d]; delete thumbs[d]; delete photoPaths[d]; } else { if ((p.new.photo || '') !== (photoPaths[d] || '')) { if (p.new.photo) { photoPaths[d] = p.new.photo; signPhotos([d]).then(() => { if (!$('s-diary').classList.contains('hidden')) renderDiary(); }); } else { delete photoPaths[d]; delete photos[d]; delete thumbs[d]; } } if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_days', filter: 'baby_id=eq.' + baby.id }, p => { const d = (p.old || p.new).day; if (p.eventType === 'DELETE') { delete stickers[d]; delete diaries[d]; delete photos[d]; delete thumbs[d]; delete photoPaths[d]; } else { if ((p.new.photo || '') !== (photoPaths[d] || '')) { if (p.new.photo) { photoPaths[d] = p.new.photo; signPhotos([d]).then(() => { if (!$('s-diary').classList.contains('hidden')) renderDiary(); }); } else { delete photoPaths[d]; delete photos[d]; delete thumbs[d]; } } if (p.new.sticker) { stickers[d] = p.new.sticker; tilts[d] = p.new.tilt || 1; } else delete stickers[d]; if (p.new.diary) diaries[d] = p.new.diary; else delete diaries[d]; if (p.new.share_hide) shareHide[d] = true; else delete shareHide[d]; } if (!$('s-diary').classList.contains('hidden')) renderDiary(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_extra_vax', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') extras = extras.filter(x => x.id !== p.old.id); else upsertLocal(extras, p.new); render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_checks', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') delete checks[p.old.item]; else checks[p.new.item] = p.new; render(); if (!$('g-vax').classList.contains('hidden')) renderVax(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'baby_growth', filter: 'baby_id=eq.' + baby.id }, p => { if (p.eventType === 'DELETE') growth = growth.filter(x => x.id !== p.old.id); else upsertLocal(growth, p.new); if (!$('s-growth').classList.contains('hidden')) renderGrowth(); })
@@ -1467,7 +1493,7 @@ async function renderDiary() {
     const sum = v ? `${v.feed ? `수유 ${v.feed}` : ''}${v.ml ? ` · ${v.ml}ml` : ''}${v.slp ? `<br>잠 ${Math.round(v.slp / 3600000 * 10) / 10}h` : ''}` : '';
     const wd = new Date(ds + 'T00:00').getDay(), ln = diaries[ds];
     h += `<button type="button" class="d ${st ? 'ms' : ''} ${ds === today ? 'today' : ''} ${!born && !future ? 'future' : ''} ${future ? 'ahead' : ''}" data-d="${ds}">
-      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small></span>${PHOTO_ON && photos[ds] ? `<img class="ph" src="${esc(thumbs[ds] || photos[ds])}" alt="">` : ''}${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(() => { const r = rv[ds] || []; if (r.length <= 2) return r.map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('');   // 11-18 사장님 "예약건으로 세로가 길어지는" — 칸에는 2줄까지, 나머지는 '외 N건'
+      <span class="n">${d}<small class="${wd === 0 ? 'sun' : ''}">${WD[wd]}</small>${shareHide[ds] && (ln || photoPaths[ds]) ? `<i class="hid" role="img" aria-label="공유 링크에서 숨긴 날">${SHARE_EYE}</i>` : ''}</span>${PHOTO_ON && photos[ds] ? `<img class="ph" src="${esc(thumbs[ds] || photos[ds])}" alt="">` : ''}${st ? `<span class="stl">${st}<i>${msIc(st)}</i></span>` : ''}${(() => { const r = rv[ds] || []; if (r.length <= 2) return r.map(x => `<span class="rv">📅 ${esc(x)}</span>`).join('');   // 11-18 사장님 "예약건으로 세로가 길어지는" — 칸에는 2줄까지, 나머지는 '외 N건'
         return `<span class="rv">📅 ${esc(r[0])}</span><span class="rv more">외 ${r.length - 1}건</span>`; })()}${ln ? `<span class="tx">${esc(ln)}</span>` : ''}<span class="m">${dots}</span></button>`;
   }
   $('cal').innerHTML = h;
@@ -1524,7 +1550,7 @@ function openDayNotes(ds) {
       <div class="dp-sub">${ds >= baby.birth_date ? 'D+' + dayNo(ds) : ''}</div>${stampOf(ds) ? `<span class="dp-ms">${stampOf(ds)} ${msIc(stampOf(ds))}</span>` : ''}</div>
     ${phBlock(ds, ahead)}
     <textarea class="dp-text" id="dp-text" maxlength="3000" placeholder="${ahead ? '이날 일정 — 오후 2시 소아과 예방접종' : '오늘의 우리 아기는…'}">${esc(orig)}</textarea>
-    ${dayInfo(ds)}</div>
+    ${dayInfo(ds)}${shareHideOk && !ahead ? `<div class="dp-share${shareHide[ds] ? ' on' : ''}" id="dp-share">${SHARE_EYE}<span>공유 링크에서 숨기기</span><button type="button" id="dp-hide" role="switch" aria-checked="${!!shareHide[ds]}" aria-label="공유 링크에서 이 날 숨기기"></button></div>` : ''}</div>
     <div class="dp-bar"><div class="dp-emo" id="dp-emo">${DP_EMO.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div></div>`;
   pg.classList.remove('hidden'); document.documentElement.style.overflow = 'hidden';
   const ta = $('dp-text');
@@ -1552,6 +1578,8 @@ function openDayNotes(ds) {
   const save = async () => { const t = ta.value.trim() ? ta.value : ''; if (t === orig) { close(); return; }   // 엔터로 띄운 여백도 그대로 저장 (10-17 사장님) — 글자가 하나도 없을 때만 지움
     try { await db.setDiary(ds, t); close(); renderDiary(); toast(t ? (ahead ? '일정을 적었어요' : '일기를 남겼어요') : (ahead ? '일정을 지웠어요' : '일기를 지웠어요')); } catch (err) { alert('저장 실패: ' + err.message); } };
   $('dp-ok').onclick = save; $('dp-x').onclick = save;   // 닫아도 쓴 건 남김
+  if ($('dp-hide')) $('dp-hide').onclick = async () => { const on = !shareHide[ds], w = $('dp-share'), bt = $('dp-hide'); bt.disabled = true;   // 누르면 바로 저장(일기 글 저장과 따로). 앱 안 책에는 그대로 보이고, 링크로 온 사람에게만 그날이 빠진다
+    try { await db.setShareHide(ds, on); w.classList.toggle('on', on); bt.setAttribute('aria-checked', on); renderDiary(); } catch (err) { toast('바꾸지 못했어요'); } bt.disabled = false; };   // 됐을 땐 알림 없이 스위치만 — 상태가 눈에 보인다
   $('dp-emo').addEventListener('pointerdown', e => e.preventDefault());   // 이모지 눌러도 키보드가 내려가지 않게
   $('dp-emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = ta.selectionStart ?? ta.value.length, z = ta.selectionEnd ?? a;
     ta.setRangeText(b.dataset.e, a, z, 'end'); ta.focus(); grow(); });
@@ -2693,7 +2721,7 @@ function fillSettings() {
   $('set-nick').textContent = me.nickname; $('set-members').textContent = Object.values(nickById).join(', ');
   charGrid($('char-seg'), charOf(me.id), false, true); _charKeep = false;   // 11-20 사장님 "설정화면도 해줘야지" — 설정도 여자·남자 나눠 아래로
 }
-const VER = 'v1.32 · 11-26';
+const VER = 'v1.33 · 11-26';
 $('ver').textContent = '기특일기 ' + VER;
 $('reload-ver').textContent = VER.split(' · ')[0];
 // ── 새 판 자동 반영: 홈 화면 앱은 화면을 이어 쓰므로, 앞으로 올 때마다 서버의 VER를 보고 다르면 새로고침
@@ -2917,6 +2945,8 @@ function mock() {
     { id: 'g3', day: '2026-09-22', weight_kg: 3.41, length_cm: null, head_cm: null, note: '조리원', user_id: 'u-mom' },
     { id: 'g4', day: gd(0), weight_kg: 3.86, length_cm: 52.4, head_cm: 35.9, note: '소아과', user_id: 'u-dad' },
   ];
+  for (const d of bookMockDays()) if (d.diary) diaries[d.day] = d.diary;   // 11-26 목업: 책에 지어낸 일기를 다이어리에도 넣어 '공유에서 숨기기'를 눌러 볼 수 있게
+  db.loadShareHide();
   notes = [
     { id: 'n1', day: dstr(new Date()), user_id: 'u-mom', text: '새벽 두 번 봐줘서 고마워. 오후엔 내가 볼게', created_at: T(7, 25) },
   ];

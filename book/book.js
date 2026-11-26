@@ -300,7 +300,7 @@ const release = e => {
   if (!drag || e.pointerId !== drag.id) return;
   const d = drag; drag = null;
   if (!d.on) {                                                   // 끌지 않고 뗀 것(탭)
-    if (e.type === 'pointerup' && e.timeStamp - d.t0 < 400 && Math.abs(e.clientX - d.x0) < 8 && d.act) pageAct(d.act);   // 쪽 안의 단추(달 타일·사진·기념일)만 눌린다. 쪽을 눌러 넘기는 건 뺐다 — 책장은 끌어서만 넘긴다 (11-17 사장님)
+    if (e.type === 'pointerup' && e.timeStamp - d.t0 < 400 && Math.abs(e.clientX - d.x0) < 8) { if (d.act) pageAct(d.act); else if (SHARE) cornerTap(e); }   // 공유 링크에서만: 아래 모서리를 톡 누르면 넘어간다(아래 cornerTap). 앱은 그대로 끌기만   // 쪽 안의 단추(달 타일·사진·기념일)만 눌린다. 쪽을 눌러 넘기는 건 뺐다 — 책장은 끌어서만 넘긴다 (11-17 사장님)
     return;
   }
   const a = d.s[0], b = d.s[d.s.length - 1];
@@ -309,6 +309,18 @@ const release = e => {
   settle(d.fwd ? (proj > .4 ? 1 : 0) : (proj < .6 ? 0 : 1), v);
 };
 book.addEventListener('pointerup', release); book.addEventListener('pointercancel', release);
+/* 아래 모서리 눌러 넘기기 (11-26) — 공유 링크 화면에만 (사장님 "화살표 빼고 좌우 하단을 클릭하면 넘겨지게 하자"). 앱 안 책은 끌어서만 넘긴다(11-17 "드래그만 해줘 클릭은 빼줘").
+   누르는 자리: 펼친 책의 왼쪽 아래·오른쪽 아래 모서리, 한 변이 책 폭의 17%(적어도 56px — 393 폭에서 63px). 사진은 그 위에 있어 겹치지 않고, 혹시 겹치는 쪽(사진첩 타일·사진 단추)은 그쪽이 먼저다.
+   왼쪽 = 이전 날(첫 쪽이면 표지 덮기), 오른쪽 = 다음 날. 넘김은 go() 그대로 — 한 장 넘김 곡선, 넘어가는 중 한 번 더 누르면 이어서 한 장(pend).
+   단서: 쪽 아래 바깥 모서리가 살짝 접혀 있다(book.css html.share .pg::before). 처음 펼친 손님에게만 오른쪽 귀가 두 번 들썩인다(earHint). */
+function cornerTap(e) {
+  if (closed || canim || cdrag || (e.target.closest && e.target.closest('.ph, #bm, button'))) return;
+  const b = book.getBoundingClientRect(), z = Math.max(56, b.width * .17);
+  if (e.clientY < b.bottom - z) return;
+  if (e.clientX < b.left + z) go(-1); else if (e.clientX > b.right - z) go(1);
+}
+function earHint() { try { if (localStorage.getItem('bb-share-ear')) return; localStorage.setItem('bb-share-ear', '1'); } catch (_) { return; } if (REDUCED) return; setTimeout(() => { book.classList.add('ear-hint'); setTimeout(() => book.classList.remove('ear-hint'), 2600); }, 500); }
+if (SHARE) addEventListener('keydown', e => { if (closed && !canim && e.key === 'ArrowRight' && e.target === document.body) openBook(); });   // PC: 닫힌 책에서 → 로 펼치기 (펼친 뒤 ←/→ 는 원래 있던 키 그대로)
 addEventListener('keydown', e => { if (closed) return; if (openEl) { if (e.key === 'Escape') closeSheet(); return; } if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });
 
 /* ── 책 아래: 이어 읽기 + 가족 댓글 ───────────────────────────── */
@@ -490,7 +502,7 @@ function coverApply() {
 // co 를 from → to 로. ez = 시간 진행(0~1) → 이동 비율. 탭은 직선(곡선은 OPEN_EZ 가 이미 품고 있다), 손을 뗀 뒤는 속도를 이어받는 곡선
 function coverRun(to, ms, ez = k => k) {
   cancelAnimationFrame(canim); cover.classList.remove('gone');
-  const from = co, t0 = performance.now(), end = () => { co = to; coverApply(); canim = 0; closed = to === 0; cover.classList.toggle('gone', to === 1); vb.toggleAttribute('inert', closed); };
+  const from = co, t0 = performance.now(), end = () => { co = to; coverApply(); canim = 0; closed = to === 0; cover.classList.toggle('gone', to === 1); vb.toggleAttribute('inert', closed); if (SHARE && to === 1) earHint(); };
   if (REDUCED) return end();
   const step = now => { const k = cl((now - t0) / ms); co = from + (to - from) * ez(k); coverApply(); if (k < 1) canim = requestAnimationFrame(step); else end(); };
   canim = requestAnimationFrame(step);
